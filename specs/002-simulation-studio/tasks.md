@@ -54,7 +54,7 @@ the main PC). **Claude research** tasks are literature work that the owner then 
 
 **Purpose**: Create the monorepo, toolchains and configuration.
 
-- [ ] T001 Create the monorepo skeleton from plan.md:
+- [X] T001 Create the monorepo skeleton from plan.md:
   - `engine/src/dentalsim/`, with one subpackage (each with `__init__.py`) for each of: `conventions`, `model`,
     `blocks`, `templates`, `assembly`, `geometry`, `mesh`, `physics`, `solvers/calculix`, `solvers/skfem`, `post`,
     `library`, `store`, `estimate`, `verification`, `exports`, `publish`, `commands`
@@ -64,35 +64,35 @@ the main PC). **Claude research** tasks are literature work that the owner then 
   - `content/library/{proposals,snapshots}/`, `content/verification/cases/` and `content/scenarios/`, each with a
     `.gitkeep`
   - `docs/setup/`
-- [ ] T002 [P] Create `engine/pyproject.toml` for the package `dentalsim`:
+- [X] T002 [P] Create `engine/pyproject.toml` for the package `dentalsim`:
   - Python 3.12
   - dependencies: gmsh 4.15.x, numpy, scipy, pydantic 2, pyyaml, python-ulid, zstandard, httpx, psutil, pyvista,
     imageio-ffmpeg, python-pptx, typst, openpyxl, pillow, pygltflib, scikit-fem
   - optional extra `promo`: kokoro, soundfile
   - console script `dentalsim = dentalsim.cli:main`
-- [ ] T003 [P] Create `studio/server/pyproject.toml` for the package `dentalsim_studio`: fastapi, uvicorn[standard],
+- [X] T003 [P] Create `studio/server/pyproject.toml` for the package `dentalsim_studio`: fastapi, uvicorn[standard],
   argon2-cffi, cryptography, python-multipart, and a workspace dependency on `dentalsim`
-- [ ] T004 Create the root `pyproject.toml` as a uv workspace:
+- [X] T004 Create the root `pyproject.toml` as a uv workspace:
   - members `engine` and `studio/server`
   - shared ruff, mypy and pytest settings: markers `unit`, `integration`, `benchmark`, `regression`, with
     `--strict-markers`
   - add `.python-version` (3.12), then run `uv lock` and `uv sync`, which creates `uv.lock`
-- [ ] T005 [P] Scaffold `studio/ui/` with Vite, React 19 and TypeScript 5:
+- [X] T005 [P] Scaffold `studio/ui/` with Vite, React 19 and TypeScript 5:
   - `package.json`, `tsconfig.json`, `.nvmrc` (24)
   - `vite.config.ts` with a dev proxy from `/api` to `https://localhost:8443`
   - add mantine, @tanstack/react-query, react-router, three, @react-three/fiber, @react-three/drei, openapi-typescript
     (dev), vitest and @playwright/test
   - scripts: `dev`, `build`, `test`, `e2e`, `lint`, `typecheck`, `gen:api`, `gen:conventions`
-- [ ] T006 [P] Extend `.gitignore` with:
+- [X] T006 [P] Extend `.gitignore` with:
   - `.venv/`, `node_modules/`, `studio/ui/dist/`, `__pycache__/`
   - solver scratch files: `*.frd`, `*.dat`, `*.sta`, `*.cvg`, `spooles.out`
   - `fea-implant-teaching.zip` and any `DentalSimData/`
-- [ ] T007 [P] Create `engine/src/dentalsim/config.py`, a pydantic settings object:
+- [X] T007 [P] Create `engine/src/dentalsim/config.py`, a pydantic settings object:
   - reads `DENTALSIM_DATA` (default `D:\DentalSimData`), `DENTALSIM_CCX`, the repository root (found by walking up to
     `docs/conventions.md`), the home subnets and port 8443
   - `ensure_data_folder()` creates `store/`, `exports/`, `published-media/`, `logs/`, `backups/`, `certs/`, `work/`
     and `estimate/`
-- [ ] T008 [P] Create `engine/src/dentalsim/version.py`:
+- [X] T008 [P] Create `engine/src/dentalsim/version.py`:
   - engine version = package version + `+g<short commit>` from git, for provenance only
   - `engine_source_hash()`: SHA-256 over the sorted paths and contents of the result-affecting engine source
     (`conventions/`, `model/`, `blocks/`, `templates/`, `assembly/`, `geometry/`, `mesh/`, `physics/`,
@@ -102,11 +102,11 @@ the main PC). **Claude research** tasks are literature work that the owner then 
   - also reports the gmsh version
   - add `engine/tests/unit/test_version.py`: the hash is stable, changes when a file in `post/` changes, and does
     not change when a file in `exports/`, `commands/` or `studio/` changes
-- [ ] T009 Create `engine/src/dentalsim/cli.py`:
+- [X] T009 Create `engine/src/dentalsim/cli.py`:
   - argparse with a registry that loads subcommands from `engine/src/dentalsim/commands/`
   - a global `--json` flag
   - exit codes 0, 1 and 2 as in contracts/cli.md: a `Refused` exception maps to 1, any other error to 2
-- [ ] T010 [P] Create `engine/tests/conftest.py` and `studio/server/tests/conftest.py`: a temporary data-folder
+- [X] T010 [P] Create `engine/tests/conftest.py` and `studio/server/tests/conftest.py`: a temporary data-folder
   fixture, skip `benchmark` tests when `DENTALSIM_CCX` is unset, and fixed-ULID and fixed-time helpers
 
 ---

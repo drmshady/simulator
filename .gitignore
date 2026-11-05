@@ -5,3 +5,43 @@
 # Earlier project: reference material only, kept locally (Constitution, Scope)
 fea-implant-teaching/
 fea-implant-teaching.zip
+
+# Data folder: results, exports and media stay outside git (research R12)
+DentalSimData/
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Interface
+node_modules/
+studio/ui/dist/
+studio/ui/openapi.json
+coverage/
+playwright-report/
+test-results/
+
+# Solver scratch files (CalculiX)
+*.frd
+*.dat
+*.sta
+*.cvg
+spooles.out
+
+# Local and editor files
+.env*
+*.log
+*.tmp
+*.swp
+.DS_Store
+Thumbs.db
+.idea/

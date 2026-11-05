@@ -1,0 +1,38 @@
+[project]
+name = "dentalsim"
+version = "0.1.0"
+description = "Finite element engine and command line for the Simulation Studio (teaching use only)"
+requires-python = "==3.12.*"
+dependencies = [
+    "gmsh>=4.15,<4.16",
+    "numpy>=2.1",
+    "scipy>=1.14",
+    "pydantic>=2.9,<3",
+    "pydantic-settings>=2.6",
+    "pyyaml>=6.0",
+    "python-ulid>=3.0",
+    "zstandard>=0.23",
+    "httpx>=0.27",
+    "psutil>=6.0",
+    "pyvista>=0.44",
+    "imageio-ffmpeg>=0.5",
+    "python-pptx>=1.0",
+    "typst>=0.12",
+    "openpyxl>=3.1",
+    "pillow>=11.0",
+    "pygltflib>=1.16",
+    "scikit-fem>=10.0",
+]
+
+[project.optional-dependencies]
+promo = [
+    "kokoro>=0.9",
+    "soundfile>=0.12",
+]
+
+[project.scripts]
+dentalsim = "dentalsim.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.10,<0.11"]
+build-backend = "uv_build"
