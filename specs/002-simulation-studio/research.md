@@ -307,11 +307,13 @@ conventions document or library is written; they do not block planning.
     - the library entry version ids and their content hashes
     - the detail level
     - the conventions version
-    - the engine version
+    - the engine source hash: SHA-256 over the result-affecting engine source files (`conventions/`, `model/`,
+      `blocks/`, `templates/`, `assembly/`, `geometry/`, `mesh/`, `physics/`, `solvers/`, `post/`, `pipeline.py`)
     - the solver build id
     - the gmsh version
-  - **Engine version**: the package version plus the git commit. A run made from uncommitted engine code is
-    marked **"development build"** and can never be published.
+  - **Engine version**: the package version plus the git commit, kept for provenance but not part of the hash,
+    so interface, server or documentation commits never force a re-solve (Principle VI). A run made from
+    uncommitted engine code is marked **"development build"** and can never be published.
   - **Out of date**: a stored item whose inputs no longer match the current engine, conventions or library is
     marked "out of date" and is never reused silently.
 - **Rationale**: this implements "keyed by every input that affects them" literally, and stops results from code

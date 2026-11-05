@@ -15,6 +15,11 @@ physics as each passes its benchmark.
 crown first, then multi-implant fixed prostheses; tooth and denture blocks arrive with their physics in
 Story 9). Added: the conventions document, screw preload as gated physics, interactive page data, the full
 published scenario package, and requirements for the edge cases (FR-050 to FR-063).
+**Revision (2026-11-05, after /speckit-analyze)**: Story 9's physics moved to later features; "detailed" made
+measurable before the mesh check exists; convergence defined for the direct solver; re-verification and review
+flags given a clearing rule; staleness keyed by result-affecting engine code only; load patterns, load-direction
+settings and verification-case inputs clarified (FR-008, FR-017, FR-018, FR-023, FR-035, FR-051, FR-052,
+FR-058, FR-062, SC-001a).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -274,6 +279,11 @@ immediately loaded implants against the literature tolerance range), and fatigue
 and implant under chewing cycles). When a benchmark passes, every block and result type that needs that
 physics turns "ready", and saved scenarios that use it can be previewed and run.
 
+**Scope in this feature** (decided at planning, research R21): this feature delivers only the lock and unlock
+framework for Story 9 (Acceptance 4, FR-011a, FR-059, FR-062). Screw preload, the periodontal ligament, contact
+and fatigue, with their blocks, templates, library entries and Acceptance scenarios 1, 2, 3 and 5, are each
+delivered as their own later feature, in that order.
+
 **Why this priority**: tooth-supported and removable scenarios depend on it, but each kind of physics must
 first pass a known-answer benchmark (Constitution, Scope); it follows the bonded-elastic work in Stories 1 to 8.
 
@@ -309,8 +319,9 @@ benchmark passes, then unlock with the benchmark report linked.
   "outside published range" mark that blocks publication.
 - A convention is changed: every stored run and published scenario that depends on it is flagged for
   re-verification.
-- The engine is updated after runs were stored: those runs are flagged "out of date" and must be re-run before
-  they can be newly published.
+- Engine code that affects results is updated after runs were stored: those runs are flagged "out of date" and
+  must be re-run before they can be newly published. Interface, server or documentation changes do not flag
+  them.
 - The laptop loses its connection to the main PC mid-run: the run continues on the main PC and the laptop
   shows its status again on reconnection.
 - Someone outside the home network tries to open the studio: the connection is refused.
@@ -345,7 +356,9 @@ benchmark passes, then unlock with the benchmark report linked.
   is compared with it; and the mesh-check limit. Every block, result, export and published package MUST
   follow it, and the automated tests MUST cover it.
 - **FR-051**: Changing a convention MUST flag every stored run and every published scenario that depends on
-  it for re-verification. A flagged scenario MUST NOT be republished until it is re-verified.
+  it for re-verification. A flagged scenario MUST NOT be republished until it is re-verified: its runs are
+  re-run under the current conventions version, its verification note is renewed from those runs, and the
+  flag is cleared only by that republication.
 
 **Scenarios, building blocks and settings**
 
@@ -355,12 +368,15 @@ benchmark passes, then unlock with the benchmark report linked.
   with its ridge height and width, the nerve canal in the mandible, the sinus floor in the maxilla and the
   positions of neighbouring roots), mucosa, natural tooth with periodontal ligament (intact or prepared as an
   abutment), implant, abutment, crown, pontic, splinting connector, cantilever extension, bar, attachment (at
-  least ball, locator-type and bar clip), denture base, artificial teeth, clasp, rest and major connector.
-  Blocks are delivered in the slices set out in Story 1 and Story 9.
+  least ball, stud-type resilient and bar clip), denture base, artificial teeth, clasp, rest and major
+  connector. Blocks are delivered in the slices set out in Story 1 and Story 9. This feature delivers the
+  slice 1a and 1b blocks; the others arrive with their physics in the later Story 9 features.
 - **FR-005**: The studio MUST offer prosthesis-type templates, each editable block by block: single crown
   (implant or tooth), splinted crowns, bridge (implant, tooth or mixed support), cantilever bridge, full-arch
   fixed prosthesis, implant overdenture, removable partial denture and complete denture. The owner MUST be able
-  to save their own templates. Each template is delivered with the blocks it needs.
+  to save their own templates. Each template is delivered with the blocks it needs; this feature delivers the
+  implant-supported fixed templates (single crown on an implant, splinted crowns, implant bridge, cantilever
+  bridge, full-arch fixed).
 - **FR-006**: Adding a new building block type or template later MUST NOT require changes to the run library,
   comparison, studies, exports or publishing.
 - **FR-007**: Each block MUST expose its own settings within the five groups, including at least: bone (jaw,
@@ -373,11 +389,16 @@ benchmark passes, then unlock with the benchmark report linked.
 - **FR-052**: Settings are of two kinds. Library settings (material properties, bone parameters, load values,
   strength references) MUST take their values from approved literature entries (FR-012). Design settings
   (sizes, positions, angles, counts and choices of type) are chosen freely by the owner within the limits the
-  block allows. A library setting given a value outside its published range MUST carry an "outside published
+  block allows. In loads, the force magnitude and the number of chewing cycles are library settings; the load
+  direction (angle and azimuth), the contact points and their shares are design settings, and the assumptions
+  note states them (FR-061). A library setting given a value outside its published range MUST carry an "outside published
   range" mark, and a run with that mark MUST NOT be publishable.
 - **FR-008**: Bite and load settings MUST include force, direction and one or more contact points on any
   occlusal surface, and load patterns for a single bite, a chewing cycle and clenching or bruxism, each defined
-  from literature entries.
+  from literature entries. A single bite is one force at its contact points. A chewing cycle is a listed
+  sequence of instants (contact points, direction and force share) solved by superposition, with results
+  reported for the worst instant; its cycle count is kept for fatigue (later feature). Clenching or bruxism
+  (one pattern, `clenching`) is a sustained force whose magnitude comes from its own literature entry.
 - **FR-009**: Model detail settings MUST let the owner choose the detail level and see the expected run time
   and memory before starting.
 - **FR-010**: Shapes MUST be generated automatically from the blocks and their settings. The studio MUST NOT
@@ -396,7 +417,8 @@ benchmark passes, then unlock with the benchmark report linked.
   missing benchmark, without blocking the rest of the run.
 - **FR-062**: If a benchmark fails when it is re-run, its physics MUST return to "awaiting benchmark", the
   blocks and result types that need it MUST lock again, and published scenarios that depend on it MUST be
-  flagged for review.
+  flagged for review. A scenario flagged for review MUST NOT be republished until the benchmark passes again
+  and the owner records the review; the flag is cleared only by that republication.
 
 **Literature library**
 
@@ -422,13 +444,17 @@ benchmark passes, then unlock with the benchmark report linked.
 
 - **FR-017**: The studio MUST show a preview result within 10 seconds of a setting change, clearly labelled as
   a preview and never publishable. Beside each preview the studio MUST show how far previews differ from
-  detailed results, as measured on the verification cases, so the owner knows how much to trust it.
+  detailed results, as measured on the verification cases (the dental published-study cases once they exist,
+  otherwise the textbook cases, saying which), so the owner knows how much to trust it.
 - **FR-018**: A "detailed" run is a run at a detail level that passes the mesh check (FR-037) for that
-  scenario, or for a verified model whose mesh justification it carries over. A detailed single implant crown
-  run MUST finish within 30 minutes on the main simulation PC. A
-  detailed run of any scenario with up to three implants or teeth MUST finish within one overnight period
-  (10 hours); larger assemblies (full arch, complete dentures) MUST show their estimate and may need a lower
-  detail level.
+  scenario, or for a verified model whose mesh justification it carries over. The detail levels are `preview`,
+  `standard`, `fine` and `extra_fine`. Until the mesh check exists (Story 5), the `standard` level counts as
+  detailed provisionally; timings measured that way MUST be confirmed again once the single implant crown's
+  first mesh check shows which level passes. A detailed single implant crown run MUST finish within 30 minutes
+  on the main simulation PC. A detailed run of any scenario with up to three implants or teeth MUST finish
+  within one overnight period (10 hours). Larger assemblies (full arch, complete dentures) MUST show their
+  estimate before starting; a level that does not pass the mesh check may be used to explore them, but such a
+  run is not a detailed run and is not publishable.
 - **FR-019**: Runs MUST be queued and executed unattended, one heavy run at a time, continuing when the browser
   is closed, with progress, estimated remaining time and cancel.
 - **FR-020**: The owner MUST be able to queue a study that varies one or more settings over listed values.
@@ -436,7 +462,10 @@ benchmark passes, then unlock with the benchmark report linked.
   parameter and report the spread of each key result.
 - **FR-022**: A failed run MUST record its reason and MUST NOT show partial results as complete.
 - **FR-023**: Each run MUST record all settings, the library entry versions, the engine version, the model
-  detail level, solver convergence information and its dates.
+  detail level, solver convergence information and its dates. For the direct linear solver, convergence
+  information means the force-balance check (the sum of reaction forces against the applied loads, per load
+  case) and the solver's relative residual; a run whose force-balance error exceeds the tolerance in the
+  conventions document MUST fail with that reason.
 - **FR-056**: After the main PC restarts or wakes, runs that were in progress MUST be marked "interrupted" and
   put back in the queue, queued runs MUST keep their place, and no interrupted run may be shown as complete.
 - **FR-057**: Before a run or study starts, the studio MUST compare its expected memory and disk space with
@@ -444,7 +473,9 @@ benchmark passes, then unlock with the benchmark report linked.
   level, and MUST warn when disk space is short. A run that still runs out of memory MUST stop cleanly and be
   recorded as failed with that reason.
 - **FR-058**: Stored meshes, previews and results MUST be tied to every input that affects them (settings,
-  library entry versions, engine version, conventions version). When any of these no longer matches, the
+  library entry versions, the engine code that affects results, solver build, conventions version). Changes
+  that cannot affect results (interface, server, documentation) MUST NOT make stored items out of date
+  (Constitution, Principle VI: re-solve only when inputs change). When any of these no longer matches, the
   stored item MUST be flagged "out of date", MUST NOT be reused silently, and MUST be re-run before it can be
   newly published (Constitution, Principle VI).
 
@@ -483,7 +514,9 @@ benchmark passes, then unlock with the benchmark report linked.
 - **FR-035**: The studio MUST include a verification suite of textbook problems with exact answers and
   reproductions of 3 to 5 published dental implant finite element studies, each with a stated tolerance and a
   stored pass or fail report. Each case's compared quantity and tolerance MUST be recorded before the case is
-  first run; a later change of tolerance MUST be recorded with its reason.
+  first run; a later change of tolerance MUST be recorded with its reason. Verification cases use the inputs
+  stated by their own source (the textbook problem or the published study), cited in the case file; they are
+  benchmarks, not scenario runs, so FR-012 does not apply to them.
 - **FR-036**: Publishing MUST stay locked until every required verification case passes.
 - **FR-037**: The owner MUST be able to run a mesh check (two detail levels) for any scenario and store the
   result in its verification note, marked pass or fail against the mesh-check limit in the conventions
@@ -577,9 +610,9 @@ benchmark passes, then unlock with the benchmark report linked.
 
 - **SC-001**: The owner can create a scenario from any template, change it, and start a detailed run in under
   5 minutes after opening the studio.
-- **SC-001a**: Every prosthesis-type template delivered so far (slice 1a: single implant crown; slice 1b: the
-  implant-supported fixed templates; Story 9: the rest, eight in all) can be built, changed block by block and
-  saved; every template whose blocks are all "ready" can be run in detail.
+- **SC-001a**: Every prosthesis-type template delivered by this feature (slice 1a: single implant crown;
+  slice 1b: the implant-supported fixed templates) can be built, changed block by block, saved and run in
+  detail. The remaining templates are measured the same way in the later Story 9 features.
 - **SC-002**: Preview results appear within 10 seconds of a setting change.
 - **SC-003**: A detailed single implant crown run finishes in 30 minutes or less on the main simulation PC.
 - **SC-004**: An overnight study of at least 18 detailed single implant crown runs completes unattended within
@@ -626,7 +659,11 @@ benchmark passes, then unlock with the benchmark report linked.
 - Defaults chosen during the 2026-11-05 spec check, which the owner may change: the owner password (FR-001),
   the 5% mesh-check limit (FR-037), out-of-range values allowed with a mark that blocks publication (FR-052),
   and the 18-run overnight target (SC-004).
+- Defaults chosen during the 2026-11-05 cross-artifact analysis, which the owner may change: load direction and
+  contact shares are design settings, not library settings (FR-052); verification cases use their own sources'
+  inputs (FR-035); a chewing cycle is reported at its worst instant (FR-008).
 - 3D file import is out of scope for this feature.
 - Full-arch and complete-denture models are the largest; they may need a lower detail level or an overnight
   run on the main simulation PC.
-- Story 9 is large and may be split into separate features (ligament, contact, fatigue) during planning.
+- Story 9 is split into separate later features (screw preload, ligament, contact, fatigue); this feature
+  delivers only its lock and unlock framework (see Story 9, "Scope in this feature").

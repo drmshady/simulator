@@ -175,13 +175,14 @@ published scenarios that use it are flagged `needs_review`.
 | detail_level | | |
 | input_hash | sha256 | R14 |
 | library_versions | list of {entry_id, version, content_hash} | FR-023 |
-| engine_version | string | Package version plus git commit; `dev_build` true when the tree was dirty |
+| engine_version | string | Package version plus git commit, for provenance only; `dev_build` true when the engine tree was dirty |
+| engine_source_hash | sha256 | Hash of the result-affecting engine source; part of `input_hash` (FR-058) |
 | conventions_version, solver_build_id, gmsh_version | | |
 | estimate | {dof, time_s, memory_gb, disk_gb} | |
 | actual | {dof, time_s, peak_memory_gb, disk_gb} | |
 | status | enum | `queued`, `running`, `succeeded`, `failed`, `cancelled`, `interrupted` |
 | failure_reason | text | Plain-language reason |
-| convergence | {residuals, solver_messages, iterations} | |
+| convergence | {force_balance: [{load_case, applied_n, reaction_n, relative_error}], solver_relative_residual, solver_messages} | FR-023; fails the run above the conventions `equilibrium_tolerance` |
 | result_ref | store key | Present only when `succeeded` |
 | locked_results | list of {result_type, missing_capability} | |
 | flags | set | `out_of_date`, `uses_rejected_entry`, `outside_published_range`, `dev_build`, `needs_reverification` |
@@ -391,6 +392,8 @@ stateDiagram-v2
 - the teaching-only notice is present
 - every input is an approved library version
 - no run carries a blocking flag
+- the published scenario carries neither `needs_reverification` nor `needs_review` (FR-051, FR-062); both
+  are cleared only by this republication, from runs under the current conventions and ready capabilities
 - every required verification case passed (FR-036)
 - brand rules hold (FR-049)
 

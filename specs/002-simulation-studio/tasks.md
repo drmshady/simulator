@@ -93,9 +93,15 @@ the main PC). **Claude research** tasks are literature work that the owner then 
   - `ensure_data_folder()` creates `store/`, `exports/`, `published-media/`, `logs/`, `backups/`, `certs/`, `work/`
     and `estimate/`
 - [ ] T008 [P] Create `engine/src/dentalsim/version.py`:
-  - engine version = package version + `+g<short commit>` from git
+  - engine version = package version + `+g<short commit>` from git, for provenance only
+  - `engine_source_hash()`: SHA-256 over the sorted paths and contents of the result-affecting engine source
+    (`conventions/`, `model/`, `blocks/`, `templates/`, `assembly/`, `geometry/`, `mesh/`, `physics/`,
+    `solvers/`, `post/`, `pipeline.py`; research R14). Interface, server and documentation files are excluded,
+    so their commits never mark stored runs out of date (Principle VI)
   - `dev_build = True` when `git status --porcelain -- engine/` is not empty (R14)
   - also reports the gmsh version
+  - add `engine/tests/unit/test_version.py`: the hash is stable, changes when a file in `post/` changes, and does
+    not change when a file in `exports/`, `commands/` or `studio/` changes
 - [ ] T009 Create `engine/src/dentalsim/cli.py`:
   - argparse with a registry that loads subcommands from `engine/src/dentalsim/commands/`
   - a global `--json` flag
@@ -135,14 +141,16 @@ the seed library is approved.
   - `*BOUNDARY` on the support node sets
   - one `*STEP` / `*STATIC, SOLVER=PARDISO` per unit load case, with `*CLOAD` spread over a node patch
   - `*NODE FILE U`, and `*EL PRINT` of S, E, COORD and EVOL to `.dat`
+  - `*NODE PRINT` of the reaction forces RF on the support node sets, for the force-balance check (FR-023)
 - [ ] T014 [P] Implement `engine/src/dentalsim/solvers/calculix/runner.py`:
   - run `ccx` as a child process in a per-job work folder, with `OMP_NUM_THREADS` and `CCX_NPROC_EQUATION_SOLVER`
-  - stream stdout for the stage and progress, and capture solver and convergence messages
+  - stream stdout for the stage and progress, and capture the solver messages and, where PARDISO reports it, the
+    relative residual
   - on cancel or watchdog, end the whole process tree with psutil
   - on failure, raise `SolverFailed` with a plain-language reason
 - [ ] T015 [P] Implement `engine/src/dentalsim/solvers/calculix/frd_reader.py` (nodal displacements per step) and
   `engine/src/dentalsim/solvers/calculix/dat_reader.py` (integration-point stress, strain and coordinates, plus element
-  volumes, per step), returning NumPy arrays
+  volumes, per step, plus the support reaction forces), returning NumPy arrays
 - [ ] T016 Add `dentalsim solver check` in `engine/src/dentalsim/commands/solver.py`, which prints the version, PARDISO
   status and SHA-256. Add `engine/tests/benchmark/test_solver_smoke.py`: one C3D10 cube under uniaxial tension must
   give the displacement σL/E within 1e-6 relative.
@@ -157,6 +165,9 @@ the seed library is approved.
     screw, crown, pontic and connector
   - the strain measure, and the Frost scale: 4 colour-blind-safe categories whose edges are library `parameter_key`s
   - the strength rules table and `mesh_check_limit: 0.05`
+  - `equilibrium_tolerance` (proposed 1e-6 relative): the largest allowed force-balance error per load case (FR-023)
+  - `max_committed_asset_bytes` (proposed 1 MB): the size above which a published asset goes to published media,
+    not git (constitution, Scope)
   - the teaching-only notice text
   - the table mapping each library category to its unit dimension
 - [ ] T018 Implement `engine/src/dentalsim/conventions/schema.py` (pydantic, `extra="forbid"`) and
@@ -194,7 +205,9 @@ the seed library is approved.
     `source:<id>` or `custom`), `value` and `outside_range`
   - scenario: `Scenario` in format `dentalsim.scenario/1`, `BlockInstance`, `Placement`, and `LoadCase` (pattern
     `single_bite`, `chewing_cycle` or `clenching`, direction, contact points, cycles), plus `detail_level` and
-    `brand_comparison`
+    `brand_comparison`. A `chewing_cycle` holds a list of instants (contact points, direction, force share) and a
+    library-sourced cycle count; `clenching` also covers bruxism (FR-008). Force magnitude and cycle count are
+    `LibraryValue`s; direction, contact points and shares are `DesignValue`s (FR-052)
 - [ ] T024 [P] Implement the remaining models (data-model.md):
   - `engine/src/dentalsim/model/validity.py`: `Problem` with the codes `overlap`, `unsupported_pontic`,
     `in_nerve_canal`, `in_sinus`, `in_root`, `exceeds_bone`, `template_misfit` and `design_limit`; `ValidityResult`
@@ -208,7 +221,7 @@ the seed library is approved.
 - [ ] T026 [P] Implement `engine/src/dentalsim/store/hashing.py`:
   - canonical JSON: sorted keys and normalised floats
   - `input_record()` and its SHA-256, built from the resolved scenario, library entry versions and content hashes,
-    detail level, conventions version, engine version, solver build id and gmsh version
+    detail level, conventions version, engine source hash (T008, not the commit), solver build id and gmsh version
 - [ ] T027 [P] Implement `engine/src/dentalsim/store/cas.py`, a content-addressed store under `<data>/store/`:
   zstd-compressed NumPy and JSON blobs keyed by input hash and artefact name, with atomic writes (temp file, then
   rename), and `put`, `get` and `exists`
@@ -238,7 +251,9 @@ the seed library is approved.
 
 - [ ] T032 Implement `engine/src/dentalsim/physics/registry.py`:
   - a `Capability` with `id`, `linear`, `required_cases`, `write_solver_input()` and `post()`
-  - register `bonded_elastic` (linear; its required cases are the textbook case ids from T074)
+  - register `bonded_elastic` (linear). Required cases are not hard-coded: at runtime the registry reads them from
+    the case files in `content/verification/cases/` whose `capability` field names it (written later, in T074), so
+    this task does not depend on T074. A capability with no required case files can never be ready.
   - register `screw_preload`, `periodontal_ligament`, `contact` and `fatigue`: non-linear, with no cases yet, so they
     can never be ready
   - status comes from `CapabilityRepo`, defaulting to `awaiting_benchmark`
@@ -335,6 +350,7 @@ the seed library is approved.
   getpass) in `engine/src/dentalsim/commands/studio.py`. `serve` delegates to
   `studio/server/src/dentalsim_studio/serve.py`, which:
   - creates the data folder, runs the migrations and makes the certificate
+  - refuses to start, telling the owner to run `dentalsim studio set-password`, while no password is set (FR-001)
   - starts uvicorn with TLS and the network guard
   - starts the worker process, and restarts it if it exits
 
@@ -381,9 +397,15 @@ the seed library is approved.
 
 - [ ] T056 Implement `dentalsim check` in `engine/src/dentalsim/commands/check.py`:
   - runs ruff, mypy, and pytest `unit` and `integration`
-  - runs `benchmark` and `regression` only when `DENTALSIM_CCX` is set; otherwise reports "incomplete"
+  - runs `benchmark` and `regression` only when `DENTALSIM_CCX` is set; otherwise the result is "incomplete",
+    which exits with code 1 and does **not** count as a pass (constitution, Workflow: the full suite must pass before
+    any merge). On the laptop, `dentalsim check --quick` gives fast feedback without the solver, but it is never a
+    merge gate
   - runs `npm --prefix studio/ui run typecheck` and `npm --prefix studio/ui test`
-  - records the pass and the engine commit in the settings table, for the publish checklist
+  - records only a complete pass, with the engine commit, in the settings table, for merges and the publish
+    checklist
+  - add `engine/tests/unit/test_check_gate.py`: with `DENTALSIM_CCX` unset, `check` exits 1, reports "incomplete" and
+    records no pass
 - [ ] T057 [P] Add `engine/tests/unit/test_import_boundaries.py` (SC-012): no module outside `dentalsim/blocks/` and
   `dentalsim/templates/` imports a block module or names a block `type_id`, and `studio/server` imports no block module
 - [ ] T058 Implement `engine/src/dentalsim/estimate/calibrate.py` and `engine/src/dentalsim/estimate/model.py`
@@ -504,7 +526,8 @@ this is gated by the bonded-elastic textbook benchmarks.
     - solves each case at the standard and preview levels
     - compares absolute, relative or ratio quantities with their tolerances
     - stores the case file's SHA-256, and refuses a case file with uncommitted git changes
-    - writes a VerificationReport, including `preview_accuracy`
+    - writes a VerificationReport, including `preview_accuracy` with the set of cases it was measured on
+      (`textbook` now; `published` once US5's cases exist, which then takes precedence, FR-017)
     - sets the capability status: ready only when every required case passes in one report; any failure locks it
       again (FR-062)
     - emits `capability.changed`
@@ -520,7 +543,9 @@ this is gated by the bonded-elastic textbook benchmarks.
 - [ ] T073 [P] [US1] Implement `engine/src/dentalsim/solvers/skfem/crosscheck.py`, which solves the textbook meshes
   with scikit-fem (quadratic tetrahedra, linear elasticity) as an independent second solver and reports agreement
 - [ ] T074 [US1] **Claude drafts, owner approves**: write the textbook case files below, each with its quantity,
-  expected value and source, and tolerance. Commit them in their own commit before any case is run.
+  expected value and source, tolerance, and `capability: bonded_elastic` (read by the registry, T032). Each case's
+  inputs are the ones its textbook source states, cited in the file (FR-035). Commit them in their own commit before
+  any case is run.
   - `content/verification/cases/textbook-cantilever.yaml`
   - `textbook-lame-cylinder.yaml`
   - `textbook-nafems-le10.yaml`
@@ -538,6 +563,8 @@ this is gated by the bonded-elastic textbook benchmarks.
 - [ ] T077 [P] [US1] Implement `engine/src/dentalsim/post/superpose.py`:
   - combines the unit cases (1 N along x, y and z per contact point) into each LoadCase: force × direction (angle and
     azimuth, with the conventions sign) × share
+  - a `chewing_cycle` is combined instant by instant, and its key numbers are those of the worst instant, which is
+    named (FR-008)
   - acts on the displacement, stress and strain tensors before invariants are computed
   - refuses if any capability in use is non-linear
 - [ ] T078 [P] [US1] Implement `engine/src/dentalsim/post/statistics.py`: the volume-weighted mean and 95th
@@ -559,7 +586,9 @@ this is gated by the bonded-elastic textbook benchmarks.
     content-addressed store under the input hash
   - a progress callback reporting the stage, percent and time remaining
   - a failure stores nothing partial (FR-022)
-  - returns the convergence, the actual DOF, time, memory and disk, `locked_results`, and every version
+  - the force-balance check per unit case after the solve: the sum of support reactions against the applied load; a
+    relative error above the conventions `equilibrium_tolerance` fails the run with that reason (FR-023)
+  - returns the convergence (force balance per case, solver relative residual, solver messages), the actual DOF, time, memory and disk, `locked_results`, and every version
 - [ ] T082 [US1] Implement `engine/src/dentalsim/estimate/predict.py` (FR-009, FR-057):
   - from the predicted DOF and the coefficients, returns `{dof, time_s, memory_gb, disk_gb, fits, warnings}`
   - refuses when the memory needed is above 85% of physical memory, suggesting a lower detail level
@@ -567,7 +596,9 @@ this is gated by the bonded-elastic textbook benchmarks.
 - [ ] T083 [US1] Add `dentalsim validate|estimate|run|preview <scenario.json>` in
   `engine/src/dentalsim/commands/scenario.py`, with `--detail`, `--out`, `--id` and `--json`; runs are stored through
   `RunRepo`. Add `engine/tests/integration/test_pipeline_single_crown.py` (marker `benchmark`): build from the template
-  and solve a preview; key numbers are present with statistic labels, and the screw is locked.
+  and solve a preview; key numbers are present with statistic labels, the screw is locked, and the force balance is
+  recorded within tolerance. Solving the same scenario a second time, without the cache, gives key numbers within
+  0.1% (SC-007).
 
 ### Studio API (US1 scope)
 
@@ -666,7 +697,8 @@ this is gated by the bonded-elastic textbook benchmarks.
      - the nerve-canal collision shows at once, and a run is refused with the location
      - the preview updates within 10 s, with its accuracy note (SC-002)
      - the estimate is shown before the run starts
-     - a standard run finishes within 30 min (SC-003)
+     - a standard run finishes within 30 min (SC-003, provisional: `standard` counts as detailed until the mesh
+       check in T136 confirms it, FR-018)
      - every result view is complete, with the screw shown as "not reported"
 
 **Checkpoint**: MVP. The owner can build, preview, run and inspect a single implant crown.
@@ -842,7 +874,9 @@ appears (quickstart row 4).
   - a worker restart mid-study requeues the interrupted run at the front
   - sensitivity reports the spread
 - [ ] T128 [US4] **Owner (main PC)**: work through quickstart row 4. Then run SC-004: 18 standard single-crown runs
-  (6 lengths × 3 densities) must finish within 10 h. Record the result in `docs/setup/performance.md`.
+  (6 lengths × 3 densities) must finish within 10 h. Record the result in `docs/setup/performance.md`. Note the
+  margin: at the 30 min SC-003 limit, 18 runs already take 9 h, so compare the per-run time from T059's calibration
+  with the 33 min that SC-004 allows.
 
 **Checkpoint**: studies run unattended overnight.
 
@@ -868,7 +902,8 @@ Publishing stays locked while any required case fails (quickstart row 5).
   1. Choose 3 to 5 studies from the research R15 candidates.
   2. Add their sources to the library and pass the source check.
   3. Write `content/verification/cases/published-<first-author>-<year>.yaml` for each. Compared quantities are ratios,
-     trends or region quantities only; each expected value cites its table or page, with a tolerance.
+     trends or region quantities only; each expected value cites its table or page, with a tolerance. The case's
+     material, bone and load inputs are the study's own, cited in the file (FR-035).
   4. Commit the files before the first run.
 - [ ] T131 [US5] Enforce the tolerance history in `engine/src/dentalsim/verification/cases.py` (FR-035):
   - compare each case file with its first committed version (`git log --follow`)
@@ -887,6 +922,8 @@ Publishing stays locked while any required case fails (quickstart row 5).
   - `GET /api/verification/reports/{id}`
   - add `engine/src/dentalsim/verification/gate.py`: `required_cases_passing()` names the failing required cases
     (FR-036)
+  - the runner also measures `preview_accuracy` on the published-study cases; previews then show that figure, naming
+    the case set (FR-017)
 - [ ] T134 [P] [US5] Implement `studio/ui/src/pages/Verification.tsx`:
   - a **Run all** button
   - per case: expected value, computed value, tolerance, and pass or fail
@@ -896,8 +933,11 @@ Publishing stays locked while any required case fails (quickstart row 5).
   recorded tolerance
 - [ ] T136 [US5] **Owner (main PC)**:
   1. Run `uv run dentalsim verify`. SC-006: every textbook case passes, and at least 3 published studies reproduce.
-  2. Run a mesh check on the single-crown scenario.
-  3. Keep the reports, and record the outcome in `docs/setup/verification.md`.
+  2. Run a mesh check on the single-crown scenario, `standard` against `fine`.
+  3. Confirm the provisional "detailed" timings (FR-018): if `standard` passes, SC-003, SC-004 and SC-013 stand as
+     recorded in T098, T107 and T128. Otherwise, set the lowest passing level as the detailed level and repeat those
+     timings at it.
+  4. Keep the reports, and record the outcome in `docs/setup/verification.md` and `docs/setup/performance.md`.
 
 **Checkpoint**: the engine verification gate in the constitution is met.
 
@@ -978,13 +1018,15 @@ kept (quickstart row 7).
   refusal lists every failing item.
   - the verification note and the assumptions note are complete
   - the owner has signed off, and the frame review is done on desktop and on a phone
-  - the test gate passed for the current engine commit
+  - a complete test gate (not "incomplete", T056) passed for the current engine commit
   - the notice is present, and every input is an approved library version
-  - no run carries a blocking flag: `out_of_date`, `uses_rejected_entry`, `outside_published_range`, `dev_build` or
-    `needs_reverification`
+  - no run carries a blocking flag; this item calls `Run.is_publishable()` (T024), so the flag list lives in one
+    place: `out_of_date`, `uses_rejected_entry`, `outside_published_range`, `dev_build` or `needs_reverification`
+  - the published scenario carries neither `needs_reverification` (FR-051) nor `needs_review` (FR-062)
   - the required verification cases pass (FR-036)
   - brand rules (FR-049): the text is scanned against `content/brand-names.txt` unless `brand_comparison` is
-    complete
+    complete. **Claude research, owner approves**: create `content/brand-names.txt` (implant, attachment and
+    material brand names, one per line, case-insensitive) as part of this task
 - [ ] T150 [US7] Implement `engine/src/dentalsim/publish/interactive.py` (FR-063, research R18):
   - bite angle and force by superposition of the unit cases; discrete controls from solved runs
   - other continuous controls by linear interpolation, with the error measured on a held-out case
@@ -994,8 +1036,8 @@ kept (quickstart row 7).
     `studio/server/src/dentalsim_studio/worker/handlers/interactive_data.py`
 - [ ] T151 [US7] Implement `engine/src/dentalsim/publish/package.py` (research R19):
   - write `content/scenarios/<slug>/v<N>/package.json` exactly as contracts/published-package.md defines it
-  - stills and small `.glb` files go in `assets/`; large media go in `<data>/published-media/`, named by SHA-256 with
-    their size
+  - stills and `.glb` files up to the conventions `max_committed_asset_bytes` (1 MB proposed) go in `assets/`; larger
+    files and all films go in `<data>/published-media/`, named by SHA-256 with their size
   - never overwrite an existing version; record publish, republish and unpublish in the history
   - write the regression references to `engine/tests/regression/references/<slug>-v<N>.json`
 - [ ] T152 [P] [US7] Add `engine/src/dentalsim/publish/package_schema.json` (JSON Schema of `dentalsim.package/1`) and
@@ -1006,7 +1048,11 @@ kept (quickstart row 7).
   - there are no brand names unless `brand_comparison` is filled in
 - [ ] T153 [US7] Implement `engine/src/dentalsim/publish/flags.py` (FR-051): at start-up and on
   `dentalsim conventions check`, flag every published scenario with an older conventions version
-  `needs_reverification`, and block republishing it until it is re-verified
+  `needs_reverification`, and block republishing it until it is re-verified. Re-verified means: every run in the
+  publication record is re-run under the current conventions version, and the verification note is renewed from
+  those runs. The flag is cleared only when that republication succeeds (FR-051). Add these cases to
+  `studio/server/tests/test_api_publish.py` (T157): republishing is refused while the flag is set, and succeeds and
+  clears it after the re-runs
 - [ ] T154 [US7] Implement `studio/server/src/dentalsim_studio/api/publish.py`, and add `dentalsim publish` and
   `unpublish` to `engine/src/dentalsim/commands/publish.py`:
   - `GET` and `PUT /api/scenarios/{id}/publication`, and `GET /api/scenarios/{id}/publication/checklist`
@@ -1080,7 +1126,9 @@ When it fails a re-run, it locks again and the published scenarios that depend o
 
 - [ ] T164 [US9] Complete FR-062 in `engine/src/dentalsim/verification/runner.py` and
   `engine/src/dentalsim/publish/flags.py`: when a capability goes back to `awaiting_benchmark`, flag `needs_review` on
-  every published scenario whose runs used a block or result type that needs it, and emit `capability.changed`
+  every published scenario whose runs used a block or result type that needs it, and emit `capability.changed`.
+  `needs_review` blocks republishing (T149) until the capability is ready again and the owner records the review in
+  the publication record; the flag is cleared only by that republication (FR-062)
 - [ ] T165 [US9] Add `engine/tests/integration/test_capability_lock_cycle.py`, using a capability registered only in
   the test, with one dummy case. Check this cycle:
   1. While awaiting, previews are refused and its results are locked.
@@ -1162,9 +1210,9 @@ story can still be tested on its own once US1 (1a) exists.
 | 2 | T022 | Conventions approved |
 | 3 | T040 | Seed library approved |
 | 4 | T059 | Calibration |
-| 5 | T074 | Textbook tolerances |
+| 5 | T067, T074 | Single-crown template defaults; textbook tolerances |
 | 6 | T098 | Slice 1a acceptance |
-| 7 | T107, T128, T136, T147 | Story acceptances |
+| 7 | T107, T128, T130, T136, T147 | Story acceptances; choosing the published studies (T130) |
 | 8 | T158 | First publication |
 | 9 | T170, T173 | Network and timing checks |
 
@@ -1318,7 +1366,8 @@ Each step ends with the owner's acceptance task for that story.
 - Work through the phases in order.
 - Inside a phase, hand [P] groups to parallel subagents. Each [P] task touches its own files.
 - Commit after each task or logical group (constitution: "commit per logical group").
-- Run `uv run dentalsim check` before every merge.
+- Run the complete `uv run dentalsim check` on the main PC before every merge. On the laptop, `--quick` is for
+  feedback only; an "incomplete" result never allows a merge.
 
 ---
 
@@ -1327,7 +1376,8 @@ Each step ends with the owner's acceptance task for that story.
 - **New top-level modules**: `pipeline.py`, `persistence.py`, `study.py`, `backup.py`, `config.py`, `version.py` and
   `commands/` extend plan.md's source tree. They hold orchestration and wiring, not science.
 - **Contract change**: T086 adds `POST /api/scenarios/{id}/geometry` to `contracts/studio-api.md`. No other change to
-  a contract is planned.
+  a contract is planned. (contracts/cli.md already lists `dentalsim check --quick` and the "incomplete" result, from
+  the 2026-11-05 analysis.)
 - **Values in the code**: no value from the old `fea-implant-teaching/` project is copied. Its verified numbers may be
   used only as extra benchmark cases (constitution, Scope).
 - **Owner approval comes first**: every number comes from approved library entries or committed case files, and is

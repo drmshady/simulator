@@ -37,7 +37,8 @@ This is the command-line equivalent of the studio that Principle VI requires.
 | `dentalsim publish <scenario-id>` / `unpublish <slug>` | Publishing (FR-045, FR-047) |
 | `dentalsim promo <slug> --script script.txt` | Promo clip (FR-041) |
 | `dentalsim backup [--to PATH]` / `restore <archive>` | FR-034 |
-| `dentalsim check` | Full merge gate: lint, type checks, unit, integration, benchmark and regression tests |
+| `dentalsim check` | Full merge gate: lint, type checks, unit, integration, benchmark and regression tests. Without the solver the result is "incomplete" (exit 1), which is not a pass |
+| `dentalsim check --quick` | Fast feedback without benchmark and regression tests; never a merge gate and records no pass |
 
 ## Scenario files
 
