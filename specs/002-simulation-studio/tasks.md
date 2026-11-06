@@ -314,10 +314,13 @@ the seed library is approved.
 
   Every value must cite at least one DOI or PMID that resolves. Ranges and typical values come from the cited papers;
   no number may be invented.
-- [ ] T040 **Owner (main PC)**:
+- [X] T040 **Owner (main PC)**:
   1. Run `uv run dentalsim library import content/library/proposals/seed-bonded-elastic.yaml`.
   2. Run `dentalsim library check` on every entry, and approve or reject each one.
   3. Run `dentalsim library export` and commit `content/library/snapshots/`.
+  - Done 2026-11-06 with revision 2 of the seed file (`seed-bonded-elastic.r2-changes.md`): 41 entries and 50
+    sources imported into `D:\DentalSimData`; every source resolved and matched (Crossref or PubMed); the owner
+    approved all 41 entries (version 1); snapshot `content/library/snapshots/library-snapshot.yaml`.
 
 ### Studio server skeleton (research R10)
 

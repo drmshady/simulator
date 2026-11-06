@@ -1,6 +1,9 @@
 # Seed literature library for bonded, linear-elastic scenarios (task T039).
 #
 # Prepared by Claude on 2026-11-05 from PubMed / Europe PMC abstracts, open-access full texts (PMC) and Crossref.
+# Revision 2 (2026-11-06): independent check; values added or corrected from full-text PDFs supplied by the owner
+# (Belli 2017, Wendler 2017, Schwartz-Dabney 2003, Dechow 1993, Frost 2004, Barbon 2019, Varga 2011). Every changed
+# line is listed in the companion change log (seed-bonded-elastic.r2-changes.md).
 # NOT APPROVED. Every entry needs the project owner's review and approval (task T040) before any simulation may use
 # it; importing this file creates `proposed` versions only.
 #
@@ -22,7 +25,7 @@
 #   src-barbosa2026 ......... DOI + PMID 2026-11-05     src-awada2015 ........... DOI + PMID 2026-11-05
 #   src-perezpevida2021 ..... DOI + PMID 2026-11-05     src-alamoush2018 ........ DOI + PMID 2026-11-05
 #   src-kasapoglu2025 ....... DOI + PMID 2026-11-05     src-chung2004a .......... DOI + PMID 2026-11-05
-#   src-martinezgrau2024 .... DOI + PMID 2026-11-05     src-chung2004b .......... DOI + PMID 2026-11-05
+#   src-martinezgrau2024 .... DOI + PMID 2026-11-05
 #   src-mugri2025 ........... DOI + PMID 2026-11-05     src-mahmoudiyamchi2024 .. DOI + PMID 2026-11-05
 #   src-schwartzdabney2003 .. DOI + PMID 2026-11-05     src-packaeser2023 ....... DOI + PMID 2026-11-05
 #   src-seong2009 ........... DOI + PMID 2026-11-05     src-carek2022 ........... DOI + PMID 2026-11-05
@@ -40,10 +43,15 @@
 #   src-guazzato2004b ....... DOI + PMID 2026-11-05     src-delong2012 .......... DOI + PMID 2026-11-05
 #   src-albakry2003 ......... DOI + PMID 2026-11-05     src-chang2018 ........... DOI + PMID 2026-11-05
 #   src-albakry2004 ......... DOI + PMID 2026-11-05
-# - src-frost1994: the journal's SICI-style DOI (10.1043/0003-3219(1994)064<0175:WLABSA>2.0.CO;2) is not registered
-#   at Crossref (HTTP 404), so the source is cited by PMID only.
+#   src-dechow1993 .......... DOI + PMID 2026-11-06     src-frost2004 ........... PMID only  2026-11-06
+#   src-barbon2019 .......... DOI + PMID 2026-11-06     src-varga2011 ........... DOI + PMID 2026-11-06
+# - src-frost1994 and src-frost2004: the journal's SICI-style DOIs (10.1043/0003-3219(1994)064<0175:WLABSA>2.0.CO;2
+#   and 10.1043/0003-3219(2004)074<0003:AUOBPA>2.0.CO;2) are not registered at Crossref (zero results, rechecked
+#   2026-11-06), so both are cited by PMID only.
 # - src-sathyanarayana2012: Crossref's record for DOI 10.5005/jp-journals-10024-1181 lists "Premkumar S" as first
-#   author, PubMed lists "Sathyanarayana HP"; the DOI is left out so the check uses the PubMed record.
+#   author, but PubMed and the journal's own "how to cite" line list "Sathyanarayana HP" first; the Crossref author
+#   order is a metadata error. The source checker looks a DOI up at Crossref first and would report a mismatch, which
+#   blocks approval, so the source is cited by PMID only (owner decision, 2026-11-06); the DOI is recorded here.
 format: dentalsim.library/1
 prepared_by: claude
 prepared_at: 2026-11-05
@@ -59,8 +67,11 @@ entries:
     range: {min: 13700, max: 30000}
     values_by_source:
       - source: src-schwartzdabney2003
-        value: 20000
-        note: "Abstract: dentate human mandibles, ultrasonic method; longitudinal modulus E3 20-30 GPa (lower end listed), 50-100% stiffer than the circumferential/tangential directions. 20 GPa x 1000."
+        value: 22800
+        note: "Results text (and Table 4 by site): grand mean of 600 specimens from 10 dentate mandibles, ultrasonic method, longitudinal modulus E3 22.8 GPa (SD 5.4); E2 17.9 (SD 2.5), E1 12.7 (SD 1.8). Site means of E3 range 17.9-29.8 GPa; abstract gives E3 20-30 GPa. 22.8 GPa x 1000."
+      - source: src-dechow1993
+        value: 19400
+        note: "Table 2: mandible (buccal cortex, n = 17, unembalmed cadavers), ultrasonic method, longitudinal modulus E3 19.4 GPa (SD 4.0); E2 13.8 (SD 2.8), E1 11.3 (SD 2.4). 19.4 GPa x 1000."
       - source: src-seong2009
         value: 17700
         note: "Table 2 (adjusted average 17.7, 95% CI 15.6-19.8) and Discussion: cortical bone 17.7 GPa (nanoindentation, edentulous maxillae and mandibles of 4 male cadavers, pooled). 17.7 GPa x 1000. Nanoindentation gives a tissue-level modulus."
@@ -76,14 +87,20 @@ entries:
       - source: src-ma2014
         value: 14700
         note: "Table 2: compact bone 14.7 GPa. Assumed in an FEA model. 14.7 GPa x 1000."
-    notes: "Typical 13,700 MPa is the value most often assumed in implant FEA (Barbosa 2026 citing Sevimay 2005; Jemaa 2024), chosen so scenarios stay comparable with published studies and consistent with the D1-D4 set below (Jemaa 2024). Measured jaw values are higher: 17,700 MPa by nanoindentation (Seong 2009) and 20,000-30,000 MPa along the long axis (Schwartz-Dabney 2003; the range max of 30,000 is that paper's stated upper end). Real cortical bone is anisotropic; this entry is for a linear isotropic model. Four of the six sources are FEA assumptions (weak)."
+    notes: "Typical 13,700 MPa is the value most often assumed in implant FEA (Barbosa 2026 citing Sevimay 2005; Jemaa 2024), chosen so scenarios stay comparable with published studies and consistent with the D1-D4 set below (Jemaa 2024). Measured jaw values are higher: 17,700 MPa by nanoindentation (Seong 2009) and, along the long axis, 19,400 MPa (Dechow 1993) and 22,800 MPa (Schwartz-Dabney 2003 grand mean; the range max of 30,000 is that paper's stated upper end). Of the measured directional moduli, only the radial one (E1 11.3-12.7 GPa) is at or below 13,700. The median of the seven values is 15,000 MPa. At a given stress, 13,700 MPa gives about 30% more strain than 17,700 MPa, which matters when strains are compared with the Frost windows below. Real cortical bone is orthotropic; this entry is for a linear isotropic model. Four of the seven sources are FEA assumptions (weak)."
   - parameter_key: bone.cortical.nu
     category: bone
     label: Cortical bone Poisson's ratio
     units: "1"
     typical: 0.3
-    range: {min: 0.3, max: 0.3}
+    range: {min: 0.273, max: 0.3}
     values_by_source:
+      - source: src-schwartzdabney2003
+        value: 0.28
+        note: "Results text and Table 5: grand mean of 600 specimens, in-plane Poisson's ratio nu23 0.28 (SD 0.10), ultrasonic method. The other five grand means are nu12 0.18, nu13 0.31, nu21 0.25, nu31 0.53, nu32 0.34 (directions: 1 radial, 2 tangential, 3 longitudinal); nu23 is listed because it lies in the plane of the cortical plate and agrees with Dechow 1993."
+      - source: src-dechow1993
+        value: 0.273
+        note: "Table 4: mandible (n = 17), ultrasonic method, nu23 0.273 (SD 0.080). The other five ratios are nu12 0.274, nu13 0.237, nu21 0.317, nu31 0.405, nu32 0.376 (subscripts read from a scanned table; the order follows the paper's convention)."
       - source: src-barbosa2026
         value: 0.3
         note: "Table (mechanical properties): cortical bone 0.30. Assumed in an FEA model."
@@ -96,7 +113,7 @@ entries:
       - source: src-ma2014
         value: 0.3
         note: "Table 2: compact bone 0.3. Assumed in an FEA model."
-    notes: "WEAK: every source is an FEA paper that assumed 0.30; no measured human jaw value could be read in an accessible source (Dechow et al. 1993 measured it, but the numbers are not in the abstract). The zero-width range reflects only that these models agree, not measured spread. Linear isotropic model."
+    notes: "Two measured human mandible sources (Schwartz-Dabney 2003, Dechow 1993; ultrasonic) give in-plane nu23 of 0.28 and 0.273, close to the 0.30 assumed in the four FEA papers. Typical 0.30 is the median of the six values. Bone is orthotropic and its six Poisson's ratios range from 0.18 to 0.53 (Schwartz-Dabney grand means), so a single isotropic value is a simplification. Linear isotropic model."
   - parameter_key: bone.cancellous.E.D1
     category: bone
     label: Cancellous bone elastic modulus, density class D1
@@ -213,7 +230,7 @@ entries:
       - source: src-jemaa2024
         value: 2.5
         note: "Methods text: cortical thickness 2.5 mm in D1 (2.0 / 1.5 / 1.0 mm in D2 / D3 / D4). Assumed in an FEA model (geometry choice)."
-    notes: "WEAK: a single FEA geometry assumption. Other models treat D1 as entirely cortical bone (Barbosa 2026; Ma 2014), so no thickness applies there. Measured mandibular cortical thickness (not by density class) fell from 3.7 mm anteriorly to 1.4 mm posteriorly (Schwartz-Dabney 2003, abstract)."
+    notes: "WEAK: a single FEA geometry assumption. Other models treat D1 as entirely cortical bone (Barbosa 2026; Ma 2014, which states D1 'consists of compact bone only'), so no thickness applies there. Measured mandibular cortical thickness (not by density class) fell from 3.7 mm anteriorly to 1.4 mm posteriorly (Schwartz-Dabney 2003, abstract)."
   - parameter_key: bone.cortical.thickness.D2
     category: bone
     label: Crestal cortical bone thickness, density class D2
@@ -399,8 +416,8 @@ entries:
     range: {min: 200000, max: 213400}
     values_by_source:
       - source: src-belli2017
-        value: 201400
-        note: "Abstract: e.max ZirCAD (polycrystalline zirconia) 201.4 GPa, measured with dynamic methods (resonant ultrasound, resonant beam, pulse-echo). 201.4 GPa x 1000."
+        value: 204100
+        note: "Table 2: e.max ZirCAD (3Y-TZP), resonant ultrasound spectroscopy (RUS) specimen #1 204.1 GPa; RUS #2 208.9, resonant beam (RBT) 206.3 and 207.1, pulse-echo (PE) 210.4 and 210.3 GPa. The authors rate RUS the most reliable method. Wendler 2017 Table 1 reports the RBT/RUS average as 205.2 GPa. The abstract's '201.4' does not appear in Table 2 and is not used. 204.1 GPa x 1000."
       - source: src-borba2011
         value: 209300
         note: "Table 3: Vita In-Ceram YZ (yttria-stabilised tetragonal zirconia polycrystal) 209.3 (2.1) GPa, ultrasonic pulse-echo. 209.3 GPa x 1000."
@@ -413,24 +430,27 @@ entries:
       - source: src-tribst2020
         value: 200000
         note: "Table 1: zirconia 200 GPa. Assumed in an FEA model. 200 GPa x 1000."
-    notes: "Typical 209,300 MPa is the median of the five values (Borba 2011, measured). Three of five are measurements on 3Y-TZP-type materials. Translucent 4Y/5Y zirconias are a different material and are not covered. Linear isotropic model."
+    notes: "Typical 209,300 MPa is the median of the five values (Borba 2011, measured). Three of five are measurements on 3Y-TZP-type materials; all measured values lie within 204-214 GPa. Translucent 4Y/5Y zirconias are a different material and are not covered. Linear isotropic model."
   - parameter_key: material.zirconia.nu
     category: material
     label: Zirconia (3Y-TZP), Poisson's ratio
     units: "1"
-    typical: 0.32
-    range: {min: 0.27, max: 0.32}
+    typical: 0.242
+    range: {min: 0.242, max: 0.32}
     values_by_source:
       - source: src-borba2011
         value: 0.32
         note: "Table 3: Vita In-Ceram YZ 0.32 (0.01), ultrasonic pulse-echo."
+      - source: src-belli2017
+        value: 0.242
+        note: "Table 2: e.max ZirCAD, RUS specimen #1 0.242; RUS #2 0.276, RBT 0.244 and 0.249, PE 0.304 and 0.300. Discussion: PE gives a higher Poisson's ratio than RBT/RUS for this zirconia. Wendler 2017 Table 1 gives the RBT/RUS average as 0.243."
       - source: src-jemaa2024
         value: 0.27
         note: "Table 2: zirconium dioxide 0.27. Assumed in an FEA model."
       - source: src-tribst2020
         value: 0.31
         note: "Table 1: zirconia 0.31. Assumed in an FEA model."
-    notes: "Typical 0.32 is the only measured value (Borba 2011); the median of the three is 0.31. Two of three are FEA assumptions (weak). Linear isotropic model."
+    notes: "Typical 0.242 is Belli 2017's resonant ultrasound value (owner decision, 2026-11-06). The two measured values disagree by method: Borba 2011 (0.32) used pulse-echo, and Belli 2017 found pulse-echo reads high for zirconia (0.30) against resonance methods (0.24-0.28), which the authors rate more reliable. The median of the four values is 0.29. 0.32 stays in the range for sensitivity runs; the effect on outputs is small (a few percent in zirconia stress, negligible for bone strain). Two of four values are FEA assumptions. Linear isotropic model."
   - parameter_key: material.lithium_disilicate.E
     category: material
     label: Lithium disilicate glass-ceramic, elastic modulus
@@ -450,7 +470,10 @@ entries:
       - source: src-mahmoudiyamchi2024
         value: 100000
         note: "Table 1: IPS e.max CAD 100.00 GPa. Assumed in an FEA model. 100 GPa x 1000."
-    notes: "Typical 96,140 MPa is the dynamic (ultrasonic) measurement on IPS e.max CAD (Capobianco 2023); the median of the four values is 98,070 MPa. Linear isotropic model."
+      - source: src-belli2017
+        value: 102800
+        note: "Table 2: IPS e.max CAD, RUS specimen #1 102.8 GPa; RUS #2 103.1, RBT 102.5 and 100.7, PE 105.1 and 107.0 GPa. Wendler 2017 Table 1: RBT/RUS average 102.7 GPa. 102.8 GPa x 1000."
+    notes: "Typical 96,140 MPa is the dynamic (ultrasonic) measurement on IPS e.max CAD (Capobianco 2023). The median of the five values is 100,000 MPa; the resonance measurement of Belli 2017 (102,800) and the impulse-excitation value of Albakry 2003 (103,000, Empress 2) are higher, so the owner may prefer 100,000-103,000. Linear isotropic model."
   - parameter_key: material.lithium_disilicate.nu
     category: material
     label: Lithium disilicate glass-ceramic, Poisson's ratio
@@ -464,13 +487,16 @@ entries:
       - source: src-mahmoudiyamchi2024
         value: 0.2
         note: "Table 1: IPS e.max CAD 0.20. Assumed in an FEA model."
-    notes: "Typical 0.22 is the measured value (Capobianco 2023). Only two sources, one an FEA assumption. Linear isotropic model."
+      - source: src-belli2017
+        value: 0.214
+        note: "Table 2: IPS e.max CAD, RUS specimen #1 0.214; RUS #2 0.216, RBT 0.216 and 0.208, PE 0.260 and 0.254. Wendler 2017 Table 1: RBT/RUS average 0.215."
+    notes: "Typical 0.22 is Capobianco 2023's ultrasonic value; Belli 2017's resonance value (0.214) agrees within the 10% the authors treat as insignificant. Median of the three values is 0.214. Linear isotropic model."
   - parameter_key: material.feldspathic.E
     category: material
     label: Feldspathic porcelain, elastic modulus
     units: MPa
     typical: 65535
-    range: {min: 47700, max: 66700}
+    range: {min: 47700, max: 72400}
     values_by_source:
       - source: src-borba2011
         value: 66500
@@ -487,7 +513,10 @@ entries:
       - source: src-porto2019
         value: 49000
         note: "Abstract: Vitablocs Mark II flexural modulus 49 +/- 15 GPa, 3-point bending. 49 GPa x 1000."
-    notes: "Typical 65,535 MPa is the mean of the two ultrasonic measurements (Borba 2011 VM9 66,500; Capobianco 2023 Mark II 64,570), because dynamic methods suit an elastic model best; static bending and nanoindentation values (47,700-51,000 MPa) are lower and set the range minimum. Range max 66,700 MPa is Borba's VM7 value. All values are measurements. Linear isotropic model."
+      - source: src-belli2017
+        value: 72400
+        note: "Table 2: Vitablocs Mark II, RUS specimen #1 72.4 GPa; RUS #2 71.8, RBT 70.1 and 72.2, PE 69.6 and 70.3 GPa. Wendler 2017 Table 1: RBT/RUS average 71.3 GPa. 72.4 GPa x 1000."
+    notes: "Typical 65,535 MPa is the mean of two ultrasonic measurements (Borba 2011 VM9 66,500; Capobianco 2023 Mark II 64,570), because dynamic methods suit an elastic model best. Belli 2017 measured Mark II at 69.6-72.4 GPa by three dynamic methods; range max 72,400 MPa is its RUS value. If the scenario models a CAD/CAM Mark II block rather than a layered veneering porcelain, the owner may prefer about 71,000-72,000 MPa. Static bending and nanoindentation values (47,700-51,000 MPa) are lower and set the range minimum. All values are measurements. Linear isotropic model."
   - parameter_key: material.feldspathic.nu
     category: material
     label: Feldspathic porcelain, Poisson's ratio
@@ -501,7 +530,10 @@ entries:
       - source: src-capobianco2023
         value: 0.15
         note: "Table 2: Vita Mark II 0.15 (0.097), ultrasonic method. Caution: the Discussion text of the same paper gives 0.23 for the feldspathic ceramic; the table value is listed."
-    notes: "Typical 0.21 is Borba 2011's VM9 value (smaller scatter than Capobianco's). Range max 0.23 is Borba's VM7 value. Only two sources and one internal inconsistency (Capobianco), so treat as moderately weak. Linear isotropic model."
+      - source: src-belli2017
+        value: 0.23
+        note: "Table 2: Vitablocs Mark II, RUS specimen #1 0.230; RUS #2 0.226, RBT 0.232 and 0.215, PE 0.207 and 0.207. Wendler 2017 Table 1: RBT/RUS average 0.231."
+    notes: "Typical 0.21 is Borba 2011's VM9 value. Belli 2017 measured Mark II at 0.21-0.23 by three dynamic methods, which supports 0.21-0.23 and leaves Capobianco's tabulated 0.15 (SD 0.097) as an outlier. Range max 0.23 is Belli's RUS value (and Borba's VM7). Median of the three values is 0.21. Linear isotropic model."
   - parameter_key: material.composite.E
     category: material
     label: Resin composite (CAD/CAM composite block), elastic modulus
@@ -511,7 +543,7 @@ entries:
     values_by_source:
       - source: src-belli2017
         value: 10900
-        note: "Abstract: Lava Ultimate 10.9 GPa (dynamic methods; the authors note these methods are limited for high-damping hybrid materials). 10.9 GPa x 1000."
+        note: "Table 2 (and abstract): Lava Ultimate, RUS specimen #2 10.9 GPa; RUS #1 11.05, RBT 12.7 and 12.6, PE 17.9 and 17.8 GPa. The authors judge PE unreliable for this material and RBT/RUS 'not without doubt' because damping broadens the resonance peaks; Wendler 2017 Table 1 adopts RBT (12.7 GPa). 10.9 GPa x 1000."
       - source: src-alamoush2018
         value: 12140
         note: "Table 2: Lava Ultimate 12.14 (0.76) GPa by nanoindentation; other composite blocks 8.79 (Shofu) to 14.8 (Grandio Blocs) GPa. 12.14 GPa x 1000."
@@ -538,7 +570,7 @@ entries:
       - source: src-capobianco2023
         value: 0.28
         note: "Methods: resin composite 17 GPa; 0.28 (their ref. 21). Assumed in an FEA model."
-    notes: "Typical 0.302 is the lowest measured value of Chung 2004, which applies best to highly filled restorative and CAD/CAM composites; range max 0.393 is Chung's stated upper end (flowable). Belli 2017 reported up to 0.47 for a CAD/CAM composite but cautioned that dynamic methods are unreliable for these high-damping materials, so it is not used. Weak: one measured source plus one FEA assumption. Linear isotropic model."
+    notes: "Typical 0.302 is the lowest measured value of Chung 2004, which applies best to highly filled restorative and CAD/CAM composites; range max 0.393 is Chung's stated upper end (flowable). Belli 2017 Table 2 gives Lava Ultimate 0.47 and 0.41 (RBT), 0.368 and 0.353 (RUS) and 0.258 (PE); the authors state these dynamic values are unreliable for this high-damping material, so they are not used. Weak: one measured source plus one FEA assumption. Linear isotropic model."
   - parameter_key: material.resin_cement.E
     category: material
     label: Resin cement, elastic modulus
@@ -561,7 +593,10 @@ entries:
       - source: src-capobianco2023
         value: 7000
         note: "Methods: resin cement 7 GPa (their ref. 20). Assumed in an FEA model. 7 GPa x 1000."
-    notes: "Typical 7,000 MPa is the median of the five values. Range min 700 MPa is the lower end stated by Carek 2022 (poorly cured or aged specimens). Dynamic measurements (Packaeser) read higher than flexural ones (Carek). Products differ widely; three of five values are FEA assumptions. Linear isotropic model."
+      - source: src-barbon2019
+        value: 10700
+        note: "Table 2: RelyX Veneer (commercial light-cured resin cement, control) 10.7 (1.6) GPa, impulse excitation (Sonelastic), n = 3. Experimental luting agents with 55/65/75 wt% filler gave 6.6, 7.8 and 10.4 GPa. 10.7 GPa x 1000."
+    notes: "Typical 7,000 MPa is kept (owner decision, 2026-11-06): it lies between the quasi-static flexural values (Carek 2022, up to 5,500) and the dynamic values (Barbon 2019, Packaeser 2023; 10,700-13,630), which likely overstate stiffness under chewing because resin cements are viscoelastic; it is also the value most FEA papers use. The median of the six values is 8,850 MPa. Cement-layer stresses scale roughly with this modulus, so cement-stress outputs should be run across the range. Range min 700 MPa is the lower end stated by Carek 2022 (poorly cured or aged specimens). Products differ widely; three of six values are FEA assumptions. Linear isotropic model."
   - parameter_key: material.resin_cement.nu
     category: material
     label: Resin cement, Poisson's ratio
@@ -581,7 +616,7 @@ entries:
       - source: src-capobianco2023
         value: 0.45
         note: "Methods: resin cement 0.45 (their ref. 20). Assumed in an FEA model."
-    notes: "Typical 0.32 is the only measured value (Packaeser 2023); the median of the four is 0.325. Three of four are FEA assumptions (weak), and they disagree (0.25-0.45). Linear isotropic model."
+    notes: "Typical 0.32 is the only usable measured value (Packaeser 2023); the median of the four is 0.325. Barbon 2019 (Table 2) also measured Poisson's ratio by impulse excitation, but its values are not usable: RelyX Veneer 0.36 (SD 0.24), and the experimental agents 0.43-0.61, which includes a value above the 0.5 limit for an isotropic solid. Three of four listed values are FEA assumptions (weak), and they disagree (0.25-0.45). Linear isotropic model."
   # ---------------------------------------------------------------------------------------------------------------
   # Strengths
   # ---------------------------------------------------------------------------------------------------------------
@@ -640,25 +675,28 @@ entries:
     category: strength
     label: Zirconia (3Y-TZP), flexural strength
     units: MPa
-    typical: 861
-    range: {min: 840, max: 1303.21}
+    typical: 850.5
+    range: {min: 815.4, max: 1303.21}
     values_by_source:
       - source: src-wendler2017
-        value: 1303.21
-        note: "Abstract: e.max ZirCAD biaxial strength 1303.21 MPa, ball-on-three-balls (B3B) test on polished plates or discs."
+        value: 1030.3
+        note: "Table 2: e.max ZirCAD, 4-point bending of bars, Weibull characteristic strength 1030.30 MPa [90% CI 1004.40-1057.17], m 13.10. Same table, ball-on-three-balls (B3B): discs 1240.89, plates 1303.21 MPa (the abstract quotes only the plate value). B3B values are higher because of the smaller effective volume/surface (Tables 3-4)."
+      - source: src-miranda2018
+        value: 815.4
+        note: "Abstract: control Y-TZP (3 mol% yttria, laboratory-made) flexural strength 815.4 MPa, n = 30 (test geometry not stated in the abstract)."
       - source: src-guazzato2004b
         value: 840
         note: "Abstract: DC-Zirkon 840 (140) MPa, 3-point bending of bars."
       - source: src-borba2011
         value: 861
         note: "Table 4: Vita In-Ceram YZ, monolithic, 3-point flexural strength median 861 (92) MPa, tested in artificial saliva at 37 C (ISO 6872:2008)."
-    notes: "Typical 861 MPa is the median of the three values. Biaxial (B3B) strengths on small polished specimens read higher than 3-point bar strengths (size effect, Wendler 2017). Inert strength only; fatigue lowers usable strength. Compare with maximum principal tensile stress."
+    notes: "Typical 850.5 MPa is the median of the four values. Range max 1303.21 MPa is Wendler 2017's B3B plate value; biaxial strengths on small polished specimens read higher than bar strengths (size effect). Wendler values are Weibull characteristic strengths, the others are means. Inert strength only; fatigue lowers usable strength. Compare with maximum principal tensile stress."
   - parameter_key: material.lithium_disilicate.flexural_strength
     category: strength
     label: Lithium disilicate glass-ceramic, flexural strength
     units: MPa
-    typical: 368
-    range: {min: 303, max: 440}
+    typical: 396
+    range: {min: 303, max: 462.06}
     values_by_source:
       - source: src-albakry2003
         value: 407
@@ -672,20 +710,23 @@ entries:
       - source: src-porto2019
         value: 396
         note: "Abstract: IPS e.max CAD 396 +/- 75 MPa, 3-point bending."
-    notes: "Typical 368 MPa is the median of the four values. Range min 303 and max 440 MPa are the experimental-ceramic values stated by Guazzato 2004 and Albakry 2003. Three sources test the older pressable Empress 2; one tests e.max CAD. Compare with maximum principal tensile stress."
+      - source: src-wendler2017
+        value: 462.06
+        note: "Table 2: IPS e.max CAD, 4-point bending of bars, Weibull characteristic strength 462.06 MPa [90% CI 446.85-477.96], m 10.00. B3B in the same table: discs 647.98, plates 609.80 MPa."
+    notes: "Typical 396 MPa is the median of the five values (Porto 2019, e.max CAD, 3-point bending). Range min 303 MPa is Guazzato 2004's experimental ceramic; max 462.06 MPa is Wendler 2017's 4-point value (its B3B values, 610-648 MPa, are higher through the size effect). Three sources test the older pressable Empress 2; two test e.max CAD. Compare with maximum principal tensile stress."
   - parameter_key: material.feldspathic.flexural_strength
     category: strength
     label: Feldspathic porcelain, flexural strength
     units: MPa
-    typical: 110.9
+    typical: 110.93
     range: {min: 65.5, max: 133}
     values_by_source:
       - source: src-borba2011
         value: 65.5
         note: "Table 4: Vita VM9 veneering porcelain, monolithic, 3-point flexural strength median 65.5 (8.9) MPa in artificial saliva (VM7: 69.8 (12.0) MPa)."
       - source: src-wendler2017
-        value: 110.9
-        note: "Abstract: Vitablocs Mark II biaxial strength 110.9 MPa, ball-on-three-balls (B3B)."
+        value: 110.93
+        note: "Table 2: Vitablocs Mark II, 4-point bending of bars, Weibull characteristic strength 110.93 MPa [90% CI 109.54-112.35], m 26.50. Correction: the abstract places '110.9 MPa' among B3B results, but in Table 2 it is the 4-point value; B3B gave 118.78 (discs) and 118.65 MPa (plates)."
       - source: src-porto2019
         value: 125
         note: "Abstract: Vitablocs Mark II 125 +/- 10 MPa, 3-point bending."
@@ -695,17 +736,14 @@ entries:
       - source: src-awada2015
         value: 105
         note: "Abstract: Vitablocs Mark II 105 +/- 9 MPa, 3-point bending."
-    notes: "Typical 110.9 MPa is the median of the five values. Layered veneering porcelains (Borba, 65-70 MPa) are weaker than CAD/CAM feldspathic blocks (105-133 MPa); choose by restoration type. Compare with maximum principal tensile stress."
+    notes: "Typical 110.93 MPa is the median of the five values. Layered veneering porcelains (Borba, 65-70 MPa) are weaker than CAD/CAM feldspathic blocks (105-133 MPa); choose by restoration type. Compare with maximum principal tensile stress."
   - parameter_key: material.composite.flexural_strength
     category: strength
     label: Resin composite (CAD/CAM composite block), flexural strength
     units: MPa
-    typical: 162
-    range: {min: 66.61, max: 219}
+    typical: 175
+    range: {min: 149, max: 219}
     values_by_source:
-      - source: src-chung2004b
-        value: 147.21
-        note: "Abstract: five 3M ESPE direct composites, 3-point bending, means 66.61-147.21 MPa (upper end listed; biaxial ball-on-three-ball 67.27-182.81 MPa)."
       - source: src-porto2019
         value: 149
         note: "Abstract: Lava Ultimate 149 +/- 28 MPa, 3-point bending."
@@ -715,7 +753,7 @@ entries:
       - source: src-awada2015
         value: 219
         note: "Abstract: highest mean 219 +/- 20 MPa (Cerasmart), 3-point bending."
-    notes: "Typical 162 MPa is the median of the four values (3-point bending only). Range min 66.61 MPa is Chung 2004's stated lower end (microfill/compomer-type materials). CAD/CAM blocks lie at 149-219 MPa. Values fall with water storage and thermocycling (Porto 2019, Blackburn 2018). Compare with maximum principal tensile stress."
+    notes: "Typical 175 MPa is the median of the three CAD/CAM block values (3-point bending only). Values fall with water storage and thermocycling (Porto 2019, Blackburn 2018). Chung 2004b (direct restorative composites, 3-point bending 66.61-147.21 MPa; PMID 15386492) was removed from this entry by owner decision on 2026-11-06 because it tested a different material class; it should seed a separate direct-composite entry if one is needed. Wendler 2017 gives Lava Ultimate B3B 300.64 MPa (plates only, no bar test), not used because B3B reads high. Compare with maximum principal tensile stress."
   # ---------------------------------------------------------------------------------------------------------------
   # Loads
   # ---------------------------------------------------------------------------------------------------------------
@@ -738,7 +776,10 @@ entries:
       - source: src-nguyen2026
         value: 574.9
         note: "Results text and Table 2: control group without sleep bruxism (n = 30, 18-45 years), first molar 574.9 +/- 77.3 N."
-    notes: "Typical 601.83 N is a mixed-sex adult mean with normal occlusion (Sathyanarayana 2012), close to Nguyen 2026's controls (574.9 N); the Waltimo values listed are men's means, and their women's means (597 and 777 N) lie inside the range. The median of the four listed values is 724.4 N. Devices and bite height differ between studies. Short maximal bites, not chewing forces."
+      - source: src-varga2011
+        value: 777.7
+        note: "Table 2: neutral occlusion, 18-year-old men (n = 14), first molar, mean of left and right 777.7 (SD 78.7) N, portable occlusal force gauge; 18-year-old women (n = 16) 481.6 (SD 190.42) N; at 15 years men 522.3, women 465.1 N. Men's value listed."
+    notes: "Typical 601.83 N is a mixed-sex adult mean with normal occlusion (Sathyanarayana 2012), close to Nguyen 2026's controls (574.9 N); the Waltimo and Varga values listed are men's means. Women's means are 597 and 777 N (Waltimo) and 481.6 N (Varga, 18 years), the last below the range minimum. The median of the five listed values is 777.7 N. Devices and bite height differ between studies. Short maximal bites, not chewing forces."
   - parameter_key: load.bite_force.premolar
     category: load
     label: Maximum voluntary bite force, premolar region (adults)
@@ -797,19 +838,22 @@ entries:
       - source: src-frost1987
         value: 100
         note: "Abstract: strains below the 100-300 microstrain range release BMU-based remodeling that removes bone; lower end listed."
+      - source: src-frost2004
+        value: 50
+        note: "Table 2 (set point values, cortical lamellar bone, healthy young-adult mammals): MESr 50-100 microstrain, about 1-2 MPa; the table adds that 'one can argue for a value of ~400 microstrain'. Lower end listed."
       - source: src-suedam2016
         value: 50
         note: "Introduction: citing Frost 2004, acute disuse window below 50 microstrain."
       - source: src-perezpevida2021
         value: 100
         note: "Discussion: citing Wiskott & Belser 1999, disuse atrophy below 100 microstrain."
-    notes: "Typical 50 microstrain is Frost's own later value (1994, MESr), giving with the next two entries one coherent set (50 / 1500 / 3000) from a single primary source; the median of the four listed values is 75. Range max 300 is the upper end of Frost's 1987 proposal (100-300), which he later lowered. Teaching reference only: thresholds are approximate regions, not sharp limits, and come from long-bone studies."
+    notes: "Typical 50 microstrain is Frost's own later value (1994 and 2004, MESr), giving with the next two entries one coherent set (50 / 1500 / 3000) from a single primary author; the median of the five listed values is 50. Range max 300 is the upper end of Frost's 1987 proposal (100-300), which he later lowered. Teaching reference only: thresholds are approximate regions, not sharp limits, and come from long-bone studies."
   - parameter_key: frost.adapted_upper
     category: frost_window
     label: Frost window edge, adapted / mild overload
     units: microstrain
     typical: 1500
-    range: {min: 1500, max: 3000}
+    range: {min: 1000, max: 3000}
     values_by_source:
       - source: src-frost1994
         value: 1500
@@ -823,7 +867,10 @@ entries:
       - source: src-perezpevida2021
         value: 2000
         note: "Discussion: citing Wiskott & Belser 1999, normal load (homeostasis) 100-2000 microstrain, mild overload from 2000."
-    notes: "Typical 1500 microstrain is Frost's MESm (1994) and the median of the four values. Range max 3000 is the upper end of Frost's 1987 range (1500-3000). Teaching reference only; approximate regions."
+      - source: src-frost2004
+        value: 1000
+        note: "Table 2: MESm 1000-1500 microstrain, about 20 MPa; lower end listed."
+    notes: "Typical 1500 microstrain is Frost's MESm (1994; the upper end of the 1000-1500 range in Frost 2004) and the median of the five values. Range min 1000 is the lower end of Frost 2004's MESm; range max 3000 is the upper end of Frost's 1987 range (1500-3000). Teaching reference only; approximate regions."
   - parameter_key: frost.mild_overload_upper
     category: frost_window
     label: Frost window edge, mild overload / pathological overload
@@ -834,13 +881,16 @@ entries:
       - source: src-frost1994
         value: 3000
         note: "Abstract: strains above a 3000 microstrain region (the MESp) can turn woven bone drifts on and increase microdamage; bone's fracture strain is about 25,000 microstrain."
+      - source: src-frost2004
+        value: 3000
+        note: "Table 2: MESp about 3000 microstrain, about 60 MPa, 'approximately equals bone's yield point'; fracture strain (Fx) about 25,000 microstrain."
       - source: src-suedam2016
         value: 4000
-        note: "Introduction: citing Frost 2004, mild overload window 1500-4000 microstrain, pathologic overload above 4000."
+        note: "Introduction: citing Frost 2004, mild overload window 1500-4000 microstrain, pathologic overload above 4000. Caution: Frost 2004 Table 2 gives MESp as about 3000 microstrain, not 4000; the 4000 figure is not in the cited source."
       - source: src-perezpevida2021
         value: 4000
         note: "Discussion: citing Wiskott & Belser 1999, mild overload 2000-4000 microstrain, pathologic overload above 4000 (fracture above 25,000)."
-    notes: "Typical 3000 microstrain is Frost's MESp (1994), keeping one coherent primary set with the other two edges; the two implant-dentistry papers place the edge at 4000 (median of the three values is 4000), so the owner may prefer 4000. The Frost 2004 paper cited by Suedam could not be read directly. Teaching reference only; approximate regions."
+    notes: "Typical 3000 microstrain is Frost's MESp in both primary sources (1994, 2004), keeping one coherent primary set with the other two edges. The two implant-dentistry papers place the edge at 4000: Suedam 2016 attributes it to Frost 2004, which does not state it, and Perez-Pevida 2021 takes it from Wiskott & Belser 1999. The median of the four values is 3500. Teaching reference only; approximate regions."
 sources:
   - id: src-sidambe2014
     authors: ["Sidambe AT"]
@@ -914,6 +964,14 @@ sources:
     doi: "10.1002/ajpa.10121"
     pmid: "12567378"
     study_type: experimental
+  - id: src-dechow1993
+    authors: ["Dechow PC", "Nail GA", "Schwartz-Dabney CL", "Ashman RB"]
+    year: 1993
+    title: "Elastic properties of human supraorbital and mandibular bone"
+    journal: "American Journal of Physical Anthropology"
+    doi: "10.1002/ajpa.1330900304"
+    pmid: "8460653"
+    study_type: experimental
   - id: src-seong2009
     authors: ["Seong WJ", "Kim UK", "Swift JQ", "Heo YC", "Hodges JS", "Ko CC"]
     year: 2009
@@ -961,6 +1019,14 @@ sources:
     journal: "Angle Orthodontist"
     doi: null
     pmid: "8060014"
+    study_type: review
+  - id: src-frost2004
+    authors: ["Frost HM"]
+    year: 2004
+    title: "A 2003 update of bone physiology and Wolff's Law for clinicians"
+    journal: "Angle Orthodontist"
+    doi: null
+    pmid: "15038485"
     study_type: review
   - id: src-suedam2016
     authors: ["Suedam V", "Moretti Neto RT", "Sousa EA", "Rubo JH"]
@@ -1082,14 +1148,6 @@ sources:
     doi: "10.1016/j.biomaterials.2003.09.029"
     pmid: "14751729"
     study_type: experimental
-  - id: src-chung2004b
-    authors: ["Chung SM", "Yap AU", "Chandra SP", "Lim CT"]
-    year: 2004
-    title: "Flexural strength of dental composite restoratives: Comparison of biaxial and three‐point bending test"
-    journal: "Journal of Biomedical Materials Research Part B: Applied Biomaterials"
-    doi: "10.1002/jbm.b.30103"
-    pmid: "15386492"
-    study_type: experimental
   - id: src-mahmoudiyamchi2024
     authors: ["MahmoudiYamchi F", "Abbasi M", "Atri F", "Ahmadi E"]
     year: 2024
@@ -1113,6 +1171,14 @@ sources:
     journal: "Polymers"
     doi: "10.3390/polym14173649"
     pmid: "36080725"
+    study_type: experimental
+  - id: src-barbon2019
+    authors: ["Barbon FJ", "Moraes RR", "Isolan CP", "Spazzin AO", "Boscato N"]
+    year: 2019
+    title: "Influence of inorganic filler content of resin luting agents and use of adhesive on the performance of bonded ceramic"
+    journal: "The Journal of Prosthetic Dentistry"
+    doi: "10.1016/j.prosdent.2019.09.013"
+    pmid: "31703919"
     study_type: experimental
   - id: src-tribst2020
     authors: ["Tribst JPM", "Dal Piva AMO", "Borges ALS", "Rodrigues VA", "Bottino MA", "Kleverlaan CJ"]
@@ -1169,6 +1235,14 @@ sources:
     journal: "Acta Odontologica Scandinavica"
     doi: "10.3109/00016359509005982"
     pmid: "7484109"
+    study_type: clinical
+  - id: src-varga2011
+    authors: ["Varga S", "Spalj S", "Lapter Varga M", "Anic Milosevic S", "Mestrovic S", "Slaj M"]
+    year: 2011
+    title: "Maximum voluntary molar bite force in subjects with normal occlusion"
+    journal: "European Journal of Orthodontics"
+    doi: "10.1093/ejo/cjq097"
+    pmid: "21062965"
     study_type: clinical
   - id: src-sathyanarayana2012
     authors: ["Sathyanarayana HP", "Premkumar S", "Manjula WS"]
