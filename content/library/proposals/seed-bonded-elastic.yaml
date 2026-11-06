@@ -1,0 +1,1220 @@
+# Seed literature library for bonded, linear-elastic scenarios (task T039).
+#
+# Prepared by Claude on 2026-11-05 from PubMed / Europe PMC abstracts, open-access full texts (PMC) and Crossref.
+# NOT APPROVED. Every entry needs the project owner's review and approval (task T040) before any simulation may use
+# it; importing this file creates `proposed` versions only.
+#
+# Rules followed:
+# - Every value_by_source number was read in that source (abstract, a table, or the full text); the note says where.
+#   GPa were converted to MPa (x 1000) and kgf to N (x 9.80665); nothing else was changed.
+# - The importer allows one value per source per entry. Where a source states a range or several materials, one
+#   stated number is listed and the others are given in the note; `range` is widened only to numbers a cited source
+#   states, and the entry's `notes` say which.
+# - Many values come from finite element papers that ASSUMED them (study_type: fea, note says "assumed in an FEA
+#   model"). Those are weak sources and are flagged in each entry's notes.
+#
+# Source verification. Each DOI was resolved at Crossref (api.crossref.org/works/<doi>) and each PMID at NCBI
+# E-utilities (esummary), on 2026-11-05; first-author surname, year and title were compared with the record and the
+# title below is copied from it. Where a source has both, both were checked and agree.
+#   src-sidambe2014 ......... DOI + PMID 2026-11-05     src-capobianco2023 ...... DOI + PMID 2026-11-05
+#   src-vasilescu2026 ....... DOI + PMID 2026-11-05     src-porto2019 ........... DOI + PMID 2026-11-05
+#   src-jemaa2024 ........... DOI + PMID 2026-11-05     src-blackburn2018 ....... DOI + PMID 2026-11-05
+#   src-barbosa2026 ......... DOI + PMID 2026-11-05     src-awada2015 ........... DOI + PMID 2026-11-05
+#   src-perezpevida2021 ..... DOI + PMID 2026-11-05     src-alamoush2018 ........ DOI + PMID 2026-11-05
+#   src-kasapoglu2025 ....... DOI + PMID 2026-11-05     src-chung2004a .......... DOI + PMID 2026-11-05
+#   src-martinezgrau2024 .... DOI + PMID 2026-11-05     src-chung2004b .......... DOI + PMID 2026-11-05
+#   src-mugri2025 ........... DOI + PMID 2026-11-05     src-mahmoudiyamchi2024 .. DOI + PMID 2026-11-05
+#   src-schwartzdabney2003 .. DOI + PMID 2026-11-05     src-packaeser2023 ....... DOI + PMID 2026-11-05
+#   src-seong2009 ........... DOI + PMID 2026-11-05     src-carek2022 ........... DOI + PMID 2026-11-05
+#   src-gasik2021 ........... DOI + PMID 2026-11-05     src-tribst2020 .......... DOI + PMID 2026-11-05
+#   src-pradosprivado2020 ... DOI + PMID 2026-11-05     src-sahinhazir2025 ...... DOI + PMID 2026-11-05
+#   src-ma2014 .............. DOI + PMID 2026-11-05     src-aljabbari2024 ....... DOI + PMID 2026-11-05
+#   src-frost1987 ........... DOI + PMID 2026-11-05     src-konieczny2024 ....... DOI + PMID 2026-11-05
+#   src-frost1994 ........... PMID only  2026-11-05     src-schettini2025 ....... DOI + PMID 2026-11-05
+#   src-suedam2016 .......... DOI + PMID 2026-11-05     src-waltimo1993 ......... DOI + PMID 2026-11-05
+#   src-belli2017 ........... DOI + PMID 2026-11-05     src-waltimo1995 ......... DOI + PMID 2026-11-05
+#   src-wendler2017 ......... DOI + PMID 2026-11-05     src-sathyanarayana2012 .. PMID only  2026-11-05
+#   src-borba2011 ........... DOI + PMID 2026-11-05     src-nguyen2026 .......... DOI + PMID 2026-11-05
+#   src-miranda2018 ......... DOI + PMID 2026-11-05     src-nishigawa2001 ....... DOI + PMID 2026-11-05
+#   src-guazzato2004a ....... DOI + PMID 2026-11-05     src-delong1991 .......... DOI + PMID 2026-11-05
+#   src-guazzato2004b ....... DOI + PMID 2026-11-05     src-delong2012 .......... DOI + PMID 2026-11-05
+#   src-albakry2003 ......... DOI + PMID 2026-11-05     src-chang2018 ........... DOI + PMID 2026-11-05
+#   src-albakry2004 ......... DOI + PMID 2026-11-05
+# - src-frost1994: the journal's SICI-style DOI (10.1043/0003-3219(1994)064<0175:WLABSA>2.0.CO;2) is not registered
+#   at Crossref (HTTP 404), so the source is cited by PMID only.
+# - src-sathyanarayana2012: Crossref's record for DOI 10.5005/jp-journals-10024-1181 lists "Premkumar S" as first
+#   author, PubMed lists "Sathyanarayana HP"; the DOI is left out so the check uses the PubMed record.
+format: dentalsim.library/1
+prepared_by: claude
+prepared_at: 2026-11-05
+entries:
+  # ---------------------------------------------------------------------------------------------------------------
+  # Bone
+  # ---------------------------------------------------------------------------------------------------------------
+  - parameter_key: bone.cortical.E
+    category: bone
+    label: Cortical bone elastic modulus (jaw)
+    units: MPa
+    typical: 13700
+    range: {min: 13700, max: 30000}
+    values_by_source:
+      - source: src-schwartzdabney2003
+        value: 20000
+        note: "Abstract: dentate human mandibles, ultrasonic method; longitudinal modulus E3 20-30 GPa (lower end listed), 50-100% stiffer than the circumferential/tangential directions. 20 GPa x 1000."
+      - source: src-seong2009
+        value: 17700
+        note: "Table 2 (adjusted average 17.7, 95% CI 15.6-19.8) and Discussion: cortical bone 17.7 GPa (nanoindentation, edentulous maxillae and mandibles of 4 male cadavers, pooled). 17.7 GPa x 1000. Nanoindentation gives a tissue-level modulus."
+      - source: src-barbosa2026
+        value: 13700
+        note: "Table (mechanical properties): cortical bone 13.7 GPa, citing Sevimay et al. 2005. Assumed in an FEA model. 13.7 GPa x 1000."
+      - source: src-jemaa2024
+        value: 13700
+        note: "Table 2: cortical bone 13.7 GPa, constant for D1-D4. Assumed in an FEA model. 13.7 GPa x 1000."
+      - source: src-perezpevida2021
+        value: 15000
+        note: "Table 1: cortical bone 15 GPa. Assumed in an FEA model. 15 GPa x 1000."
+      - source: src-ma2014
+        value: 14700
+        note: "Table 2: compact bone 14.7 GPa. Assumed in an FEA model. 14.7 GPa x 1000."
+    notes: "Typical 13,700 MPa is the value most often assumed in implant FEA (Barbosa 2026 citing Sevimay 2005; Jemaa 2024), chosen so scenarios stay comparable with published studies and consistent with the D1-D4 set below (Jemaa 2024). Measured jaw values are higher: 17,700 MPa by nanoindentation (Seong 2009) and 20,000-30,000 MPa along the long axis (Schwartz-Dabney 2003; the range max of 30,000 is that paper's stated upper end). Real cortical bone is anisotropic; this entry is for a linear isotropic model. Four of the six sources are FEA assumptions (weak)."
+  - parameter_key: bone.cortical.nu
+    category: bone
+    label: Cortical bone Poisson's ratio
+    units: "1"
+    typical: 0.3
+    range: {min: 0.3, max: 0.3}
+    values_by_source:
+      - source: src-barbosa2026
+        value: 0.3
+        note: "Table (mechanical properties): cortical bone 0.30. Assumed in an FEA model."
+      - source: src-jemaa2024
+        value: 0.3
+        note: "Table 2: cortical bone 0.3. Assumed in an FEA model."
+      - source: src-perezpevida2021
+        value: 0.3
+        note: "Table 1: cortical bone 0.30. Assumed in an FEA model."
+      - source: src-ma2014
+        value: 0.3
+        note: "Table 2: compact bone 0.3. Assumed in an FEA model."
+    notes: "WEAK: every source is an FEA paper that assumed 0.30; no measured human jaw value could be read in an accessible source (Dechow et al. 1993 measured it, but the numbers are not in the abstract). The zero-width range reflects only that these models agree, not measured spread. Linear isotropic model."
+  - parameter_key: bone.cancellous.E.D1
+    category: bone
+    label: Cancellous bone elastic modulus, density class D1
+    units: MPa
+    typical: 9500
+    range: {min: 1370, max: 9500}
+    values_by_source:
+      - source: src-jemaa2024
+        value: 9500
+        note: "Table 2 and Methods text: cancellous bone 9.5 GPa for D1, citing Azcarate-Velazquez et al. 2019. Assumed in an FEA model. 9.5 GPa x 1000."
+      - source: src-gasik2021
+        value: 9500
+        note: "Table 1: 'Assigned by bone density', bone type I 9.5 GPa, citing Tada et al. 2003 (an FEA study). Review reporting an FEA assumption. 9.5 GPa x 1000."
+      - source: src-pradosprivado2020
+        value: 1370
+        note: "Table 3: Sevimay et al. 2005 used cancellous 1.37 GPa for D1 to D3 (and 1.1 GPa for D4). Review reporting an FEA assumption. 1.37 GPa x 1000."
+    notes: "WEAK: all values are FEA assumptions, not measurements by density class. Two schools exist: the Tada 2003 / Azcarate-Velazquez 2019 set (9.5 / 5.5 / 1.6 / 0.69 GPa for D1-D4) varies the cancellous modulus, while Sevimay 2005 and similar models keep cancellous bone near 1.37 GPa and represent the class mainly by cortical thickness; several models (Barbosa 2026, Ma 2014) treat D1 as all cortical bone. Typical 9,500 MPa is the median and comes from one coherent set (Jemaa 2024) used for all four classes and the cortical thickness entries. Caution: measured apparent moduli of human mandibular trabecular bone are far lower (3.5-125.6 MPa without cortical plates; Misch, Qu & Bidez 1999, J Oral Maxillofac Surg 57:700-706, doi 10.1016/s0278-2391(99)90437-8), not by class."
+  - parameter_key: bone.cancellous.E.D2
+    category: bone
+    label: Cancellous bone elastic modulus, density class D2
+    units: MPa
+    typical: 5500
+    range: {min: 1370, max: 5500}
+    values_by_source:
+      - source: src-jemaa2024
+        value: 5500
+        note: "Table 2 and Methods text: cancellous bone 5.5 GPa for D2, citing Azcarate-Velazquez et al. 2019. Assumed in an FEA model. 5.5 GPa x 1000."
+      - source: src-gasik2021
+        value: 5500
+        note: "Table 1: 'Assigned by bone density', bone type II 5.5 GPa, citing Tada et al. 2003. Review reporting an FEA assumption. 5.5 GPa x 1000."
+      - source: src-pradosprivado2020
+        value: 1370
+        note: "Table 3: Sevimay et al. 2005 used cancellous 1.37 GPa for D1 to D3. Review reporting an FEA assumption. 1.37 GPa x 1000."
+      - source: src-barbosa2026
+        value: 1370
+        note: "Table (mechanical properties): dense cancellous bone (types II and III) 1.37 GPa. Assumed in an FEA model. 1.37 GPa x 1000."
+      - source: src-ma2014
+        value: 1470
+        note: "Table 2: dense trabecular bone (for D2, D3) 1.47 GPa. Assumed in an FEA model. 1.47 GPa x 1000."
+    notes: "WEAK: all values are FEA assumptions. The median of the five values is 1,470 MPa, but typical 5,500 MPa is taken from the same coherent set as D1, D3 and D4 (Jemaa 2024, citing Azcarate-Velazquez 2019; also Tada 2003 via Gasik 2021) so the classes keep their order; the owner may prefer the Sevimay-type 1,370 MPa. See the D1 entry for the Misch 1999 caution that measured mandibular trabecular moduli are much lower. Linear isotropic model."
+  - parameter_key: bone.cancellous.E.D3
+    category: bone
+    label: Cancellous bone elastic modulus, density class D3
+    units: MPa
+    typical: 1600
+    range: {min: 1370, max: 1600}
+    values_by_source:
+      - source: src-jemaa2024
+        value: 1600
+        note: "Table 2 and Methods text: cancellous bone 1.6 GPa for D3, citing Azcarate-Velazquez et al. 2019. Assumed in an FEA model. 1.6 GPa x 1000."
+      - source: src-gasik2021
+        value: 1600
+        note: "Table 1: 'Assigned by bone density', bone type III 1.6 GPa, citing Tada et al. 2003. Review reporting an FEA assumption. 1.6 GPa x 1000."
+      - source: src-pradosprivado2020
+        value: 1370
+        note: "Table 3: Sevimay et al. 2005 used cancellous 1.37 GPa for D1 to D3. Review reporting an FEA assumption. 1.37 GPa x 1000."
+      - source: src-barbosa2026
+        value: 1370
+        note: "Table (mechanical properties): dense cancellous bone (types II and III) 1.37 GPa. Assumed in an FEA model. 1.37 GPa x 1000."
+      - source: src-ma2014
+        value: 1470
+        note: "Table 2: dense trabecular bone (for D2, D3) 1.47 GPa. Assumed in an FEA model. 1.47 GPa x 1000."
+    notes: "WEAK: all values are FEA assumptions. Typical 1,600 MPa is from the same coherent set as the other classes (Jemaa 2024; Tada 2003 via Gasik 2021); the median of the five values is 1,470 MPa. See the D1 entry for the Misch 1999 caution. Linear isotropic model."
+  - parameter_key: bone.cancellous.E.D4
+    category: bone
+    label: Cancellous bone elastic modulus, density class D4
+    units: MPa
+    typical: 690
+    range: {min: 231, max: 1100}
+    values_by_source:
+      - source: src-jemaa2024
+        value: 690
+        note: "Table 2 and Methods text: cancellous bone 0.69 GPa for D4, citing Azcarate-Velazquez et al. 2019. Assumed in an FEA model. 0.69 GPa x 1000."
+      - source: src-gasik2021
+        value: 690
+        note: "Table 1: 'Assigned by bone density', bone type IV 0.69 GPa, citing Tada et al. 2003. Review reporting an FEA assumption. 0.69 GPa x 1000."
+      - source: src-pradosprivado2020
+        value: 1100
+        note: "Table 3: Sevimay et al. 2005 used cancellous 1.1 GPa for D4. Review reporting an FEA assumption. 1.1 GPa x 1000."
+      - source: src-barbosa2026
+        value: 1100
+        note: "Table (mechanical properties): low-density cancellous bone (type IV) 1.10 GPa. Assumed in an FEA model. 1.10 GPa x 1000."
+      - source: src-ma2014
+        value: 231
+        note: "Table 2: low-density trabecular bone (for D4) 0.231 GPa. Assumed in an FEA model. 0.231 GPa x 1000."
+    notes: "WEAK: all values are FEA assumptions. Typical 690 MPa is the median of the five values and matches the coherent set used for the other classes (Jemaa 2024; Tada 2003 via Gasik 2021). See the D1 entry for the Misch 1999 caution. Linear isotropic model."
+  - parameter_key: bone.cancellous.nu
+    category: bone
+    label: Cancellous bone Poisson's ratio
+    units: "1"
+    typical: 0.3
+    range: {min: 0.25, max: 0.3}
+    values_by_source:
+      - source: src-jemaa2024
+        value: 0.3
+        note: "Table 2: cancellous bone 0.3 for all classes. Assumed in an FEA model."
+      - source: src-barbosa2026
+        value: 0.3
+        note: "Table (mechanical properties): cancellous bone 0.30. Assumed in an FEA model."
+      - source: src-ma2014
+        value: 0.3
+        note: "Table 2: trabecular bone 0.3. Assumed in an FEA model."
+      - source: src-perezpevida2021
+        value: 0.25
+        note: "Table 1: trabecular bone 0.25. Assumed in an FEA model."
+    notes: "WEAK: every source is an FEA assumption; no measured jaw value was found in an accessible source. Typical 0.30 is the median. Linear isotropic model."
+  - parameter_key: bone.cortical.thickness.D1
+    category: bone
+    label: Crestal cortical bone thickness, density class D1
+    units: mm
+    typical: 2.5
+    range: {min: 2.5, max: 2.5}
+    values_by_source:
+      - source: src-jemaa2024
+        value: 2.5
+        note: "Methods text: cortical thickness 2.5 mm in D1 (2.0 / 1.5 / 1.0 mm in D2 / D3 / D4). Assumed in an FEA model (geometry choice)."
+    notes: "WEAK: a single FEA geometry assumption. Other models treat D1 as entirely cortical bone (Barbosa 2026; Ma 2014), so no thickness applies there. Measured mandibular cortical thickness (not by density class) fell from 3.7 mm anteriorly to 1.4 mm posteriorly (Schwartz-Dabney 2003, abstract)."
+  - parameter_key: bone.cortical.thickness.D2
+    category: bone
+    label: Crestal cortical bone thickness, density class D2
+    units: mm
+    typical: 2
+    range: {min: 2, max: 2}
+    values_by_source:
+      - source: src-jemaa2024
+        value: 2
+        note: "Methods text: 2.0 mm in D2. Assumed in an FEA model (geometry choice)."
+      - source: src-barbosa2026
+        value: 2
+        note: "Methods: Type II bone (D2) with a 2-mm-thick cortical layer. Assumed in an FEA model."
+      - source: src-ma2014
+        value: 2
+        note: "Methods: D2 model with compact bone 2 mm wide. Assumed in an FEA model."
+    notes: "WEAK: FEA geometry assumptions only; no measurement by density class was found. The three models agree on 2 mm."
+  - parameter_key: bone.cortical.thickness.D3
+    category: bone
+    label: Crestal cortical bone thickness, density class D3
+    units: mm
+    typical: 1.5
+    range: {min: 1, max: 1.5}
+    values_by_source:
+      - source: src-jemaa2024
+        value: 1.5
+        note: "Methods text: 1.5 mm in D3. Assumed in an FEA model (geometry choice)."
+      - source: src-barbosa2026
+        value: 1
+        note: "Methods: types III (D3) and IV (D4) with a 1-mm-thick cortical layer. Assumed in an FEA model."
+      - source: src-ma2014
+        value: 1
+        note: "Methods: D3 and D4 models with compact bone reduced to 1 mm. Assumed in an FEA model."
+    notes: "WEAK: FEA geometry assumptions only. The median is 1.0 mm; typical 1.5 mm is taken from the same coherent set as the other classes (Jemaa 2024), which keeps D3 thicker than D4."
+  - parameter_key: bone.cortical.thickness.D4
+    category: bone
+    label: Crestal cortical bone thickness, density class D4
+    units: mm
+    typical: 1
+    range: {min: 1, max: 1}
+    values_by_source:
+      - source: src-jemaa2024
+        value: 1
+        note: "Methods text: 1.0 mm in D4. Assumed in an FEA model (geometry choice)."
+      - source: src-barbosa2026
+        value: 1
+        note: "Methods: types III (D3) and IV (D4) with a 1-mm-thick cortical layer. Assumed in an FEA model."
+      - source: src-ma2014
+        value: 1
+        note: "Methods: D4 model with a thin (1 mm) cortical layer. Assumed in an FEA model."
+    notes: "WEAK: FEA geometry assumptions only; the three models agree on 1 mm. (Misch's description of D4 as mainly fine trabecular bone implies little or no crestal cortex; no source giving a measured value was found.)"
+  # ---------------------------------------------------------------------------------------------------------------
+  # Materials: elastic constants
+  # ---------------------------------------------------------------------------------------------------------------
+  - parameter_key: material.titanium_g4.E
+    category: material
+    label: Commercially pure titanium grade 4, elastic modulus
+    units: MPa
+    typical: 104500
+    range: {min: 102000, max: 107000}
+    values_by_source:
+      - source: src-sidambe2014
+        value: 103000
+        note: "Table 1 (ASTM F67 Grade 4 requirements for implant bar): elastic modulus 103-107 GPa; lower end listed. 103 GPa x 1000."
+      - source: src-vasilescu2026
+        value: 104000
+        note: "Table 5: Cp-Ti grade 4 reference value 104 GPa, quoted from Nicholson 2020 (Prosthesis 2:100-116), not measured in this study; text and abstract give 102-104 GPa. 104 GPa x 1000."
+      - source: src-jemaa2024
+        value: 104500
+        note: "Table 2: titanium grade 4 (implant, abutment) 104.5 GPa. Assumed in an FEA model. 104.5 GPa x 1000."
+      - source: src-kasapoglu2025
+        value: 105000
+        note: "Table 1: titanium (grade 4) 105,000 MPa. Assumed in an FEA model."
+      - source: src-martinezgrau2024
+        value: 107000
+        note: "Table 2: implant, Ti grade 4, 107 GPa. Assumed in an FEA model. 107 GPa x 1000."
+    notes: "Typical 104,500 MPa is the median of the five values. Range min 102,000 MPa is the lower end of the 102-104 GPa stated by Vasilescu 2026; max 107,000 MPa is the upper end of Sidambe 2014 (ASTM F67). Handbook/standard values quoted in reviews; three of five are FEA assumptions. Linear isotropic model."
+  - parameter_key: material.titanium_g4.nu
+    category: material
+    label: Commercially pure titanium grade 4, Poisson's ratio
+    units: "1"
+    typical: 0.33
+    range: {min: 0.33, max: 0.37}
+    values_by_source:
+      - source: src-jemaa2024
+        value: 0.37
+        note: "Table 2: titanium grade 4 0.37. Assumed in an FEA model."
+      - source: src-kasapoglu2025
+        value: 0.33
+        note: "Table 1: titanium (grade 4) 0.33. Assumed in an FEA model."
+      - source: src-martinezgrau2024
+        value: 0.33
+        note: "Table 2: implant, Ti grade 4, 0.33. Assumed in an FEA model."
+    notes: "WEAK: all three are FEA assumptions; no measured value was found in an accessible source. Typical 0.33 is the median. Linear isotropic model."
+  - parameter_key: material.titanium_g5.E
+    category: material
+    label: Titanium alloy Ti-6Al-4V (grade 5), elastic modulus
+    units: MPa
+    typical: 113000
+    range: {min: 107200, max: 120000}
+    values_by_source:
+      - source: src-sidambe2014
+        value: 114000
+        note: "Table 1 (ASTM F136 Grade 5, Ti6Al4V, implant bar): elastic modulus 114-120 GPa; lower end listed. 114 GPa x 1000."
+      - source: src-vasilescu2026
+        value: 113000
+        note: "Table 5: Ti6Al4V reference value 113 GPa, quoted from Nicholson 2020, not measured in this study. 113 GPa x 1000."
+      - source: src-jemaa2024
+        value: 114000
+        note: "Table 2: implant screw, titanium grade 5, 114.0 GPa. Assumed in an FEA model. 114 GPa x 1000."
+      - source: src-perezpevida2021
+        value: 107200
+        note: "Table 1: Ti-6Al-4V alloy (abutment and screw) 107.2 GPa. Assumed in an FEA model. 107.2 GPa x 1000."
+      - source: src-kasapoglu2025
+        value: 111000
+        note: "Table 1: titanium (Ti6Al4V) 111,000 MPa. Assumed in an FEA model."
+    notes: "Typical 113,000 MPa is the median of the five values. Range max 120,000 MPa is the upper end of Sidambe 2014 (114-120 GPa). Three of five values are FEA assumptions. Linear isotropic model."
+  - parameter_key: material.titanium_g5.nu
+    category: material
+    label: Titanium alloy Ti-6Al-4V (grade 5), Poisson's ratio
+    units: "1"
+    typical: 0.33
+    range: {min: 0.3, max: 0.34}
+    values_by_source:
+      - source: src-jemaa2024
+        value: 0.33
+        note: "Table 2: titanium grade 5 0.33. Assumed in an FEA model."
+      - source: src-perezpevida2021
+        value: 0.3
+        note: "Table 1: Ti-6Al-4V alloy 0.30. Assumed in an FEA model."
+      - source: src-mugri2025
+        value: 0.34
+        note: "Table 3: Grade 5 ELI / wrought Ti-6Al-4V ELI 0.34 (one row 0.342). Assumed in an FEA model."
+      - source: src-kasapoglu2025
+        value: 0.34
+        note: "Table 1: titanium (Ti6Al4V) 0.34. Assumed in an FEA model."
+      - source: src-martinezgrau2024
+        value: 0.33
+        note: "Table 2: Ti grade 5 0.33. Assumed in an FEA model."
+    notes: "WEAK: all values are FEA assumptions; no measured value was found in an accessible source. Typical 0.33 is the median. Linear isotropic model."
+  - parameter_key: material.cocr.E
+    category: material
+    label: Cobalt-chromium alloy, elastic modulus
+    units: MPa
+    typical: 218000
+    range: {min: 170000, max: 244000}
+    values_by_source:
+      - source: src-aljabbari2024
+        value: 170000
+        note: "Abstract: modulus from 3-point bending of six Co-Cr alloys (cast and selective laser melted) ranged from 170 +/- 25 to 244 +/- 36 GPa (lower end listed; SLM alloys were higher than cast). 170 GPa x 1000."
+      - source: src-perezpevida2021
+        value: 218000
+        note: "Table 1: Cr-Co alloy (crown structure) 218 GPa. Assumed in an FEA model. 218 GPa x 1000."
+      - source: src-tribst2020
+        value: 220000
+        note: "Table 1: CoCr 220 GPa. Assumed in an FEA model. 220 GPa x 1000."
+      - source: src-sahinhazir2025
+        value: 218000
+        note: "Table 4: Co-Cr 218,000 MPa. Assumed in an FEA model."
+    notes: "Typical 218,000 MPa is the median of the four values. Range max 244,000 MPa is the upper end stated by Al Jabbari 2024. Only one measured source (bending modulus); three are FEA assumptions. Linear isotropic model."
+  - parameter_key: material.cocr.nu
+    category: material
+    label: Cobalt-chromium alloy, Poisson's ratio
+    units: "1"
+    typical: 0.33
+    range: {min: 0.3, max: 0.33}
+    values_by_source:
+      - source: src-perezpevida2021
+        value: 0.33
+        note: "Table 1: Cr-Co alloy 0.33. Assumed in an FEA model."
+      - source: src-tribst2020
+        value: 0.3
+        note: "Table 1: CoCr 0.30. Assumed in an FEA model."
+      - source: src-sahinhazir2025
+        value: 0.33
+        note: "Table 4: Co-Cr 0.33. Assumed in an FEA model."
+    notes: "WEAK: all values are FEA assumptions; no measured value was found in an accessible source. Typical 0.33 is the median. Linear isotropic model."
+  - parameter_key: material.zirconia.E
+    category: material
+    label: Zirconia (3Y-TZP), elastic modulus
+    units: MPa
+    typical: 209300
+    range: {min: 200000, max: 213400}
+    values_by_source:
+      - source: src-belli2017
+        value: 201400
+        note: "Abstract: e.max ZirCAD (polycrystalline zirconia) 201.4 GPa, measured with dynamic methods (resonant ultrasound, resonant beam, pulse-echo). 201.4 GPa x 1000."
+      - source: src-borba2011
+        value: 209300
+        note: "Table 3: Vita In-Ceram YZ (yttria-stabilised tetragonal zirconia polycrystal) 209.3 (2.1) GPa, ultrasonic pulse-echo. 209.3 GPa x 1000."
+      - source: src-miranda2018
+        value: 213400
+        note: "Abstract: control Y-TZP (3 mol% yttria, laboratory-made) 213.4 GPa, ultrasonic pulse-echo. 213.4 GPa x 1000."
+      - source: src-jemaa2024
+        value: 210000
+        note: "Table 2: zirconium dioxide (FPD) 210 GPa, citing Piconi & Maccauro 1999. Assumed in an FEA model. 210 GPa x 1000."
+      - source: src-tribst2020
+        value: 200000
+        note: "Table 1: zirconia 200 GPa. Assumed in an FEA model. 200 GPa x 1000."
+    notes: "Typical 209,300 MPa is the median of the five values (Borba 2011, measured). Three of five are measurements on 3Y-TZP-type materials. Translucent 4Y/5Y zirconias are a different material and are not covered. Linear isotropic model."
+  - parameter_key: material.zirconia.nu
+    category: material
+    label: Zirconia (3Y-TZP), Poisson's ratio
+    units: "1"
+    typical: 0.32
+    range: {min: 0.27, max: 0.32}
+    values_by_source:
+      - source: src-borba2011
+        value: 0.32
+        note: "Table 3: Vita In-Ceram YZ 0.32 (0.01), ultrasonic pulse-echo."
+      - source: src-jemaa2024
+        value: 0.27
+        note: "Table 2: zirconium dioxide 0.27. Assumed in an FEA model."
+      - source: src-tribst2020
+        value: 0.31
+        note: "Table 1: zirconia 0.31. Assumed in an FEA model."
+    notes: "Typical 0.32 is the only measured value (Borba 2011); the median of the three is 0.31. Two of three are FEA assumptions (weak). Linear isotropic model."
+  - parameter_key: material.lithium_disilicate.E
+    category: material
+    label: Lithium disilicate glass-ceramic, elastic modulus
+    units: MPa
+    typical: 96140
+    range: {min: 84000, max: 103000}
+    values_by_source:
+      - source: src-albakry2003
+        value: 103000
+        note: "Abstract: IPS Empress 2 (lithium disilicate by XRD) 103 GPa by impulse excitation (ASTM C1259); the experimental lithium disilicate ceramic gave 91 GPa. 103 GPa x 1000."
+      - source: src-capobianco2023
+        value: 96140
+        note: "Table 2: IPS e.max CAD 96.14 (1.21) GPa, ultrasonic method. 96.14 GPa x 1000."
+      - source: src-porto2019
+        value: 84000
+        note: "Abstract: IPS e.max CAD flexural modulus 84 +/- 11 GPa (3-point bending). 84 GPa x 1000. Static bending moduli tend to read lower than dynamic ones."
+      - source: src-mahmoudiyamchi2024
+        value: 100000
+        note: "Table 1: IPS e.max CAD 100.00 GPa. Assumed in an FEA model. 100 GPa x 1000."
+    notes: "Typical 96,140 MPa is the dynamic (ultrasonic) measurement on IPS e.max CAD (Capobianco 2023); the median of the four values is 98,070 MPa. Linear isotropic model."
+  - parameter_key: material.lithium_disilicate.nu
+    category: material
+    label: Lithium disilicate glass-ceramic, Poisson's ratio
+    units: "1"
+    typical: 0.22
+    range: {min: 0.2, max: 0.22}
+    values_by_source:
+      - source: src-capobianco2023
+        value: 0.22
+        note: "Table 2: IPS e.max CAD 0.22 (0.022), ultrasonic method."
+      - source: src-mahmoudiyamchi2024
+        value: 0.2
+        note: "Table 1: IPS e.max CAD 0.20. Assumed in an FEA model."
+    notes: "Typical 0.22 is the measured value (Capobianco 2023). Only two sources, one an FEA assumption. Linear isotropic model."
+  - parameter_key: material.feldspathic.E
+    category: material
+    label: Feldspathic porcelain, elastic modulus
+    units: MPa
+    typical: 65535
+    range: {min: 47700, max: 66700}
+    values_by_source:
+      - source: src-borba2011
+        value: 66500
+        note: "Table 3: Vita VM9 feldspathic veneering porcelain 66.5 (0.7) GPa, ultrasonic pulse-echo (VM7: 66.7 GPa). 66.5 GPa x 1000."
+      - source: src-capobianco2023
+        value: 64570
+        note: "Table 2: Vita Mark II (feldspathic CAD/CAM block) 64.57 (2.27) GPa, ultrasonic method. 64.57 GPa x 1000."
+      - source: src-alamoush2018
+        value: 47700
+        note: "Table 2: Vitablocs Mark II 47.7 (3.47) GPa by nanoindentation (Poisson's ratio assumed 0.3). 47.7 GPa x 1000."
+      - source: src-blackburn2018
+        value: 51000
+        note: "Abstract: Vitablocs Mark II flexural modulus 51 GPa at baseline (0 thermocycles), 3-point bending. 51 GPa x 1000."
+      - source: src-porto2019
+        value: 49000
+        note: "Abstract: Vitablocs Mark II flexural modulus 49 +/- 15 GPa, 3-point bending. 49 GPa x 1000."
+    notes: "Typical 65,535 MPa is the mean of the two ultrasonic measurements (Borba 2011 VM9 66,500; Capobianco 2023 Mark II 64,570), because dynamic methods suit an elastic model best; static bending and nanoindentation values (47,700-51,000 MPa) are lower and set the range minimum. Range max 66,700 MPa is Borba's VM7 value. All values are measurements. Linear isotropic model."
+  - parameter_key: material.feldspathic.nu
+    category: material
+    label: Feldspathic porcelain, Poisson's ratio
+    units: "1"
+    typical: 0.21
+    range: {min: 0.15, max: 0.23}
+    values_by_source:
+      - source: src-borba2011
+        value: 0.21
+        note: "Table 3: Vita VM9 0.21 (0.01), ultrasonic pulse-echo (VM7: 0.23 (0.02))."
+      - source: src-capobianco2023
+        value: 0.15
+        note: "Table 2: Vita Mark II 0.15 (0.097), ultrasonic method. Caution: the Discussion text of the same paper gives 0.23 for the feldspathic ceramic; the table value is listed."
+    notes: "Typical 0.21 is Borba 2011's VM9 value (smaller scatter than Capobianco's). Range max 0.23 is Borba's VM7 value. Only two sources and one internal inconsistency (Capobianco), so treat as moderately weak. Linear isotropic model."
+  - parameter_key: material.composite.E
+    category: material
+    label: Resin composite (CAD/CAM composite block), elastic modulus
+    units: MPa
+    typical: 12000
+    range: {min: 8000, max: 16000}
+    values_by_source:
+      - source: src-belli2017
+        value: 10900
+        note: "Abstract: Lava Ultimate 10.9 GPa (dynamic methods; the authors note these methods are limited for high-damping hybrid materials). 10.9 GPa x 1000."
+      - source: src-alamoush2018
+        value: 12140
+        note: "Table 2: Lava Ultimate 12.14 (0.76) GPa by nanoindentation; other composite blocks 8.79 (Shofu) to 14.8 (Grandio Blocs) GPa. 12.14 GPa x 1000."
+      - source: src-porto2019
+        value: 12000
+        note: "Abstract: Lava Ultimate flexural modulus 12 +/- 3 GPa, 3-point bending. 12 GPa x 1000."
+      - source: src-blackburn2018
+        value: 14000
+        note: "Abstract: Lava Ultimate flexural modulus 14 GPa at baseline, 3-point bending (Paradigm MZ100: 16 GPa). 14 GPa x 1000."
+      - source: src-awada2015
+        value: 8000
+        note: "Abstract: lowest flexural modulus 8 +/- 0.25 GPa (Cerasmart), 3-point bending. 8 GPa x 1000."
+    notes: "Typical 12,000 MPa is the median of the five values. Range max 16,000 MPa is Blackburn 2018's Paradigm MZ100 value. CAD/CAM composite blocks only; direct (layered) composites vary more and were not sourced here. All values are measurements. Linear isotropic model."
+  - parameter_key: material.composite.nu
+    category: material
+    label: Resin composite, Poisson's ratio
+    units: "1"
+    typical: 0.302
+    range: {min: 0.28, max: 0.393}
+    values_by_source:
+      - source: src-chung2004a
+        value: 0.302
+        note: "Abstract: mean Poisson's ratio of five 3M ESPE resin-based composites (static tensile test) ranged 0.302 to 0.393; lower end listed. The authors report higher values for lower filler fractions (the flowable composite was highest)."
+      - source: src-capobianco2023
+        value: 0.28
+        note: "Methods: resin composite 17 GPa; 0.28 (their ref. 21). Assumed in an FEA model."
+    notes: "Typical 0.302 is the lowest measured value of Chung 2004, which applies best to highly filled restorative and CAD/CAM composites; range max 0.393 is Chung's stated upper end (flowable). Belli 2017 reported up to 0.47 for a CAD/CAM composite but cautioned that dynamic methods are unreliable for these high-damping materials, so it is not used. Weak: one measured source plus one FEA assumption. Linear isotropic model."
+  - parameter_key: material.resin_cement.E
+    category: material
+    label: Resin cement, elastic modulus
+    units: MPa
+    typical: 7000
+    range: {min: 700, max: 13630}
+    values_by_source:
+      - source: src-packaeser2023
+        value: 13630
+        note: "Abstract: high-viscosity resin cement 13.63 GPa (low-viscosity 12.74 GPa), determined with the Sonelastic method as stated in the abstract. 13.63 GPa x 1000."
+      - source: src-carek2022
+        value: 5500
+        note: "Abstract: flexural modulus of dual-curing resin cements (ISO 4049 bars) 0.7-5.5 GPa across materials and curing conditions (light-cured, cured through 1 mm lithium disilicate, self-cured; after ethanol ageing); upper end listed. 5.5 GPa x 1000."
+      - source: src-mahmoudiyamchi2024
+        value: 12000
+        note: "Table 1: Panavia F2 12.00 GPa. Assumed in an FEA model. 12 GPa x 1000."
+      - source: src-barbosa2026
+        value: 7000
+        note: "Table (mechanical properties): resin cement 7.0 GPa. Assumed in an FEA model. 7 GPa x 1000."
+      - source: src-capobianco2023
+        value: 7000
+        note: "Methods: resin cement 7 GPa (their ref. 20). Assumed in an FEA model. 7 GPa x 1000."
+    notes: "Typical 7,000 MPa is the median of the five values. Range min 700 MPa is the lower end stated by Carek 2022 (poorly cured or aged specimens). Dynamic measurements (Packaeser) read higher than flexural ones (Carek). Products differ widely; three of five values are FEA assumptions. Linear isotropic model."
+  - parameter_key: material.resin_cement.nu
+    category: material
+    label: Resin cement, Poisson's ratio
+    units: "1"
+    typical: 0.32
+    range: {min: 0.25, max: 0.45}
+    values_by_source:
+      - source: src-packaeser2023
+        value: 0.32
+        note: "Abstract: high-viscosity resin cement 0.32 (low-viscosity 0.30), determined with the Sonelastic and Maxwell-principles tests as stated in the abstract."
+      - source: src-mahmoudiyamchi2024
+        value: 0.33
+        note: "Table 1: Panavia F2 0.33. Assumed in an FEA model."
+      - source: src-barbosa2026
+        value: 0.25
+        note: "Table (mechanical properties): resin cement 0.25. Assumed in an FEA model."
+      - source: src-capobianco2023
+        value: 0.45
+        note: "Methods: resin cement 0.45 (their ref. 20). Assumed in an FEA model."
+    notes: "Typical 0.32 is the only measured value (Packaeser 2023); the median of the four is 0.325. Three of four are FEA assumptions (weak), and they disagree (0.25-0.45). Linear isotropic model."
+  # ---------------------------------------------------------------------------------------------------------------
+  # Strengths
+  # ---------------------------------------------------------------------------------------------------------------
+  - parameter_key: material.titanium_g4.yield_strength
+    category: strength
+    label: Commercially pure titanium grade 4, 0.2% yield strength
+    units: MPa
+    typical: 483
+    range: {min: 480, max: 483}
+    values_by_source:
+      - source: src-sidambe2014
+        value: 483
+        note: "Table 1 (ASTM F67 Grade 4 requirements for implant bar): 0.2% proof stress 483 MPa."
+      - source: src-vasilescu2026
+        value: 480
+        note: "Table 5: Cp-Ti grade 4 Rp 480 MPa, quoted from Nicholson 2020, not measured in this study."
+      - source: src-kasapoglu2025
+        value: 480
+        note: "Table 1: titanium (grade 4) elastic limit 480 MPa. Assumed in an FEA model."
+    notes: "Typical 483 MPa is the ASTM F67 minimum 0.2% proof stress (Sidambe 2014). These are specification or handbook minimum values; cold-worked implant rod is often stronger, but no accessible measured value was found, so the range is narrow. Weak: no primary measurement."
+  - parameter_key: material.titanium_g5.yield_strength
+    category: strength
+    label: Titanium alloy Ti-6Al-4V (grade 5), 0.2% yield strength
+    units: MPa
+    typical: 795
+    range: {min: 760, max: 900}
+    values_by_source:
+      - source: src-sidambe2014
+        value: 795
+        note: "Table 1 (ASTM F136 Grade 5, Ti6Al4V, implant bar): 0.2% proof stress 795 MPa."
+      - source: src-vasilescu2026
+        value: 850
+        note: "Table 5: Ti6Al4V Rp 850 MPa, quoted from Nicholson 2020, not measured in this study."
+      - source: src-kasapoglu2025
+        value: 830
+        note: "Table 1: titanium (Ti6Al4V) elastic limit 830-900 MPa; lower end listed. Assumed in an FEA model."
+      - source: src-martinezgrau2024
+        value: 760
+        note: "Table 2: Ti grade 5 yield strength 760-795 MPa; lower end listed. Assumed in an FEA model."
+    notes: "Typical 795 MPa is the ASTM F136 minimum 0.2% proof stress (Sidambe 2014), matching the convention used for grade 4; the median of the four values is 812.5 MPa. Range max 900 MPa is Kasapoglu 2025's stated upper end. Weak: no primary measurement."
+  - parameter_key: material.cocr.yield_strength
+    category: strength
+    label: Cobalt-chromium alloy, 0.2% yield strength
+    units: MPa
+    typical: 599
+    range: {min: 525, max: 908}
+    values_by_source:
+      - source: src-konieczny2024
+        value: 599
+        note: "Table 3: cast MoguCera 0.2% yield 599 (52) MPa, tensile test (cast Starbond COS: 525 (11) MPa; laser-powder-bed-fused groups 706-909 MPa after heat treatments)."
+      - source: src-schettini2025
+        value: 908
+        note: "Abstract: direct metal laser sintered (DMLS) Co-Cr 0.2% yield 908.0 +/- 13.1 MPa, the highest of cast, CNC-milled and DMLS (cast and milled values are not in the abstract)."
+    notes: "Typical 599 MPa is a cast-alloy value, matching this entry's casting/milling alloy; laser-sintered or laser-melted alloys are much stronger (908 MPa). Range min 525 MPa is Konieczny 2024's cast Starbond COS value. Only two sources; no milled-alloy number was readable."
+  - parameter_key: material.zirconia.flexural_strength
+    category: strength
+    label: Zirconia (3Y-TZP), flexural strength
+    units: MPa
+    typical: 861
+    range: {min: 840, max: 1303.21}
+    values_by_source:
+      - source: src-wendler2017
+        value: 1303.21
+        note: "Abstract: e.max ZirCAD biaxial strength 1303.21 MPa, ball-on-three-balls (B3B) test on polished plates or discs."
+      - source: src-guazzato2004b
+        value: 840
+        note: "Abstract: DC-Zirkon 840 (140) MPa, 3-point bending of bars."
+      - source: src-borba2011
+        value: 861
+        note: "Table 4: Vita In-Ceram YZ, monolithic, 3-point flexural strength median 861 (92) MPa, tested in artificial saliva at 37 C (ISO 6872:2008)."
+    notes: "Typical 861 MPa is the median of the three values. Biaxial (B3B) strengths on small polished specimens read higher than 3-point bar strengths (size effect, Wendler 2017). Inert strength only; fatigue lowers usable strength. Compare with maximum principal tensile stress."
+  - parameter_key: material.lithium_disilicate.flexural_strength
+    category: strength
+    label: Lithium disilicate glass-ceramic, flexural strength
+    units: MPa
+    typical: 368
+    range: {min: 303, max: 440}
+    values_by_source:
+      - source: src-albakry2003
+        value: 407
+        note: "Abstract: IPS Empress 2 biaxial flexural strength 407 +/- 45 MPa, piston-on-3-balls (experimental lithium disilicate ceramic: 440 +/- 55 MPa)."
+      - source: src-albakry2004
+        value: 340
+        note: "Abstract: Empress 2, pressed, biaxial flexural strength 340 (SD 40) MPa, piston-on-3-balls."
+      - source: src-guazzato2004a
+        value: 306
+        note: "Abstract: Empress 2 306 (29) MPa, 3-point bending (new experimental ceramic: 303 (49) MPa)."
+      - source: src-porto2019
+        value: 396
+        note: "Abstract: IPS e.max CAD 396 +/- 75 MPa, 3-point bending."
+    notes: "Typical 368 MPa is the median of the four values. Range min 303 and max 440 MPa are the experimental-ceramic values stated by Guazzato 2004 and Albakry 2003. Three sources test the older pressable Empress 2; one tests e.max CAD. Compare with maximum principal tensile stress."
+  - parameter_key: material.feldspathic.flexural_strength
+    category: strength
+    label: Feldspathic porcelain, flexural strength
+    units: MPa
+    typical: 110.9
+    range: {min: 65.5, max: 133}
+    values_by_source:
+      - source: src-borba2011
+        value: 65.5
+        note: "Table 4: Vita VM9 veneering porcelain, monolithic, 3-point flexural strength median 65.5 (8.9) MPa in artificial saliva (VM7: 69.8 (12.0) MPa)."
+      - source: src-wendler2017
+        value: 110.9
+        note: "Abstract: Vitablocs Mark II biaxial strength 110.9 MPa, ball-on-three-balls (B3B)."
+      - source: src-porto2019
+        value: 125
+        note: "Abstract: Vitablocs Mark II 125 +/- 10 MPa, 3-point bending."
+      - source: src-blackburn2018
+        value: 133
+        note: "Abstract: Vitablocs Mark II 133 MPa at baseline (0 thermocycles), 3-point bending."
+      - source: src-awada2015
+        value: 105
+        note: "Abstract: Vitablocs Mark II 105 +/- 9 MPa, 3-point bending."
+    notes: "Typical 110.9 MPa is the median of the five values. Layered veneering porcelains (Borba, 65-70 MPa) are weaker than CAD/CAM feldspathic blocks (105-133 MPa); choose by restoration type. Compare with maximum principal tensile stress."
+  - parameter_key: material.composite.flexural_strength
+    category: strength
+    label: Resin composite (CAD/CAM composite block), flexural strength
+    units: MPa
+    typical: 162
+    range: {min: 66.61, max: 219}
+    values_by_source:
+      - source: src-chung2004b
+        value: 147.21
+        note: "Abstract: five 3M ESPE direct composites, 3-point bending, means 66.61-147.21 MPa (upper end listed; biaxial ball-on-three-ball 67.27-182.81 MPa)."
+      - source: src-porto2019
+        value: 149
+        note: "Abstract: Lava Ultimate 149 +/- 28 MPa, 3-point bending."
+      - source: src-blackburn2018
+        value: 175
+        note: "Abstract: Lava Ultimate 175 MPa at baseline, 3-point bending (Paradigm MZ100: 154 MPa)."
+      - source: src-awada2015
+        value: 219
+        note: "Abstract: highest mean 219 +/- 20 MPa (Cerasmart), 3-point bending."
+    notes: "Typical 162 MPa is the median of the four values (3-point bending only). Range min 66.61 MPa is Chung 2004's stated lower end (microfill/compomer-type materials). CAD/CAM blocks lie at 149-219 MPa. Values fall with water storage and thermocycling (Porto 2019, Blackburn 2018). Compare with maximum principal tensile stress."
+  # ---------------------------------------------------------------------------------------------------------------
+  # Loads
+  # ---------------------------------------------------------------------------------------------------------------
+  - parameter_key: load.bite_force.molar
+    category: load
+    label: Maximum voluntary bite force, molar region (adults)
+    units: N
+    typical: 601.83
+    range: {min: 574.9, max: 909}
+    values_by_source:
+      - source: src-waltimo1993
+        value: 847
+        note: "Abstract: mean maximal bite force in the molar region 847 N for men and 597 N for women (healthy young adults); men's value listed."
+      - source: src-waltimo1995
+        value: 909
+        note: "Abstract: young Finnish non-patients, molar region 909 N (SD 177) for men and 777 N (SD 168) for women; men's value listed."
+      - source: src-sathyanarayana2012
+        value: 601.83
+        note: "Abstract: class I normal occlusion group (n = 30, both sexes, 17-25 years), first molar region 601.83 +/- 60.80 N."
+      - source: src-nguyen2026
+        value: 574.9
+        note: "Results text and Table 2: control group without sleep bruxism (n = 30, 18-45 years), first molar 574.9 +/- 77.3 N."
+    notes: "Typical 601.83 N is a mixed-sex adult mean with normal occlusion (Sathyanarayana 2012), close to Nguyen 2026's controls (574.9 N); the Waltimo values listed are men's means, and their women's means (597 and 777 N) lie inside the range. The median of the four listed values is 724.4 N. Devices and bite height differ between studies. Short maximal bites, not chewing forces."
+  - parameter_key: load.bite_force.premolar
+    category: load
+    label: Maximum voluntary bite force, premolar region (adults)
+    units: N
+    typical: 419.8
+    range: {min: 392, max: 447.6}
+    values_by_source:
+      - source: src-sathyanarayana2012
+        value: 392
+        note: "Abstract: class I normal occlusion group, first premolar region 392 +/- 31.43 N."
+      - source: src-nguyen2026
+        value: 447.6
+        note: "Results text and Table 2: control group, premolar region 447.6 +/- 63.5 N (abstract: second premolar)."
+    notes: "Typical 419.8 N is the mean of the two values. Only two sources; first and second premolars were measured respectively."
+  - parameter_key: load.clenching_force
+    category: load
+    label: Clenching / sleep bruxism bite force
+    units: N
+    typical: 220.6
+    range: {min: 153, max: 796.3}
+    values_by_source:
+      - source: src-nishigawa2001
+        value: 220.6
+        note: "Abstract: mean amplitude of 499 nocturnal bruxism events in 10 subjects 22.5 kgf (s.d. 13.0 kgf), first molar transducers on acrylic appliances; 22.5 kgf x 9.80665 = 220.6 N. Highest event per subject averaged 42.3 kgf (414.8 N), range 15.6-81.2 kgf (153.0-796.3 N); daytime maximum voluntary bite force 79.0 kgf (774.7 N)."
+    notes: "Typical 220.6 N is the mean bruxism event amplitude; the range is the spread of each subject's highest nocturnal event (15.6-81.2 kgf) stated by the same paper. Nocturnal forces can exceed daytime maximum bite force. WEAK: a single study of 10 bruxers; sustained awake clenching was not sourced separately."
+  - parameter_key: load.chewing_cycles_per_year
+    category: load
+    label: Chewing cycles per year (simulator equivalence)
+    units: "1/year"
+    typical: 250000
+    range: {min: 240000, max: 300000}
+    values_by_source:
+      - source: src-delong1991
+        value: 250000
+        note: "Abstract: simulator wear correlated well with clinical wear if 250,000 cycles in the artificial mouth are taken as equivalent to one year in the mouth."
+      - source: src-delong2012
+        value: 300000
+        note: "Abstract: 'a conversion rate of one year equals 3 x 10^5 cycles' gave no significant difference between clinical and simulated composite wear (with two exceptions)."
+      - source: src-chang2018
+        value: 240000
+        note: "Abstract: 240,000 load cycles used to simulate chewing for one year (equivalence assumed, not derived)."
+    notes: "Typical 250,000 per year is the median. These are wear-calibrated simulator equivalences (DeLong 1991, 2012) or assumed conventions (Chang 2018), NOT counts derived from chewing strokes per day; no source deriving the figure from daily stroke counts was readable. Use for fatigue-life framing only."
+  # ---------------------------------------------------------------------------------------------------------------
+  # Frost mechanostat window edges
+  # ---------------------------------------------------------------------------------------------------------------
+  - parameter_key: frost.disuse_upper
+    category: frost_window
+    label: Frost window edge, disuse / adapted
+    units: microstrain
+    typical: 50
+    range: {min: 50, max: 300}
+    values_by_source:
+      - source: src-frost1994
+        value: 50
+        note: "Abstract: peak strains below a 50 microstrain region (the MESr) give the largest disuse effects; larger strains make remodeling conserve bone."
+      - source: src-frost1987
+        value: 100
+        note: "Abstract: strains below the 100-300 microstrain range release BMU-based remodeling that removes bone; lower end listed."
+      - source: src-suedam2016
+        value: 50
+        note: "Introduction: citing Frost 2004, acute disuse window below 50 microstrain."
+      - source: src-perezpevida2021
+        value: 100
+        note: "Discussion: citing Wiskott & Belser 1999, disuse atrophy below 100 microstrain."
+    notes: "Typical 50 microstrain is Frost's own later value (1994, MESr), giving with the next two entries one coherent set (50 / 1500 / 3000) from a single primary source; the median of the four listed values is 75. Range max 300 is the upper end of Frost's 1987 proposal (100-300), which he later lowered. Teaching reference only: thresholds are approximate regions, not sharp limits, and come from long-bone studies."
+  - parameter_key: frost.adapted_upper
+    category: frost_window
+    label: Frost window edge, adapted / mild overload
+    units: microstrain
+    typical: 1500
+    range: {min: 1500, max: 3000}
+    values_by_source:
+      - source: src-frost1994
+        value: 1500
+        note: "Abstract: strains above a 1500 microstrain region (the MESm) tend to turn lamellar bone modeling drifts on."
+      - source: src-frost1987
+        value: 1500
+        note: "Abstract: strains in or above the 1500-3000 microstrain range cause bone modelling to increase cortical bone mass; lower end listed."
+      - source: src-suedam2016
+        value: 1500
+        note: "Introduction: citing Frost 2004, adaptation window 50-1500 microstrain, mild overload from 1500."
+      - source: src-perezpevida2021
+        value: 2000
+        note: "Discussion: citing Wiskott & Belser 1999, normal load (homeostasis) 100-2000 microstrain, mild overload from 2000."
+    notes: "Typical 1500 microstrain is Frost's MESm (1994) and the median of the four values. Range max 3000 is the upper end of Frost's 1987 range (1500-3000). Teaching reference only; approximate regions."
+  - parameter_key: frost.mild_overload_upper
+    category: frost_window
+    label: Frost window edge, mild overload / pathological overload
+    units: microstrain
+    typical: 3000
+    range: {min: 3000, max: 4000}
+    values_by_source:
+      - source: src-frost1994
+        value: 3000
+        note: "Abstract: strains above a 3000 microstrain region (the MESp) can turn woven bone drifts on and increase microdamage; bone's fracture strain is about 25,000 microstrain."
+      - source: src-suedam2016
+        value: 4000
+        note: "Introduction: citing Frost 2004, mild overload window 1500-4000 microstrain, pathologic overload above 4000."
+      - source: src-perezpevida2021
+        value: 4000
+        note: "Discussion: citing Wiskott & Belser 1999, mild overload 2000-4000 microstrain, pathologic overload above 4000 (fracture above 25,000)."
+    notes: "Typical 3000 microstrain is Frost's MESp (1994), keeping one coherent primary set with the other two edges; the two implant-dentistry papers place the edge at 4000 (median of the three values is 4000), so the owner may prefer 4000. The Frost 2004 paper cited by Suedam could not be read directly. Teaching reference only; approximate regions."
+sources:
+  - id: src-sidambe2014
+    authors: ["Sidambe AT"]
+    year: 2014
+    title: "Biocompatibility of Advanced Manufactured Titanium Implants—A Review"
+    journal: "Materials"
+    doi: "10.3390/ma7128168"
+    pmid: "28788296"
+    study_type: review
+  - id: src-vasilescu2026
+    authors: ["Vasilescu VG", "Ciocan LT", "Cucuruz A", "Miculescu F", "Paraschiv A", "Matache G", "Neacșu MI", "Vasilescu E", "Imre M", "Pițuru SM", "Turculeț CȘ"]
+    year: 2026
+    title: "Influence of Chemical Composition on the Physical–Mechanical Properties of Some Experimental Titanium Alloys for Dental Implants"
+    journal: "Dentistry Journal"
+    doi: "10.3390/dj14020089"
+    pmid: "41744927"
+    study_type: experimental
+  - id: src-jemaa2024
+    authors: ["Jemaa H", "Eisenburger M", "Greuling A"]
+    year: 2024
+    title: "Automated Support Generation for Fixed Partial Dentures and Impact of Bone Loss, Bone Quality and Support Types: Parametric Cad and Finite Element Analysis"
+    journal: "Dentistry Journal"
+    doi: "10.3390/dj12120394"
+    pmid: "39727451"
+    study_type: fea
+  - id: src-barbosa2026
+    authors: ["Barbosa FT", "Vargas-Moreno VF", "Marcello-Machado RM", "Pimentel SP", "Corrêa MG", "Monteiro MF", "Cirano FR", "Caldas RA", "Casati MZ"]
+    year: 2026
+    title: "Stress distribution and bone deformation around narrow-diameter implants at different placement depths and in different bone densities"
+    journal: "Brazilian Oral Research"
+    doi: "10.1590/1807-3107bor-2026.vol40.050"
+    pmid: "42484248"
+    study_type: fea
+  - id: src-perezpevida2021
+    authors: ["Pérez-Pevida E", "Chávarri-Prado D", "Diéguez-Pereira M", "Estrada-Martínez A", "Montalbán-Vadillo O", "Jiménez-Garrudo A"]
+    year: 2021
+    title: "Consequences of Peri-Implant Bone Loss in the Occlusal Load Transfer to the Supporting Bone in terms of Magnitude of Stress, Strain, and Stress Distribution: A Finite Element Analysis"
+    journal: "BioMed Research International"
+    doi: "10.1155/2021/3087071"
+    pmid: "34513989"
+    study_type: fea
+  - id: src-kasapoglu2025
+    authors: ["Kasapoglu MB", "Az ZAA"]
+    year: 2025
+    title: "Comparison of Load Distribution in Subperiosteal Implants and Mini Plates in Orthognathic Surgery"
+    journal: "International Journal of Medical Sciences"
+    doi: "10.7150/ijms.111111"
+    pmid: "40386052"
+    study_type: fea
+  - id: src-martinezgrau2024
+    authors: ["Martínez-Grau J", "Robles D", "Pérez RA", "Marimon X", "Fernández-Hernández S", "Aroso C", "Brizuela-Velasco A"]
+    year: 2024
+    title: "Design Factors of Ti-Base Abutments Related to the Biomechanics Behavior of Dental Implant Prostheses: Finite Element Analysis and Validation via In Vitro Load Creeping Tests"
+    journal: "Materials"
+    doi: "10.3390/ma17153746"
+    pmid: "39124410"
+    study_type: fea
+  - id: src-mugri2025
+    authors: ["Mugri MH", "Reddy NK", "Sayed ME", "Mattoo K", "Qomari OM", "Alnaji MM", "Mshari WA", "Alqarawi FK", "AlResayes SS", "Alshaibani RM"]
+    year: 2025
+    title: "Stress Assessment of Abutment-Free and Three Implant–Abutment Connections Utilizing Various Abutment Materials: A 3D Finite Element Study of Static and Cyclic Static Loading Conditions"
+    journal: "Journal of Functional Biomaterials"
+    doi: "10.3390/jfb16100372"
+    pmid: "41149718"
+    study_type: fea
+  - id: src-schwartzdabney2003
+    authors: ["Schwartz-Dabney CL", "Dechow PC"]
+    year: 2003
+    title: "Variations in cortical material properties throughout the human dentate mandible"
+    journal: "American Journal of Physical Anthropology"
+    doi: "10.1002/ajpa.10121"
+    pmid: "12567378"
+    study_type: experimental
+  - id: src-seong2009
+    authors: ["Seong WJ", "Kim UK", "Swift JQ", "Heo YC", "Hodges JS", "Ko CC"]
+    year: 2009
+    title: "Elastic properties and apparent density of human edentulous maxilla and mandible"
+    journal: "International Journal of Oral and Maxillofacial Surgery"
+    doi: "10.1016/j.ijom.2009.06.025"
+    pmid: "19647417"
+    study_type: experimental
+  - id: src-gasik2021
+    authors: ["Gasik M", "Lambert F", "Bacevic M"]
+    year: 2021
+    title: "Biomechanical Properties of Bone and Mucosa for Design and Application of Dental Implants"
+    journal: "Materials"
+    doi: "10.3390/ma14112845"
+    pmid: "34073388"
+    study_type: review
+  - id: src-pradosprivado2020
+    authors: ["Prados-Privado M", "Martínez-Martínez C", "Gehrke SA", "Prados-Frutos JC"]
+    year: 2020
+    title: "Influence of Bone Definition and Finite Element Parameters in Bone and Dental Implants Stress: A Literature Review"
+    journal: "Biology"
+    doi: "10.3390/biology9080224"
+    pmid: "32823884"
+    study_type: review
+  - id: src-ma2014
+    authors: ["Ma P", "Xiong W", "Tan B", "Geng W", "Liu J", "Li W", "Li D"]
+    year: 2014
+    title: "Influence of Thread Pitch, Helix Angle, and Compactness on Micromotion of Immediately Loaded Implants in Three Types of Bone Quality: A Three-Dimensional Finite Element Analysis"
+    journal: "BioMed Research International"
+    doi: "10.1155/2014/983103"
+    pmid: "25110716"
+    study_type: fea
+  - id: src-frost1987
+    authors: ["Frost HM"]
+    year: 1987
+    title: "Bone “mass” and the “mechanostat”: A proposal"
+    journal: "The Anatomical Record"
+    doi: "10.1002/ar.1092190104"
+    pmid: "3688455"
+    study_type: review
+  - id: src-frost1994
+    authors: ["Frost HM"]
+    year: 1994
+    title: "Wolff's Law and bone's structural adaptations to mechanical usage: an overview for clinicians."
+    journal: "Angle Orthodontist"
+    doi: null
+    pmid: "8060014"
+    study_type: review
+  - id: src-suedam2016
+    authors: ["Suedam V", "Moretti Neto RT", "Sousa EA", "Rubo JH"]
+    year: 2016
+    title: "Effect of cantilever length and alloy framework on the stress distribution in peri-implant area of cantilevered implant-supported fixed partial dentures"
+    journal: "Journal of Applied Oral Science"
+    doi: "10.1590/1678-775720150297"
+    pmid: "27119758"
+    study_type: experimental
+  - id: src-belli2017
+    authors: ["Belli R", "Wendler M", "de Ligny D", "Cicconi MR", "Petschelt A", "Peterlik H", "Lohbauer U"]
+    year: 2017
+    title: "Chairside CAD/CAM materials. Part 1: Measurement of elastic constants and microstructural characterization"
+    journal: "Dental Materials"
+    doi: "10.1016/j.dental.2016.10.009"
+    pmid: "27890354"
+    study_type: experimental
+  - id: src-wendler2017
+    authors: ["Wendler M", "Belli R", "Petschelt A", "Mevec D", "Harrer W", "Lube T", "Danzer R", "Lohbauer U"]
+    year: 2017
+    title: "Chairside CAD/CAM materials. Part 2: Flexural strength testing"
+    journal: "Dental Materials"
+    doi: "10.1016/j.dental.2016.10.008"
+    pmid: "27884403"
+    study_type: experimental
+  - id: src-borba2011
+    authors: ["Borba M", "de Araújo MD", "de Lima E", "Yoshimura HN", "Cesar PF", "Griggs JA", "Della Bona A"]
+    year: 2011
+    title: "Flexural strength and failure modes of layered ceramic structures"
+    journal: "Dental Materials"
+    doi: "10.1016/j.dental.2011.09.008"
+    pmid: "21982199"
+    study_type: experimental
+  - id: src-miranda2018
+    authors: ["Miranda RBP", "Miranda WG Junior", "Lazar DRR", "Ussui V", "Marchi J", "Cesar PF"]
+    year: 2018
+    title: "Effect of titania content and biomimetic coating on the mechanical properties of the Y-TZP/TiO2 composite"
+    journal: "Dental Materials"
+    doi: "10.1016/j.dental.2017.11.003"
+    pmid: "29183671"
+    study_type: experimental
+  - id: src-guazzato2004a
+    authors: ["Guazzato M", "Albakry M", "Ringer SP", "Swain MV"]
+    year: 2004
+    title: "Strength, fracture toughness and microstructure of a selection of all-ceramic materials. Part I. Pressable and alumina glass-infiltrated ceramics"
+    journal: "Dental Materials"
+    doi: "10.1016/j.dental.2003.05.003"
+    pmid: "15081550"
+    study_type: experimental
+  - id: src-guazzato2004b
+    authors: ["Guazzato M", "Albakry M", "Ringer SP", "Swain MV"]
+    year: 2004
+    title: "Strength, fracture toughness and microstructure of a selection of all-ceramic materials. Part II. Zirconia-based dental ceramics"
+    journal: "Dental Materials"
+    doi: "10.1016/j.dental.2003.05.002"
+    pmid: "15081551"
+    study_type: experimental
+  - id: src-albakry2003
+    authors: ["Albakry M", "Guazzato M", "Swain MV"]
+    year: 2003
+    title: "Biaxial flexural strength, elastic moduli, and x-ray diffraction characterization of three pressable all-ceramic materials"
+    journal: "The Journal of Prosthetic Dentistry"
+    doi: "10.1067/mpr.2003.42"
+    pmid: "12690350"
+    study_type: experimental
+  - id: src-albakry2004
+    authors: ["Albakry M", "Guazzato M", "Swain MV"]
+    year: 2004
+    title: "Biaxial Flexural Strength and Microstructure Changes of Two Recycled Pressable Glass Ceramics"
+    journal: "Journal of Prosthodontics"
+    doi: "10.1111/j.1532-849x.2004.04025.x"
+    pmid: "15345013"
+    study_type: experimental
+  - id: src-capobianco2023
+    authors: ["Capobianco V", "Baroudi K", "Santos MJMC", "Rubo JH", "Rizkalla AS", "Dal Piva AMO", "Vitti RP", "Tribst JPM", "Santos GC"]
+    year: 2023
+    title: "Post-fatigue fracture load, stress concentration and mechanical properties of feldspathic, leucite- and lithium disilicate-reinforced glass ceramics"
+    journal: "Heliyon"
+    doi: "10.1016/j.heliyon.2023.e17787"
+    pmid: "37449193"
+    study_type: experimental
+  - id: src-porto2019
+    authors: ["Porto TS", "Roperto RC", "Akkus A", "Akkus O", "Teich S", "Faddoul F", "Porto-Neto ST", "Campos EA"]
+    year: 2019
+    title: "Effect of storage and aging conditions on the flexural strength and flexural modulus of CAD/CAM materials"
+    journal: "Dental Materials Journal"
+    doi: "10.4012/dmj.2018-111"
+    pmid: "30541991"
+    study_type: experimental
+  - id: src-blackburn2018
+    authors: ["Blackburn C", "Rask H", "Awada A"]
+    year: 2018
+    title: "Mechanical properties of resin-ceramic CAD-CAM materials after accelerated aging"
+    journal: "The Journal of Prosthetic Dentistry"
+    doi: "10.1016/j.prosdent.2017.08.016"
+    pmid: "29195816"
+    study_type: experimental
+  - id: src-awada2015
+    authors: ["Awada A", "Nathanson D"]
+    year: 2015
+    title: "Mechanical properties of resin-ceramic CAD/CAM restorative materials"
+    journal: "The Journal of Prosthetic Dentistry"
+    doi: "10.1016/j.prosdent.2015.04.016"
+    pmid: "26141648"
+    study_type: experimental
+  - id: src-alamoush2018
+    authors: ["Alamoush RA", "Silikas N", "Salim NA", "Al-Nasrawi S", "Satterthwaite JD"]
+    year: 2018
+    title: "Effect of the Composition of CAD/CAM Composite Blocks on Mechanical Properties"
+    journal: "BioMed Research International"
+    doi: "10.1155/2018/4893143"
+    pmid: "30426009"
+    study_type: experimental
+  - id: src-chung2004a
+    authors: ["Chung SM", "Yap AU", "Koh WK", "Tsai KT", "Lim CT"]
+    year: 2004
+    title: "Measurement of Poisson's ratio of dental composite restorative materials"
+    journal: "Biomaterials"
+    doi: "10.1016/j.biomaterials.2003.09.029"
+    pmid: "14751729"
+    study_type: experimental
+  - id: src-chung2004b
+    authors: ["Chung SM", "Yap AU", "Chandra SP", "Lim CT"]
+    year: 2004
+    title: "Flexural strength of dental composite restoratives: Comparison of biaxial and three‐point bending test"
+    journal: "Journal of Biomedical Materials Research Part B: Applied Biomaterials"
+    doi: "10.1002/jbm.b.30103"
+    pmid: "15386492"
+    study_type: experimental
+  - id: src-mahmoudiyamchi2024
+    authors: ["MahmoudiYamchi F", "Abbasi M", "Atri F", "Ahmadi E"]
+    year: 2024
+    title: "Influence of Deep Margin Elevation Technique With Two Restorative Materials on Stress Distribution of e.max Endocrown Restorations: A Finite Element Analysis"
+    journal: "International Journal of Dentistry"
+    doi: "10.1155/ijod/6753069"
+    pmid: "39634059"
+    study_type: fea
+  - id: src-packaeser2023
+    authors: ["Packaeser MG", "Aragonez GC", "Soares PM", "Borges ALS", "Pereira GKR", "Valandro LF", "Rippe MP"]
+    year: 2023
+    title: "High-versus low-viscosity resin cements: Its effect on the load-bearing capacity under fatigue of a translucent zirconia"
+    journal: "Journal of the Mechanical Behavior of Biomedical Materials"
+    doi: "10.1016/j.jmbbm.2023.105829"
+    pmid: "37068429"
+    study_type: experimental
+  - id: src-carek2022
+    authors: ["Carek A", "Dukaric K", "Miler H", "Marovic D", "Tarle Z", "Par M"]
+    year: 2022
+    title: "Post-Cure Development of the Degree of Conversion and Mechanical Properties of Dual-Curing Resin Cements"
+    journal: "Polymers"
+    doi: "10.3390/polym14173649"
+    pmid: "36080725"
+    study_type: experimental
+  - id: src-tribst2020
+    authors: ["Tribst JPM", "Dal Piva AMO", "Borges ALS", "Rodrigues VA", "Bottino MA", "Kleverlaan CJ"]
+    year: 2020
+    title: "Does the prosthesis weight matter? 3D finite element analysis of a fixed implant-supported prosthesis at different weights and implant numbers"
+    journal: "The Journal of Advanced Prosthodontics"
+    doi: "10.4047/jap.2020.12.2.67"
+    pmid: "32377319"
+    study_type: fea
+  - id: src-sahinhazir2025
+    authors: ["Sahin Hazir D", "Sozen Yanik I", "Guncu MB", "Canay RS"]
+    year: 2025
+    title: "Biomechanical behavior of titanium, cobalt-chromium, zirconia, and PEEK frameworks in implant-supported prostheses: a dynamic finite element analysis"
+    journal: "BMC Oral Health"
+    doi: "10.1186/s12903-025-05486-5"
+    pmid: "39827102"
+    study_type: fea
+  - id: src-aljabbari2024
+    authors: ["Al Jabbari YS", "Dimitriadis K", "Sufyan A", "Zinelis S"]
+    year: 2024
+    title: "Microstructural and mechanical characterization of six Co-Cr alloys made by conventional casting and selective laser melting"
+    journal: "The Journal of Prosthetic Dentistry"
+    doi: "10.1016/j.prosdent.2024.06.015"
+    pmid: "38955601"
+    study_type: experimental
+  - id: src-konieczny2024
+    authors: ["Konieczny B", "Szczesio-Wlodarczyk A", "Andrearczyk A", "Januszewicz B", "Lipa S", "Zieliński R", "Sokolowski J"]
+    year: 2024
+    title: "Enhancing the Mechanical Properties of Co-Cr Dental Alloys Fabricated by Laser Powder Bed Fusion: Evaluation of Quenching and Annealing as Heat Treatment Methods"
+    journal: "Materials"
+    doi: "10.3390/ma17215313"
+    pmid: "39517586"
+    study_type: experimental
+  - id: src-schettini2025
+    authors: ["Schettini A", "Pesun IJ", "França R"]
+    year: 2025
+    title: "Assessment of mechanical properties and microstructure of Co-Cr dental alloys manufactured by casting, milling, and 3D printing"
+    journal: "The Journal of Prosthetic Dentistry"
+    doi: "10.1016/j.prosdent.2024.12.017"
+    pmid: "39741083"
+    study_type: experimental
+  - id: src-waltimo1993
+    authors: ["Waltimo A", "Könönen M"]
+    year: 1993
+    title: "A novel bite force recorder and maximal isometric bite force values for healthy young adults"
+    journal: "European Journal of Oral Sciences"
+    doi: "10.1111/j.1600-0722.1993.tb01658.x"
+    pmid: "8322012"
+    study_type: clinical
+  - id: src-waltimo1995
+    authors: ["Waltimo A", "Könönen M"]
+    year: 1995
+    title: "Maximal bite force and its association with signs and symptoms of craniomandibular disorders in young Finnish non-patients"
+    journal: "Acta Odontologica Scandinavica"
+    doi: "10.3109/00016359509005982"
+    pmid: "7484109"
+    study_type: clinical
+  - id: src-sathyanarayana2012
+    authors: ["Sathyanarayana HP", "Premkumar S", "Manjula WS"]
+    year: 2012
+    title: "Assessment of maximum voluntary bite force in adults with normal occlusion and different types of malocclusions."
+    journal: "The Journal of Contemporary Dental Practice"
+    doi: null
+    pmid: "23151705"
+    study_type: clinical
+  - id: src-nguyen2026
+    authors: ["Nguyen ON", "Tran XV", "Nguyen AH", "Nguyen NG"]
+    year: 2026
+    title: "Sleep bruxism, maximum bite force, and home electromyography: a cross-sectional study"
+    journal: "BMC Oral Health"
+    doi: "10.1186/s12903-026-09398-w"
+    pmid: "42919217"
+    study_type: clinical
+  - id: src-nishigawa2001
+    authors: ["Nishigawa K", "Bando E", "Nakano M"]
+    year: 2001
+    title: "Quantitative study of bite force during sleep associated bruxism"
+    journal: "Journal of Oral Rehabilitation"
+    doi: "10.1046/j.1365-2842.2001.00692.x"
+    pmid: "11380790"
+    study_type: clinical
+  - id: src-delong1991
+    authors: ["DeLong R", "Douglas WH"]
+    year: 1991
+    title: "An artificial oral environment for testing dental materials"
+    journal: "IEEE Transactions on Biomedical Engineering"
+    doi: "10.1109/10.133228"
+    pmid: "1855795"
+    study_type: experimental
+  - id: src-delong2012
+    authors: ["DeLong R", "Pintado MR", "Douglas WH", "Fok AS", "Wilder AD Jr", "Swift EJ Jr", "Bayne SC"]
+    year: 2012
+    title: "Wear of a dental composite in an artificial oral environment: A clinical correlation"
+    journal: "Journal of Biomedical Materials Research Part B: Applied Biomaterials"
+    doi: "10.1002/jbm.b.32801"
+    pmid: "22997090"
+    study_type: clinical
+  - id: src-chang2018
+    authors: ["Chang YH", "Wang HW", "Lin PH", "Lin CL"]
+    year: 2018
+    title: "Evaluation of early resin luting cement damage induced by voids around a circular fiber post in a root canal treated premolar by integrating micro-CT, finite element analysis and fatigue testing"
+    journal: "Dental Materials"
+    doi: "10.1016/j.dental.2018.04.006"
+    pmid: "29747911"
+    study_type: experimental

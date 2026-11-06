@@ -60,6 +60,9 @@ stateDiagram-v2
 When a capability goes back to `awaiting_benchmark`, the blocks and result types that need it lock again, and
 published scenarios that use it are flagged `needs_review`.
 
+A capability is ready for the solver build its passing report was made with. A run on another build (for
+example a rented solver machine's, FR-064) needs a passing report made with that build (task T176).
+
 ## Building blocks and templates
 
 **BlockType** is code: one module per type under `engine/src/dentalsim/blocks/`.
@@ -178,11 +181,12 @@ published scenarios that use it are flagged `needs_review`.
 | engine_version | string | Package version plus git commit, for provenance only; `dev_build` true when the engine tree was dirty |
 | engine_source_hash | sha256 | Hash of the result-affecting engine source; part of `input_hash` (FR-058) |
 | conventions_version, solver_build_id, gmsh_version | | |
+| solver_host | string or null | The rented solver machine that solved it (FR-064); null for the main PC |
 | estimate | {dof, time_s, memory_gb, disk_gb} | |
 | actual | {dof, time_s, peak_memory_gb, disk_gb} | |
 | status | enum | `queued`, `running`, `succeeded`, `failed`, `cancelled`, `interrupted` |
 | failure_reason | text | Plain-language reason |
-| convergence | {force_balance: [{load_case, applied_n, reaction_n, relative_error}], solver_relative_residual, solver_messages} | FR-023; fails the run above the conventions `equilibrium_tolerance` |
+| convergence | {force_balance: [{load_case, applied_n, reaction_n, relative_error}], energy_balance: [{load_case, external_work, twice_strain_energy, relative_error}], residuals: [{load_case, relative_residual}], solver_relative_residual, solver_messages} | FR-023; fails the run above the conventions `equilibrium_tolerance`, `energy_tolerance` or `residual_tolerance` |
 | result_ref | store key | Present only when `succeeded` |
 | locked_results | list of {result_type, missing_capability} | |
 | flags | set | `out_of_date`, `uses_rejected_entry`, `outside_published_range`, `dev_build`, `needs_reverification` |
@@ -322,7 +326,7 @@ stateDiagram-v2
 |---|---|---|
 | id, title | | |
 | kind | enum | `textbook` or `published_study` |
-| physics | PhysicsCapability id | |
+| capability | PhysicsCapability id | The capability the case gates (read by the physics registry) |
 | required | bool | |
 | model | {builder, parameters} | Or a scenario definition |
 | quantities | list | {id, description, expected, expected_source, compare: `absolute`, `relative` or `ratio`, tolerance} |

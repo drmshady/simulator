@@ -21,7 +21,7 @@ This is the command-line equivalent of the studio that Principle VI requires.
 | `dentalsim studio serve [--host IP] [--port 8443]` | Starts the server and worker on the main PC (R10) |
 | `dentalsim studio set-password` | Sets or changes the owner password (prompted; stored as an Argon2id hash) |
 | `dentalsim worker` | Starts the worker alone (normally started by `serve`) |
-| `dentalsim solver check` | Runs the configured CalculiX binary once and prints its version, the PARDISO status and the SHA-256 (the solver build id) |
+| `dentalsim solver check [--host NAME]` | Runs the configured CalculiX binary once and prints its version, the equation solver (PaStiX preferred, SPOOLES as fallback), any non-open-source library it loads, and the SHA-256 (the solver build id). `--host` checks a rented solver machine (FR-064, task T175) |
 | `dentalsim conventions check` | Parses `docs/conventions.md`, validates it, prints the version and hash (SC-014) |
 | `dentalsim validate <scenario.json>` | Validity checks and the problem list |
 | `dentalsim estimate <scenario.json> --detail standard` | Expected DOF, time, memory and disk |
@@ -29,7 +29,7 @@ This is the command-line equivalent of the studio that Principle VI requires.
 | `dentalsim preview <scenario.json>` | Preview solve |
 | `dentalsim mesh-check <scenario.json> --levels standard,fine` | FR-037 |
 | `dentalsim study <study.yaml>` | Queues a sweep or sensitivity study |
-| `dentalsim verify [--case ID ...] [--physics bonded_elastic]` | Runs the verification suite; writes the report; updates capability status |
+| `dentalsim verify [--case ID ...] [--physics bonded_elastic] [--host NAME]` | Runs the verification suite; writes the report; updates capability status |
 | `dentalsim library import <file.yaml>` / `library check <entry>` / `library approve <entry> <version>` / `library reject ...` / `library export` | Literature library operations (same rules as the studio) |
 | `dentalsim export <run-id> --kind figure,film,slide_loop,pptx,report,spreadsheet` | Exports |
 | `dentalsim regenerate <export-id>` | Rebuilds and compares with the stored export (FR-044) |

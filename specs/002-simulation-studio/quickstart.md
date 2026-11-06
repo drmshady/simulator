@@ -10,10 +10,10 @@ How to set up the studio, and how to check each user story works. Commands use P
 2. **Install the tools**:
    - **uv**: `winget install astral-sh.uv`
    - **Node 24 LTS**: needed only to build the interface.
-   - **CalculiX 2.23 with PARDISO** (research R3):
-     1. Put `ccx.exe` (or `ccx_dynamic.exe`) and its Intel MKL DLLs in `D:\DentalSimTools\calculix\`.
+   - **CalculiX 2.23, the open-source build with PaStiX** (research R3; steps in `docs/setup/solver.md`):
+     1. Put `ccx_static.exe` from the dhondt.de Windows package in `D:\DentalSimTools\calculix\` (no other DLLs).
      2. Set `DENTALSIM_CCX` to that executable.
-     3. Check it with `dentalsim solver check`, which prints the version, the PARDISO status and the SHA-256.
+     3. Check it with `dentalsim solver check`, which prints the version, the equation solver (PaStiX) and the SHA-256.
 3. **Install the environment and build the interface**:
    ```powershell
    cd D:\simulator

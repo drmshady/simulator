@@ -12,7 +12,7 @@ The owner gets a local studio for building, running, checking and publishing fin
   strength value comes from an owner-approved literature library.
 - **Engine**: a new Python engine, `dentalsim`:
   - generates the shapes and a matching mesh with **gmsh**
-  - solves with **CalculiX** (open source; Windows build with the PARDISO solver)
+  - solves with **CalculiX** (open source; the Windows build with the open-source PaStiX solver)
   - reports region means and 95th percentiles under one conventions document
 - **Speed**: linear load cases are solved once as unit loads and combined. One run therefore covers every bite
   angle and force, and interactive page data needs no interpolation for those controls.
@@ -30,14 +30,14 @@ The owner gets a local studio for building, running, checking and publishing fin
 | Item | Choice |
 |---|---|
 | **Language/Version** | Python 3.12 (engine, server, worker, command line), managed with uv; TypeScript 5 with Node 24 LTS for the browser interface (build only) |
-| **Primary Dependencies** | gmsh 4.15 (OpenCASCADE geometry and meshing); CalculiX ccx 2.23 with Intel MKL PARDISO; NumPy, SciPy; pydantic 2; FastAPI with uvicorn; argon2-cffi; psutil; PyVista/VTK (figures and films); imageio-ffmpeg (H.264); python-pptx; typst (PDF reports); openpyxl; Pillow; Kokoro-82M (promo voice, Apache-2.0); scikit-fem (independent cross-check for the textbook benchmarks only). Interface: React 19, Vite, Mantine, TanStack Query, three.js with react-three-fiber. |
+| **Primary Dependencies** | gmsh 4.15 (OpenCASCADE geometry and meshing); CalculiX ccx 2.23, the open-source `ccx_static` build with the PaStiX solver (with Scotch, hwloc and OpenBLAS; research R3); NumPy, SciPy; pydantic 2; FastAPI with uvicorn; argon2-cffi; psutil; PyVista/VTK (figures and films); imageio-ffmpeg (H.264); python-pptx; typst (PDF reports); openpyxl; Pillow; Kokoro-82M (promo voice, Apache-2.0); scikit-fem (independent cross-check for the textbook benchmarks only). Interface: React 19, Vite, Mantine, TanStack Query, three.js with react-three-fiber. |
 | **Storage** | SQLite (WAL, FTS5) in the data folder `D:\DentalSimData` as the system of record. Content-addressed results store (zstd). Repository files for conventions, verification cases, library proposals and snapshots, and published packages. Large published media are named by SHA-256, outside git. |
 | **Testing** | pytest (markers `unit`, `integration`, `benchmark`, `regression`), Vitest, Playwright smoke tests; `dentalsim check` is the merge gate, and only a complete run (benchmark and regression tests included, so on the main PC) passes it; a run without the solver is "incomplete" and blocks merging |
-| **Target Platform** | Windows 11. The main PC (RTX 4060 Ti, about 32 GB) runs the server, worker and solver; the laptop (24 GB) is a browser client and the development machine. Clients are current Chrome or Edge. |
+| **Target Platform** | Windows 11. The main PC (RTX 4060 Ti, 10 physical cores, about 32 GB) runs the server, worker and solver; the laptop (24 GB) is a browser client and the development machine. Clients are current Chrome or Edge. Optionally, a rented solver machine (Windows or Linux, reached over SSH) solves heavy runs that do not fit the main PC (FR-064, research R23). |
 | **Project Type** | Local web application (Python server and worker, plus a browser interface) on a shared engine library with a command line |
 | **Performance Goals** | Preview ≤ 10 s after a change (SC-002); detailed single implant crown ≤ 30 min (SC-003); 18 detailed runs ≤ 10 h overnight (SC-004); scenarios with up to 3 implants or teeth ≤ 10 h (SC-013); comparison ready in < 1 min (SC-008); key numbers reproduce within 0.1% (SC-007) |
-| **Constraints** | Home network only, with owner password and HTTPS (FR-001); one heavy run at a time; memory refusal above 85% of RAM, watchdog at 92%; no patient data fields; open-source tools only; runs from uncommitted engine code are never publishable |
-| **Scale/Scope** | One user. About 30 published scenarios and hundreds to low thousands of runs in year one. Detailed models of about 0.5–2 M degrees of freedom. 5 capabilities, about 17 block types and 8 templates over all slices. About 12 interface screens. |
+| **Constraints** | Home network only, with owner password and HTTPS (FR-001); one heavy run at a time; memory refusal above 85% of the solving machine's RAM, watchdog at 92%; every unit case passes the force, energy and residual checks (FR-023); no patient data fields; open-source tools only; runs from uncommitted engine code are never publishable |
+| **Scale/Scope** | One user. About 30 published scenarios and hundreds to low thousands of runs in year one. Detailed models of about 0.3–1.2 M degrees of freedom on the main PC (its memory limit, measured in research R8); larger ones need a lower detail level, a factor-once solver build (R4) or the rented solver machine (R23). Previews about 15–25 k degrees of freedom (R7). 5 capabilities, about 17 block types and 8 templates over all slices. About 12 interface screens. |
 
 There are no NEEDS CLARIFICATION items; every choice is resolved in [research.md](research.md).
 
@@ -55,7 +55,7 @@ There are no NEEDS CLARIFICATION items; every choice is resolved in [research.md
 | **VI. Reproducible Pipeline** | Every output is regenerated from stored results, the run record and a template version, through the studio or `dentalsim` (FR-044). Input-hash keys cover a hash of the result-affecting engine source (not the repository commit, so interface, server or documentation commits never force a re-solve), solver build, gmsh version, conventions and library versions (R14). The commit is kept for provenance. Builds from uncommitted engine code are blocked from publishing. | ✅ |
 | **VII. Honest Visuals** | Shared colour and deformation scales are enforced in comparisons and packages. Magnification is stated. Frame review on desktop and phone is a checklist item. Promo clips come only from published scenarios. Brand names are blocked unless the brand-comparison fields are filled in. | ✅ |
 | **VIII. Literature-Sourced Inputs** | Library settings must point to an approved, immutable entry version. The source check passes before approval. Ranges are shown. Runs record entry versions and hashes. Rejecting an entry flags the runs that used it. | ✅ |
-| **Scope: open source, compute, git size** | All tools are open source (GPL tools run as separate processes; outputs are unencumbered). Compute is on the main PC. Results and large media stay outside git (R12, R19). | ✅ |
+| **Scope: open source, compute, git size** | All tools are open source, including the solver build (PaStiX in `ccx_static.exe`; PARDISO was dropped because Intel MKL is not open source, R3). GPL tools run as separate processes; outputs are unencumbered. Compute is on the main PC; a rented solver machine, when used, follows constitution 2.1.0 (inputs only, key-authenticated SSH, verified build, nothing kept there; R23). Results and large media stay outside git (R12, R19). | ✅ |
 | **Scope: new physics needs a benchmark first** | The capability gate (FR-011a, FR-062) also covers bonded elastic itself. | ✅ |
 | **Workflow: tests, gates** | `dentalsim check` is the merge gate; only a complete run on the main PC, with benchmark and regression tests, passes it ("incomplete" blocks merging). Every new solver capability ships with benchmark tests. | ✅ |
 
@@ -170,6 +170,11 @@ only `content/scenarios/`.
 - **Out of date** (FR-058): the hashes are compared each time a stored item is opened; nothing is reused silently.
 - **No block-specific code outside `blocks/` and `templates/`**: this is checked by an import-boundary test, so
   SC-012 holds.
+- **Convergence checks** (FR-023): the solver never reports a singular matrix (R3), so the engine checks every
+  unit case itself: force balance, energy (F · u against twice the strain energy) and the PaStiX residual, plus a
+  connectivity check of the mesh before the solve.
+- **Rented solver machine** (FR-064, R23): only the ccx step can move to it, over SSH; it is a solver build of
+  its own, verified and calibrated before use. Previews never leave the main PC.
 
 ## Complexity Tracking
 

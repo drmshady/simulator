@@ -127,37 +127,39 @@ the seed library is approved.
 
 ### Solver (research R3)
 
-- [ ] T011 **Owner (main PC)**: get CalculiX ccx 2.23 for Windows with Intel MKL PARDISO
-  - either PrePoMax's `ccx_dynamic.exe` with its MKL DLLs, or a oneAPI build
+- [ ] T011 **Owner (main PC)**: get CalculiX ccx 2.23 for Windows, the open-source build with PaStiX
+  (revised 2026-11-05: research R3)
+  - `ccx_static.exe` from the dhondt.de Windows package; no Intel MKL DLLs (MKL is not open source)
   - put it in `D:\DentalSimTools\calculix\` and set `DENTALSIM_CCX`
-  - with Claude, record the download source and steps in `docs/setup/solver.md`
-- [ ] T012 [P] Implement `engine/src/dentalsim/solvers/calculix/build.py`:
+  - with Claude, record the download source and steps in `docs/setup/solver.md` (written; follow it)
+- [X] T012 [P] Implement `engine/src/dentalsim/solvers/calculix/build.py`:
   - find the binary and run it on a one-element input
-  - parse the version string and confirm PARDISO is accepted
+  - parse the version string and confirm PaStiX is accepted (SPOOLES as the fallback; PARDISO is never chosen on
+    its own, and a program that loads Intel MKL is reported)
   - compute the binary's SHA-256 and return `solver_build_id = "ccx-<version>-<solver>-sha256:<hash>"`
-- [ ] T013 [P] Implement `engine/src/dentalsim/solvers/calculix/inp_writer.py`, which writes:
+- [X] T013 [P] Implement `engine/src/dentalsim/solvers/calculix/inp_writer.py`, which writes:
   - `*NODE`, `*ELEMENT, TYPE=C3D10`, and `*ELSET` per part and material
   - `*MATERIAL`/`*ELASTIC` and `*SOLID SECTION`
   - `*BOUNDARY` on the support node sets
-  - one `*STEP` / `*STATIC, SOLVER=PARDISO` per unit load case, with `*CLOAD` spread over a node patch
+  - one `*STEP` / `*STATIC, SOLVER=PASTIX` per unit load case, with `*CLOAD` spread over a node patch
   - `*NODE FILE U`, and `*EL PRINT` of S, E, COORD and EVOL to `.dat`
   - `*NODE PRINT` of the reaction forces RF on the support node sets, for the force-balance check (FR-023)
-- [ ] T014 [P] Implement `engine/src/dentalsim/solvers/calculix/runner.py`:
+- [X] T014 [P] Implement `engine/src/dentalsim/solvers/calculix/runner.py`:
   - run `ccx` as a child process in a per-job work folder, with `OMP_NUM_THREADS` and `CCX_NPROC_EQUATION_SOLVER`
-  - stream stdout for the stage and progress, and capture the solver messages and, where PARDISO reports it, the
-    relative residual
+  - stream stdout for the stage and progress, and capture the solver messages and the relative residual of each
+    step (PaStiX prints its refinement error; PARDISO and SPOOLES print none)
   - on cancel or watchdog, end the whole process tree with psutil
   - on failure, raise `SolverFailed` with a plain-language reason
-- [ ] T015 [P] Implement `engine/src/dentalsim/solvers/calculix/frd_reader.py` (nodal displacements per step) and
+- [X] T015 [P] Implement `engine/src/dentalsim/solvers/calculix/frd_reader.py` (nodal displacements per step) and
   `engine/src/dentalsim/solvers/calculix/dat_reader.py` (integration-point stress, strain and coordinates, plus element
   volumes, per step, plus the support reaction forces), returning NumPy arrays
-- [ ] T016 Add `dentalsim solver check` in `engine/src/dentalsim/commands/solver.py`, which prints the version, PARDISO
-  status and SHA-256. Add `engine/tests/benchmark/test_solver_smoke.py`: one C3D10 cube under uniaxial tension must
+- [X] T016 Add `dentalsim solver check` in `engine/src/dentalsim/commands/solver.py`, which prints the version, the
+  equation solver and SHA-256. Add `engine/tests/benchmark/test_solver_smoke.py`: one C3D10 cube under uniaxial tension must
   give the displacement σL/E within 1e-6 relative.
 
 ### Conventions document (FR-050, research R6)
 
-- [ ] T017 Draft `docs/conventions.md` (Claude drafts, the owner approves in T022): prose for the owner, plus one fenced
+- [X] T017 Draft `docs/conventions.md` (Claude drafts, the owner approves in T022): prose for the owner, plus one fenced
   ```` ```yaml conventions ```` block with:
   - `version: 1.0.0`, units, the frame and the load-angle sign
   - `load_patch_radius_mm`
@@ -170,23 +172,23 @@ the seed library is approved.
     not git (constitution, Scope)
   - the teaching-only notice text
   - the table mapping each library category to its unit dimension
-- [ ] T018 Implement `engine/src/dentalsim/conventions/schema.py` (pydantic, `extra="forbid"`) and
+- [X] T018 Implement `engine/src/dentalsim/conventions/schema.py` (pydantic, `extra="forbid"`) and
   `engine/src/dentalsim/conventions/loader.py`:
   - extract the fenced block and validate it
   - compute the SHA-256 content hash
   - a cached `get_conventions()` raises `ConventionsMissing`, so nothing runs without a valid block
-- [ ] T019 [P] Implement `engine/src/dentalsim/conventions/regions.py`, region predicates on integration-point
+- [X] T019 [P] Implement `engine/src/dentalsim/conventions/regions.py`, region predicates on integration-point
   coordinates and material group (research R5):
   - crestal ring: cortical bone within the distance of the implant or tooth surface set in the conventions, and above
     the depth below the crest set in the conventions
   - implant neck, and whole-component regions
   - surface distance from each block's report anchors (axis and radius profile)
   - mesial, distal, buccal and lingual sectors; the worse side is the sector with the highest mean
-- [ ] T020 [P] Implement `engine/src/dentalsim/conventions/codegen.py`:
+- [X] T020 [P] Implement `engine/src/dentalsim/conventions/codegen.py`:
   - writes `studio/ui/src/viewer/colourScales.generated.ts`: Frost categories and colours, the continuous stress scale,
     units and the notice text
   - wire it to `npm run gen:conventions`
-- [ ] T021 Add `dentalsim conventions check` (prints the version and hash) in
+- [X] T021 Add `dentalsim conventions check` (prints the version and hash) in
   `engine/src/dentalsim/commands/conventions.py`, plus the conventions regression tests in
   `engine/tests/unit/test_conventions.py` (SC-014):
   - the block parses and has a semver version
@@ -199,7 +201,7 @@ the seed library is approved.
 
 ### Core models (data-model.md, contracts/scenario-format.md)
 
-- [ ] T023 [P] Implement `engine/src/dentalsim/model/settings.py` and `engine/src/dentalsim/model/scenario.py`. All
+- [X] T023 [P] Implement `engine/src/dentalsim/model/settings.py` and `engine/src/dentalsim/model/scenario.py`. All
   models use `extra="forbid"`.
   - settings: `DesignValue`, and `LibraryValue` with `entry_id`, `entry_version`, `choice` (`typical`,
     `source:<id>` or `custom`), `value` and `outside_range`
@@ -208,48 +210,48 @@ the seed library is approved.
     `brand_comparison`. A `chewing_cycle` holds a list of instants (contact points, direction, force share) and a
     library-sourced cycle count; `clenching` also covers bruxism (FR-008). Force magnitude and cycle count are
     `LibraryValue`s; direction, contact points and shares are `DesignValue`s (FR-052)
-- [ ] T024 [P] Implement the remaining models (data-model.md):
+- [X] T024 [P] Implement the remaining models (data-model.md):
   - `engine/src/dentalsim/model/validity.py`: `Problem` with the codes `overlap`, `unsupported_pontic`,
     `in_nerve_canal`, `in_sinus`, `in_root`, `exceeds_bone`, `template_misfit` and `design_limit`; `ValidityResult`
   - `engine/src/dentalsim/model/results.py`: `KeyNumber`, `ResultSet`, `LockedResult`
   - `engine/src/dentalsim/model/run.py`: `Run`, with statuses, flags and `is_publishable()`
-- [ ] T025 Add `engine/tests/unit/test_model_no_patient_fields.py` (FR-048): unknown fields are refused, and no field
+- [X] T025 Add `engine/tests/unit/test_model_no_patient_fields.py` (FR-048): unknown fields are refused, and no field
   name in any model matches the patient-data deny list (patient, name, birth, mrn, address, scan, photo)
 
 ### Store and hashing (research R14)
 
-- [ ] T026 [P] Implement `engine/src/dentalsim/store/hashing.py`:
+- [X] T026 [P] Implement `engine/src/dentalsim/store/hashing.py`:
   - canonical JSON: sorted keys and normalised floats
   - `input_record()` and its SHA-256, built from the resolved scenario, library entry versions and content hashes,
     detail level, conventions version, engine source hash (T008, not the commit), solver build id and gmsh version
-- [ ] T027 [P] Implement `engine/src/dentalsim/store/cas.py`, a content-addressed store under `<data>/store/`:
+- [X] T027 [P] Implement `engine/src/dentalsim/store/cas.py`, a content-addressed store under `<data>/store/`:
   zstd-compressed NumPy and JSON blobs keyed by input hash and artefact name, with atomic writes (temp file, then
   rename), and `put`, `get` and `exists`
-- [ ] T028 Implement `engine/src/dentalsim/store/staleness.py`: compare a stored item's input record with the current
+- [X] T028 Implement `engine/src/dentalsim/store/staleness.py`: compare a stored item's input record with the current
   engine, conventions and library state, and return the flags `out_of_date` (FR-058) and `needs_reverification`
   (FR-051). Stale items are never reused silently.
 
 ### Persistence (SQLite, research R12)
 
-- [ ] T029 Implement `engine/src/dentalsim/persistence.py`:
+- [X] T029 Implement `engine/src/dentalsim/persistence.py`:
   - Protocol interfaces that engine modules depend on: `LibraryRepo`, `CapabilityRepo`, `ScenarioRepo`, `RunRepo`,
     `JobRepo`, `VerificationRepo`, `PublicationRepo`, `EventSink`
   - `open_repos(data_dir)`, which imports `dentalsim_studio.db` lazily so that the command line and the studio share
     one database
-- [ ] T030 Create `studio/server/src/dentalsim_studio/db/schema.sql` and
+- [X] T030 Create `studio/server/src/dentalsim_studio/db/schema.sql` and
   `studio/server/src/dentalsim_studio/db/migrations.py`:
   - migrations by `PRAGMA user_version`, with WAL and foreign keys
   - one table per data-model.md entity: projects, scenarios, owner_templates, runs, previews, studies, jobs, events,
     library_entries, library_versions, sources, version_sources, capability_status, verification_reports,
     mesh_checks, publication_records, published_scenarios, published_versions, exports, promo_clips, settings
   - an FTS5 table, `search_index`
-- [ ] T031 Implement `studio/server/src/dentalsim_studio/db/connection.py` (WAL, foreign keys, busy timeout, runs the
+- [X] T031 Implement `studio/server/src/dentalsim_studio/db/connection.py` (WAL, foreign keys, busy timeout, runs the
   migrations on open) and `studio/server/src/dentalsim_studio/db/repos/{jobs,events,capabilities,settings}.py`, with
   round-trip tests in `studio/server/tests/test_db_basics.py`
 
 ### Physics capabilities (FR-011a)
 
-- [ ] T032 Implement `engine/src/dentalsim/physics/registry.py`:
+- [X] T032 Implement `engine/src/dentalsim/physics/registry.py`:
   - a `Capability` with `id`, `linear`, `required_cases`, `write_solver_input()` and `post()`
   - register `bonded_elastic` (linear). Required cases are not hard-coded: at runtime the registry reads them from
     the case files in `content/verification/cases/` whose `capability` field names it (written later, in T074), so
@@ -257,43 +259,43 @@ the seed library is approved.
   - register `screw_preload`, `periodontal_ligament`, `contact` and `fatigue`: non-linear, with no cases yet, so they
     can never be ready
   - status comes from `CapabilityRepo`, defaulting to `awaiting_benchmark`
-- [ ] T033 Implement `engine/src/dentalsim/physics/gate.py`, `check_gate(scenario)`. It reads only the blocks'
+- [X] T033 Implement `engine/src/dentalsim/physics/gate.py`, `check_gate(scenario)`. It reads only the blocks'
   `needs_physics` and the result types' `needs_physics`, and returns:
   - the missing capabilities, which refuse previews and runs, each naming its benchmark
   - `locked_results`
 
 ### Literature library core (minimum of Story 2; blocks every story)
 
-- [ ] T034 [P] Implement `engine/src/dentalsim/library/models.py`: `Source` and `SourceCheck`, `LiteratureEntry`, and
+- [X] T034 [P] Implement `engine/src/dentalsim/library/models.py`: `Source` and `SourceCheck`, `LiteratureEntry`, and
   `LiteratureEntryVersion` with the statuses `proposed`, `approved`, `rejected` and `superseded` and a content hash
   (data-model.md)
-- [ ] T035 [P] Implement `engine/src/dentalsim/library/yaml_io.py`, which parses `dentalsim.library/1` (format and
+- [X] T035 [P] Implement `engine/src/dentalsim/library/yaml_io.py`, which parses `dentalsim.library/1` (format and
   rules in contracts/library-entry-format.md) and also writes approved snapshots. Import rules:
   - required fields must be present
   - `min ≤ typical ≤ max`, and every source value lies within the range
   - units must match the dimension the conventions give for the category
   - a `parameter_key` that already exists becomes a new version, not a duplicate
   - every import has the status `proposed`
-- [ ] T036 [P] Implement `engine/src/dentalsim/library/source_check.py`:
+- [X] T036 [P] Implement `engine/src/dentalsim/library/source_check.py`:
   - check DOIs with Crossref `https://api.crossref.org/works/{doi}` and PMIDs with NCBI E-utilities `esummary`, using
     httpx with the generic User-Agent `dentalsim-studio/<version>` and no personal data
   - a source matches when the first author's surname, the year and the normalised title (similarity ≥ 0.90) all agree
   - statuses: `resolved_match`, `resolved_mismatch`, `unresolved` or `not_checked` (offline)
-- [ ] T037 Implement `engine/src/dentalsim/library/service.py` and
+- [X] T037 Implement `engine/src/dentalsim/library/service.py` and
   `studio/server/src/dentalsim_studio/db/repos/library.py`. The service covers:
   - import and source checks
   - `approve`: refused unless every source is `resolved_match` (FR-054)
   - `reject`
   - `edit`: creates a new version and supersedes the old one (FR-016)
   - `resolve(parameter_key, choice)`: approved versions only (FR-014)
-- [ ] T038 Add `dentalsim library import|check|approve|reject|export` in `engine/src/dentalsim/commands/library.py`.
+- [X] T038 Add `dentalsim library import|check|approve|reject|export` in `engine/src/dentalsim/commands/library.py`.
   `check` prints the entry, its values and each source's check result. Add `engine/tests/unit/test_library_rules.py`,
   with Crossref and NCBI mocked:
   - the import validation rules
   - approval is refused on `resolved_mismatch`, `unresolved` and `not_checked`
   - a proposed version cannot be resolved
   - an edit creates a new version
-- [ ] T039 **Claude research**: write `content/library/proposals/seed-bonded-elastic.yaml`
+- [X] T039 **Claude research**: write `content/library/proposals/seed-bonded-elastic.yaml`
   (`dentalsim.library/1`), using PubMed, Crossref and Consensus. Entries:
   - **Bone**: cortical bone E and ν; cancellous bone E for D1–D4 and ν; cortical thickness per density class
   - **Titanium**: grade 4 and grade 5 E, ν and yield strength
@@ -313,40 +315,40 @@ the seed library is approved.
 
 ### Studio server skeleton (research R10)
 
-- [ ] T041 Implement `studio/server/src/dentalsim_studio/app.py`, the FastAPI app factory:
+- [X] T041 Implement `studio/server/src/dentalsim_studio/app.py`, the FastAPI app factory:
   - registers the routers
   - error handlers that return the error shape in contracts/studio-api.md: `not_signed_in`, `validation_failed`,
     `run_refused`, `estimate_too_large`, `publish_refused`, `not_found`, `conflict`
   - serves `studio/ui/dist` with an SPA fallback
   - loads the conventions at start-up and refuses to start without them
-- [ ] T042 [P] Implement `studio/server/src/dentalsim_studio/auth/network_guard.py`:
+- [X] T042 [P] Implement `studio/server/src/dentalsim_studio/auth/network_guard.py`:
   - a subclass of uvicorn's `H11Protocol`, passed as `Config(http=...)`
   - its `connection_made` closes the transport with no HTTP reply unless the peer is loopback or inside a configured
     home subnet; `connection_lost` is short-circuited for refused connections
   - tests in `studio/server/tests/test_network_guard.py`
-- [ ] T043 [P] Implement sign-in:
+- [X] T043 [P] Implement sign-in:
   - `studio/server/src/dentalsim_studio/auth/password.py`: an Argon2id hash in the settings table
   - `studio/server/src/dentalsim_studio/auth/sessions.py`: a random session id in an HttpOnly, Secure,
     SameSite=Strict cookie; a 2-hour idle timeout; at most 5 login attempts a minute
   - `studio/server/src/dentalsim_studio/api/auth.py`: `POST /api/auth/login`, `POST /api/auth/logout`, and the session
     dependency on every other route
   - tests in `studio/server/tests/test_auth.py`
-- [ ] T044 [P] Implement `studio/server/src/dentalsim_studio/auth/certificate.py`. On first start:
+- [X] T044 [P] Implement `studio/server/src/dentalsim_studio/auth/certificate.py`. On first start:
   - generate a local CA and a server certificate for the main PC's host name and home-network IP addresses
     (`cryptography`), stored in `<data>/certs/`
   - print the Windows trust steps (certutil) and the exact `New-NetFirewallRule` command: Private profile,
     LocalSubnet, port 8443
-- [ ] T045 [P] Implement `studio/server/src/dentalsim_studio/events/bus.py` and
+- [X] T045 [P] Implement `studio/server/src/dentalsim_studio/events/bus.py` and
   `studio/server/src/dentalsim_studio/api/events.py`:
   - the worker and the server append events to the `events` table
   - `GET /api/events` streams Server-Sent Events by polling the table every 250 ms, and resumes from `Last-Event-ID`
   - event types: `preview.ready`, `run.progress`, `run.finished`, `study.progress`, `job.failed`,
     `validity.changed`, `capability.changed`
-- [ ] T046 Implement `studio/server/src/dentalsim_studio/api/system.py`:
+- [X] T046 Implement `studio/server/src/dentalsim_studio/api/system.py`:
   - `GET /api/system`: engine version, `dev_build`, solver build id, conventions version, memory and free disk
     (psutil), and the queue summary
   - `GET /api/conventions`
-- [ ] T047 Add `dentalsim studio serve [--host] [--port]` and `dentalsim studio set-password` (password prompted with
+- [X] T047 Add `dentalsim studio serve [--host] [--port]` and `dentalsim studio set-password` (password prompted with
   getpass) in `engine/src/dentalsim/commands/studio.py`. `serve` delegates to
   `studio/server/src/dentalsim_studio/serve.py`, which:
   - creates the data folder, runs the migrations and makes the certificate
@@ -356,46 +358,46 @@ the seed library is approved.
 
 ### Queue and worker (research R9)
 
-- [ ] T048 Implement `studio/server/src/dentalsim_studio/jobs/queue.py` and `studio/server/src/dentalsim_studio/db/repos/jobs.py`:
+- [X] T048 Implement `studio/server/src/dentalsim_studio/jobs/queue.py` and `studio/server/src/dentalsim_studio/db/repos/jobs.py`:
   - lanes `heavy` and `preview`, with positions
   - an atomic claim (`BEGIN IMMEDIATE`), heartbeat, cancel and requeue at the front
   - job kinds: `run`, `preview`, `mesh_check`, `verification`, `export`, `promo`, `interactive_data`
-- [ ] T049 Implement `studio/server/src/dentalsim_studio/worker/main.py` and `dentalsim worker` (in
+- [X] T049 Implement `studio/server/src/dentalsim_studio/worker/main.py` and `dentalsim worker` (in
   `engine/src/dentalsim/commands/studio.py`):
   - one loop per lane: heavy runs one job at a time with `OMP_NUM_THREADS` = cores − 2; preview runs one job at a
     time with 2 threads
   - a registry of handlers by job kind, from `worker/handlers/`
   - start-up recovery: a job left `running` becomes `interrupted` and is requeued at the front (FR-056)
   - heartbeats and events
-- [ ] T050 [P] Implement two worker guards:
+- [X] T050 [P] Implement two worker guards:
   - `studio/server/src/dentalsim_studio/worker/power.py`: calls `SetThreadExecutionState(ES_CONTINUOUS |
     ES_SYSTEM_REQUIRED)` through ctypes while jobs exist, and releases it when idle
   - `studio/server/src/dentalsim_studio/worker/watchdog.py`: when system memory passes 92%, ends the solver process
     tree and records "failed: out of memory, try a lower detail level"
-- [ ] T051 Add `studio/server/tests/test_queue_recovery.py`:
+- [X] T051 Add `studio/server/tests/test_queue_recovery.py`:
   - two heavy jobs never run at once
   - a job left `running` at start-up becomes `interrupted`, then queued at the front
   - queued jobs keep their order
 
 ### Interface shell
 
-- [ ] T052 [P] Implement the interface's API layer:
+- [X] T052 [P] Implement the interface's API layer:
   - `studio/ui/src/api/client.ts`: fetch with credentials, mapping the error shape to a typed `StudioError`
   - `studio/ui/src/api/schema.d.ts`, generated from the server's OpenAPI by `npm run gen:api`
   - the TanStack Query provider in `studio/ui/src/main.tsx`
-- [ ] T053 [P] Implement `studio/ui/src/api/events.ts`: an EventSource hook that reconnects automatically and refreshes
+- [X] T053 [P] Implement `studio/ui/src/api/events.ts`: an EventSource hook that reconnects automatically and refreshes
   queries on reconnect, so the laptop shows a run's current status again after losing its connection (edge case)
-- [ ] T054 Implement `studio/ui/src/App.tsx` and `studio/ui/src/pages/Login.tsx`:
+- [X] T054 Implement `studio/ui/src/App.tsx` and `studio/ui/src/pages/Login.tsx`:
   - a Mantine AppShell with navigation to Builder, Results, Compare, Projects, Queue, Library, Verification,
     Exports, Publish and Physics
   - redirect to sign-in on 401
   - a system bar showing the engine version, a dev-build badge, the conventions version, memory and disk
-- [ ] T055 [P] Implement `studio/ui/src/components/TeachingNotice.tsx`, using the notice text from the conventions
+- [X] T055 [P] Implement `studio/ui/src/components/TeachingNotice.tsx`, using the notice text from the conventions
   (FR-028)
 
 ### Merge gate, boundaries, estimates
 
-- [ ] T056 Implement `dentalsim check` in `engine/src/dentalsim/commands/check.py`:
+- [X] T056 Implement `dentalsim check` in `engine/src/dentalsim/commands/check.py`:
   - runs ruff, mypy, and pytest `unit` and `integration`
   - runs `benchmark` and `regression` only when `DENTALSIM_CCX` is set; otherwise the result is "incomplete",
     which exits with code 1 and does **not** count as a pass (constitution, Workflow: the full suite must pass before
@@ -406,16 +408,17 @@ the seed library is approved.
     checklist
   - add `engine/tests/unit/test_check_gate.py`: with `DENTALSIM_CCX` unset, `check` exits 1, reports "incomplete" and
     records no pass
-- [ ] T057 [P] Add `engine/tests/unit/test_import_boundaries.py` (SC-012): no module outside `dentalsim/blocks/` and
+- [X] T057 [P] Add `engine/tests/unit/test_import_boundaries.py` (SC-012): no module outside `dentalsim/blocks/` and
   `dentalsim/templates/` imports a block module or names a block `type_id`, and `studio/server` imports no block module
-- [ ] T058 Implement `engine/src/dentalsim/estimate/calibrate.py` and `engine/src/dentalsim/estimate/model.py`
+- [X] T058 Implement `engine/src/dentalsim/estimate/calibrate.py` and `engine/src/dentalsim/estimate/model.py`
   (research R8):
   - mesh a gmsh box at 3 sizes and solve 3 unit cases at each
   - measure wall time, peak memory (polling the ccx process with psutil) and disk use
   - fit, per solver build: time ≈ a·DOF^b, memory ≈ c·DOF^d, disk ≈ e·DOF·cases
   - write `<data>/estimate/coefficients.json`; `refit()` later adds finished runs
-- [ ] T059 **Owner (main PC)**: run `uv run python -m dentalsim.estimate.calibrate`, then record the measured numbers in
-  `docs/setup/solver.md`
+- [ ] T059 **Owner (main PC)**: run `uv run python -m dentalsim.estimate.calibrate` (it uses the heavy lane's thread
+  count, `dentalsim.threads`; about 10 minutes, so choose a time when the PC is free), then record the measured
+  numbers in `docs/setup/solver.md`
 
 **Checkpoint**: the foundation is ready. The conventions are approved, the solver passes its smoke test, the seed
 library is approved, and the secured server and worker start.
@@ -515,8 +518,12 @@ this is gated by the bonded-elastic textbook benchmarks.
   - `engine/src/dentalsim/mesh/build.py`:
     - C3D10 elements, meshed single-threaded with a fixed seed
     - a quality check (minimum SICN) that fails with a plain reason
+    - a connectivity check (FR-023): every part must be joined to a supported part through shared faces, not only
+      nodes or edges; otherwise the run fails before the solve, naming the part ("the crown does not touch the
+      abutment")
     - extraction of nodes, elements, element sets, support node sets and per-part outer-surface triangles
   - `engine/src/dentalsim/mesh/predict.py`: predicts the DOF from the size fields before meshing
+  - the `preview` level targets about 15–25 k DOF (research R7: 48 k DOF already takes 8 s on 2 threads)
 
 ### Bonded-elastic benchmarks: the gate (FR-011a, research R15)
 
@@ -530,6 +537,9 @@ this is gated by the bonded-elastic textbook benchmarks.
       (`textbook` now; `published` once US5's cases exist, which then takes precedence, FR-017)
     - sets the capability status: ready only when every required case passes in one report; any failure locks it
       again (FR-062)
+    - a capability stays ready only while its report covers every current required case: adding a required case
+      file returns it to "awaiting benchmark" until a new report passes (extend `physics/registry.capability_state`
+      to compare the report's case ids with the current required cases)
     - emits `capability.changed`
 - [ ] T072 [P] [US1] Implement `engine/src/dentalsim/verification/builders/textbook.py` with these cases:
   - cantilever beam: Timoshenko tip deflection
@@ -554,7 +564,9 @@ this is gated by the bonded-elastic textbook benchmarks.
   - `textbook-cylinder-convergence.yaml`
 - [ ] T075 [US1] Add `dentalsim verify [--case ID ...] [--physics ID]` in
   `engine/src/dentalsim/commands/verify.py`, and `engine/tests/benchmark/test_textbook_bonded_elastic.py`: every
-  textbook case passes on CalculiX and agrees with the scikit-fem cross-check
+  textbook case passes on CalculiX and agrees with the scikit-fem cross-check. Also add
+  `engine/tests/benchmark/test_unsupported_models_refused.py`: a cube held only along one edge, and an assembly with
+  a part that touches nothing, are refused by the convergence or connectivity checks and never reported
 
 ### Solve pipeline and results (research R4, R5)
 
@@ -586,12 +598,19 @@ this is gated by the bonded-elastic textbook benchmarks.
     content-addressed store under the input hash
   - a progress callback reporting the stage, percent and time remaining
   - a failure stores nothing partial (FR-022)
-  - the force-balance check per unit case after the solve: the sum of support reactions against the applied load; a
-    relative error above the conventions `equilibrium_tolerance` fails the run with that reason (FR-023)
-  - returns the convergence (force balance per case, solver relative residual, solver messages), the actual DOF, time, memory and disk, `locked_results`, and every version
+  - the convergence checks per unit case after the solve (FR-023; research R3), each failing the run with its
+    reason:
+    - force balance: the sum of support reactions against the applied load, within `equilibrium_tolerance`
+    - energy: the work of the load (F · u at the patch nodes) against twice the strain energy (from the
+      integration-point stress, strain and volumes), within `energy_tolerance`
+    - the solver residual of the step (`SolverRunResult.step_residuals`), within `residual_tolerance`, where the
+      solver reports one
+  - returns the convergence (force balance, energy balance and residual per case, solver messages), the actual DOF,
+    time, memory and disk, `locked_results`, and every version
 - [ ] T082 [US1] Implement `engine/src/dentalsim/estimate/predict.py` (FR-009, FR-057):
   - from the predicted DOF and the coefficients, returns `{dof, time_s, memory_gb, disk_gb, fits, warnings}`
-  - refuses when the memory needed is above 85% of physical memory, suggesting a lower detail level
+  - refuses when the memory needed is above 85% of the solving machine's physical memory, suggesting a lower
+    detail level (and, when one is configured, the rented solver machine, FR-064)
   - warns when free disk is below twice the expected use
 - [ ] T083 [US1] Add `dentalsim validate|estimate|run|preview <scenario.json>` in
   `engine/src/dentalsim/commands/scenario.py`, with `--detail`, `--out`, `--id` and `--json`; runs are stored through
@@ -1164,6 +1183,41 @@ When it fails a re-run, it locks again and the published scenarios that depend o
 
 ---
 
+## Phase 14: Rented solver machine (optional; FR-064, research R23)
+
+**Goal**: send heavy runs that do not fit the main PC to a rented machine over SSH, with only the solver step
+moving there. Start this phase only when T098, T107 or a study shows the main PC is too small or too slow.
+
+**Independent Test**: on a rented machine, `dentalsim solver check --host NAME` and `dentalsim verify --host NAME`
+pass; a detailed run sent there gives the same key numbers (within 0.1%) as the same run on the main PC; cutting
+the connection mid-run fails the run cleanly with its reason and stores nothing.
+
+- [ ] T174 [P] Implement `engine/src/dentalsim/solvers/remote.py`:
+  - solver hosts from `<data>/solver-hosts.yaml` (name, SSH target, private-key path in the owner's profile, ccx path,
+    threads, memory GB, platform); never stored in git or the database
+  - a remote runner with the same interface as `run_ccx`: copy the work folder with `scp`, run ccx over `ssh` with the
+    thread variables, stream its output for progress and the PaStiX residual, copy `.frd`, `.dat` and the log back,
+    delete the remote folder; cancel ends the remote process tree; a lost connection raises `SolverFailed`
+  - the remote build id: version and equation solver from a probe run there, SHA-256 computed there
+- [ ] T175 Add `--host NAME` to `dentalsim solver check`, `dentalsim verify` and
+  `python -m dentalsim.estimate.calibrate` (coefficients per solver build already, research R8)
+- [ ] T176 Extend the gate and the run path:
+  - `engine/src/dentalsim/physics/registry.py` and `gate.py`: a capability is ready for a solver build only when a
+    passing report was made with that build; runs on an unverified build are refused, naming the benchmark
+  - `engine/src/dentalsim/pipeline.py` and `studio/server/src/dentalsim_studio/worker/handlers/run.py`: a run's
+    `solver_host` (default: the main PC) picks the runner, the estimate and the memory limit; the run records it
+  - previews always run on the main PC
+- [ ] T177 [P] In the interface: list the solver hosts with their build and verification status on the Physics page,
+  and let the owner choose the main PC or a rented machine in `EstimateDialog.tsx` and the study dialog
+- [ ] T178 Add `engine/tests/unit/test_remote_runner.py` (ssh and scp replaced by local stand-ins: streaming, cancel,
+  lost connection, clean-up) and `studio/server/tests/test_remote_runs.py` (an unverified host is refused; a failed
+  remote run stores nothing partial)
+- [ ] T179 **Owner**: rent a machine; install OpenSSH server and `ccx_static.exe` (Windows) or build ccx 2.23 with PaStiX
+  (Linux); add it to `solver-hosts.yaml`; run `solver check`, `verify` and the calibration with `--host`; compare one
+  detailed run with the main PC; record everything in `docs/setup/rented-solver.md`
+
+---
+
 ## Dependencies and execution order
 
 ### Phase dependencies
@@ -1180,6 +1234,7 @@ When it fails a re-run, it locks again and the published scenarios that depend o
 | **US8** (Phase 11) | US7 (only published scenarios) and US6 (`render.py`) |
 | **US9 framework** (Phase 12) | US7 (published scenarios to flag) |
 | **Polish** (Phase 13) | Every story you choose to deliver |
+| **Rented solver machine** (Phase 14, optional) | Slice 1a (pipeline T081, verification T071–T075, run handler T088); start only when the main PC proves too small or slow |
 
 ### User story dependency graph
 

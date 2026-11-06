@@ -60,7 +60,7 @@ This is the contract between this feature and the public website (feature 001), 
   "library_entries": [{"id": "01J...", "version": 1, "parameter_key": "…", "value": 0, "units": "…", "sources": ["src-..."]}],
   "brand_comparison": null,
   "provenance": {"engine_version": "0.4.0+g1a2b3c4", "conventions_version": "1.0.0",
-                 "solver_build_id": "ccx-2.23-pardiso-sha256:…", "run_ids": ["01J..."]},
+                 "solver_build_id": "ccx-2.23-pastix-sha256:…", "run_ids": ["01J..."]},
   "history": [{"action": "publish", "version": 1, "at": "2027-02-01T10:00:00Z"}]
 }
 ```

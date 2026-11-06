@@ -1,6 +1,33 @@
 <!--
 Sync Impact Report
 ==================
+Version change: 2.0.0 -> 2.1.0 (MINOR: compute may include a rented solver machine; materially expanded
+guidance in Principle V and Scope)
+
+Modified principles:
+  V.   Solve Offline, Deliver Instantly - clarified: solves are run by the owner's simulator, on the owner's PCs
+                                          or on a solver machine the owner rents and controls; the website
+                                          still never solves
+
+Modified sections:
+  - Scope and Delivery Constraints: Products and Compute allow a rented solver machine for runs too large or
+    too slow for the main PC, with the rules it must follow (inputs only, encrypted key-authenticated access,
+    same open-source solver verified on that machine, nothing kept there)
+
+Added sections: none
+Removed sections: none
+
+Templates:
+  ✅ .specify/templates/plan-template.md   - Constitution Check reads this file; no edit needed
+  ✅ .specify/templates/spec-template.md   - no mandatory section change
+  ✅ .specify/templates/tasks-template.md  - no change
+  ✅ specs/002-simulation-studio/          - spec FR-002, FR-057 revised and FR-064 added; plan, research R23,
+                                              data model and tasks (Phase 14) updated on 2026-11-05
+
+Deferred TODOs: none.
+
+Previous report (2.0.0)
+-----------------------
 Version change: 1.0.0 -> 2.0.0 (MAJOR: Principle IV redefined; project restarted from scratch)
 
 Modified principles:
@@ -95,9 +122,9 @@ Rationale: experts will judge the platform by its assumptions; stating them firs
 
 ### V. Solve Offline, Deliver Instantly
 
-- Finite element solves MUST run in the local simulator, never on the public website. The website MUST only
-  read pre-computed, published results. No solve may run in a visitor's browser or on a server at request
-  time.
+- Finite element solves MUST be run by the local simulator, never by the public website: on the owner's own
+  PCs, or on a solver machine the owner rents and controls (see Scope, Compute). The website MUST only read
+  pre-computed, published results. No solve may run in a visitor's browser or on a server at request time.
 - Website interactive controls MUST respond without perceptible delay on a mid-range phone.
 - One website codebase MUST serve both layouts: a textbook layout with a contents list on laptops and a card
   layout on phones, each with a "find by situation" entry.
@@ -142,7 +169,8 @@ Rationale: published values vary widely; showing the range and the source is wha
 
 - Audience: dental students, residents and dentists worldwide. Language: English.
 - Products: (1) the local simulator, used only by the owner, running on the owner's own computers and
-  reachable only on the home network, never from the internet; (2) the public website, a library browsed
+  reachable only on the home network, never from the internet (a rented solver machine, below, only solves
+  for it and is never reachable as the simulator); (2) the public website, a library browsed
   freely, not a sequenced course. Both live in one repository with a shared engine and a shared content
   format.
 - Build order: the simulator first; the website after the first scenarios are verified and published.
@@ -156,7 +184,16 @@ Rationale: published values vary widely; showing the range and the source is wha
   periodontal ligament, screw preload, fatigue) MUST pass a benchmark with a known answer before any scenario
   uses it.
 - Compute: the owner's stronger PC (RTX 4060 Ti, about 32 GB memory) is the main simulation machine;
-  overnight runs are acceptable. Large solved results MUST NOT bloat normal version-control history.
+  overnight runs are acceptable. When a run is too large or too slow for it, the owner MAY rent a more
+  powerful machine as a solver machine. A rented solver machine:
+  - receives only generated solver inputs and returns solver results (the simulator holds no patient data);
+  - is reached only by the simulator, over an encrypted, key-authenticated connection, and offers no other
+    service;
+  - runs the same free, open-source solver, identified as its own solver build, which MUST pass the engine
+    benchmark suite on that machine before any of its results are used;
+  - keeps no inputs or results after a run has been returned.
+  The simulator, its database and every stored result stay on the owner's PCs. Large solved results MUST NOT
+  bloat normal version-control history.
 - Teaching films and slide animations: H.264 MP4 that presentation software plays directly.
 - Promo videos: vertical 9:16, 15 to 45 seconds, for YouTube Shorts, Instagram, Facebook and TikTok; a
   generated voice whose licence permits commercial use; captions burned in; widescreen cuts for longer pieces
@@ -193,4 +230,4 @@ Rationale: published values vary widely; showing the range and the source is wha
 - Compliance is checked in every plan's Constitution Check, at every scenario publication, and at least once
   a quarter against the year-one targets.
 
-**Version**: 2.0.0 | **Ratified**: 2026-11-05 | **Last Amended**: 2026-11-05
+**Version**: 2.1.0 | **Ratified**: 2026-11-05 | **Last Amended**: 2026-11-05

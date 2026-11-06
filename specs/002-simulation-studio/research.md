@@ -53,16 +53,34 @@ conventions document or library is written; they do not block planning.
 
 - **Decision**: use **CalculiX ccx 2.23** (GPL-2; stable release 19 Oct 2025) as the single solver for every
   physics stage.
-  - **Build**: a Windows build linked to Intel MKL **PARDISO** and multithreaded with OpenMP. The bundled
-    PARDISO executable PrePoMax uses (`ccx_dynamic.exe` plus MKL DLLs), or one built by us with oneAPI MKL.
+  - **Build** (revised 2026-11-05 after measuring on the main PC): the open-source Windows build
+    `ccx_static.exe` from dhondt.de, with the **PaStiX** sparse direct solver (and Scotch, hwloc and OpenBLAS,
+    all open source), multithreaded. PARDISO is not used: it needs Intel MKL, which is free but not open source
+    (constitution, Scope), and PaStiX was faster on detailed models anyway (table below).
+  - **How PaStiX runs in ccx 2.23**: it factors in single precision, then refines the solution in double
+    precision (GMRES) until the residual is below 1e-12, and switches itself to full double precision if that
+    refinement does not converge. It prints the error of each refinement iteration, which gives the relative
+    residual FR-023 asks for.
   - **How the engine drives it**:
     - writes a solver input file (`.inp`)
     - runs `ccx` as a separate process
     - reads nodal fields from `.frd` and integration-point stress, strain and element volumes from `.dat`
   - **Solver identity**: the binary's SHA-256 and version string form the solver build id stored with every run.
-  - **Fallbacks**, both recorded as a different solver build:
-    - the same version with the PaStiX or SPOOLES solver
-    - the Ubuntu `calculix-ccx` package under WSL2
+  - **Fallbacks**, each recorded as a different solver build:
+    - the same program with the SPOOLES solver (open source, about 3 times slower)
+    - the Ubuntu `calculix-ccx` package under WSL2 (version 2.21, not 2.23)
+  - **Measured on the main PC** (10 physical cores, 31.8 GB; 8 solver threads; a 20 mm cube of 10-node
+    tetrahedra, one unit load case, time including assembly and output):
+
+    | DOF | PARDISO (MKL) | PaStiX (`ccx_static.exe`) | SPOOLES |
+    |---|---|---|---|
+    | 48 k | 3.5 s, 0.35 GB | 3.5 s, 0.43 GB | 4.3 s, 0.39 GB |
+    | 165 k | 16.6 s, 1.7 GB | 19.7 s, 2.0 GB | 49.5 s, 1.8 GB |
+    | 387 k | 110 s, 5.4 GB | 69 s, 6.1 GB | — |
+    | 758 k | 308 s, 13.5 GB | 154 s, 14.4 GB | — |
+
+    Every solver balanced the support reactions against the load to about 1e-14 (relative); PaStiX's final
+    refinement error was 1e-16 to 6e-14.
 - **Rationale**:
   - Its input language is Abaqus-like, which matches how most published dental FEA is described (linear
     elastic, bonded, 10-node tetrahedra). That makes the 3–5 published reproductions straightforward.
@@ -84,8 +102,15 @@ conventions document or library is written; they do not block planning.
     planning).
   - **Code_Aster, MOOSE**: Linux-centred and heavy on Windows.
   - Commercial codes are excluded by the constitution.
-- **Risk and first task**: get and smoke-test the PARDISO Windows build on the main PC before any engine work.
-  Measure solve time and memory for the textbook cases at 3 sizes to calibrate R8.
+- **Risk and first task**: get and smoke-test the solver build on the main PC before any engine work (done
+  2026-11-05 with `ccx_static.exe`), and calibrate R8 with it (T059).
+- **What the solver does not report**: ccx 2.23 never stops on a singular stiffness matrix. A cube held only
+  along one edge "solved" with no message and displacements of 10⁹–10¹⁰ mm under every equation solver. The
+  checks that catch it are the engine's own (FR-023): force balance (an error of 57% to 874% here, but that
+  depends on the hinge's orientation), the energy check (work of the load / twice the strain energy: 1.0000003
+  for the supported cube, about −10¹¹ for the hinged one) and, with PaStiX, the residual (2e-6 after the
+  50-iteration cap, against about 1e-14 normally). A part that touches nothing carries no load and is caught
+  only by a connectivity check before the solve.
 
 ## R4. Linear load cases and superposition
 
@@ -100,6 +125,12 @@ conventions document or library is written; they do not block planning.
   the runs.
 - **Limit**: superposition is invalid for contact, preload and other nonlinear physics. The physics capability
   declares whether it is linear, and interactive data then falls back to solved cases (R18).
+- **Cost**: ccx 2.23 factors the stiffness matrix again for every unit case: its linear static driver solves
+  one right-hand side per step, although the PaStiX and PARDISO interfaces already accept several (checked in
+  `linstatic.c`; 3 cases took 2.8 times as long as one). So each contact point costs 3 factorisations. If the
+  single-crown acceptance run (T098) misses the 30-minute target, the main lever is a ccx build patched to
+  factor once and solve every unit case (open source, GPL; we would build and publish it), before buying
+  memory or renting compute (R23).
 
 ## R5. Reported values and regions
 
@@ -162,7 +193,8 @@ conventions document or library is written; they do not block planning.
 ## R7. Preview within 10 seconds (FR-017, SC-002)
 
 - **Decision**: the preview uses the same pipeline at the **preview** detail level:
-  - coarse mesh (about 20–60 k nodes)
+  - coarse mesh of about 15–25 k degrees of freedom (about 5–8 k nodes; revised 2026-11-05 from the
+    measurements below)
   - threads smeared into a cylinder
   - unit load cases only for the active contact points
 - **Time budget**:
@@ -170,10 +202,13 @@ conventions document or library is written; they do not block planning.
   | Step | Time |
   |---|---|
   | Geometry and mesh | ≤ 4 s |
-  | Solve (PARDISO, 2 reserved cores) | ≤ 3 s |
+  | Solve (PaStiX, 2 threads) | ≤ 3 s |
   | Post-processing and transfer | ≤ 2 s |
   | Safety margin | 1 s |
 
+- **Measured on the main PC** (PaStiX, 2 threads, one contact point = 3 unit cases): 14 k DOF took 1.7 s
+  (0.8 s for one case); 48 k DOF took 8.1 s, which alone breaks the budget. Previews with several active
+  contact points need a still smaller mesh, or more threads when the heavy lane is idle.
 - **How it behaves**:
   - Setting changes are debounced by 600 ms.
   - Results are cached by input hash (R14).
@@ -198,6 +233,15 @@ conventions document or library is written; they do not block planning.
   - The worker warns when free disk space is less than twice the expected disk use.
   - A watchdog (psutil) stops the solver process cleanly if real memory passes 92%. The run is recorded as
     "failed: out of memory".
+- **Measured on the main PC** (R3 table): peak memory grows as about DOF^1.35 for PARDISO and DOF^1.28 for
+  PaStiX, and 758 k DOF needs 13.5–14.4 GB. Within the 85% limit of 31.8 GB (27 GB), the largest model is
+  therefore about **1.2–1.3 M DOF**, not the 2 M first assumed. A uniform cube is close to the worst case for
+  fill-in, so elongated, locally refined dental models should do somewhat better; T059 and T098 measure it.
+  Time per unit case with PaStiX on 8 threads: about 70 s at 387 k and 150 s at 758 k DOF.
+- **If detailed models do not fit or are too slow**, in order of cost: solve only the loaded contact points;
+  refine only where reported regions need it (the mesh check decides the level, and region means and 95th
+  percentiles converge much faster than peaks); a ccx build that factors once for all unit cases (R4); more
+  memory in the main PC (64 GB would hold about 2.2 M DOF); a rented solver machine (R23).
 - **Rationale**: these laws describe the cost of direct solvers well, and the fit improves as runs accumulate.
 - **Alternatives considered**: fixed tables per template, which break when blocks are combined freely.
 
@@ -211,7 +255,9 @@ conventions document or library is written; they do not block planning.
     | Heavy | 1 |
     | Preview | 1 |
 
-  - **Cores**: the heavy lane gets all cores minus 2 (`OMP_NUM_THREADS`), so previews stay fast.
+  - **Cores**: the heavy lane gets all physical cores minus 2 (`OMP_NUM_THREADS`; 8 on the main PC), so
+    previews stay fast. Hyper-threads do not help the direct solvers. The calibration runs (R8) use the same
+    count (`dentalsim.threads`).
   - **Restarts**: on start-up, any job left "running" is marked "interrupted" and put back at the front of the
     queue.
   - **Sleep**: while jobs exist, the worker asks Windows not to sleep (`SetThreadExecutionState`), so overnight
@@ -487,3 +533,33 @@ conventions document or library is written; they do not block planning.
   - **The 4060 Ti**: used for rendering films and figures. The direct solver runs on the CPU.
 - **Rationale**: matches the spec's Assumptions and the owner's hardware. A GPU solver is not needed to meet the
   30-minute and 10-hour targets.
+
+## R23. Rented solver machine (FR-064, constitution 2.1.0 Scope: Compute)
+
+- **Decision**: when a run is too large or too slow for the main PC, the owner may rent a more powerful
+  machine (a cloud virtual machine or a remote workstation, Windows or Linux) as a **solver machine**. Only the
+  solver step moves there; everything else stays on the main PC.
+  - **What moves**: the worker writes the solver input (`.inp`) as usual, copies it to the rented machine over
+    SSH (OpenSSH, built into Windows 11 and Linux), runs ccx there with the same thread variables, streams its
+    output back for progress, copies the `.frd`, `.dat` and log back, and deletes the remote work folder. Meshing,
+    post-processing, the convergence checks and storage stay on the main PC.
+  - **Access**: key authentication only (the key stays in the owner's user profile, never in the repository or
+    the database); the rented machine opens no other port; no studio service runs there.
+  - **Solver build**: the rented machine's ccx is identified like any other (`ccx-<version>-<solver>-sha256:…`,
+    the hash computed on that machine), so its results are keyed separately (R14). Every capability a run needs
+    must have passed its benchmarks with that build (`dentalsim verify --host`) before runs go there; the gate
+    treats an unverified build as "awaiting benchmark" (FR-011a). It gets its own estimate coefficients (R8).
+    - Windows: copy `ccx_static.exe` (the same file and hash as the main PC's).
+    - Linux: build ccx 2.23 with PaStiX from source (Ubuntu's package is 2.21); a different build id.
+  - **Failure**: a lost connection ends the run as failed, storing nothing partial (FR-022); the remote process
+    tree is ended; the owner can re-queue it.
+  - **Choosing it**: per run or study, in the estimate dialog; the default stays the main PC. Previews always
+    run on the main PC (they must answer within 10 s).
+- **Rationale**: the measurements in R8 put the main PC's ceiling at about 1.2 M DOF. Renting a machine with
+  128–256 GB for an overnight batch is cheap compared with buying one, and keeping only the solver step remote
+  keeps the studio on the home network (FR-001) and every result on the owner's PCs.
+- **Alternatives considered**:
+  - Running the whole studio on the rented machine: breaks FR-001 (home network only) and puts the database
+    outside the owner's PCs.
+  - A managed cloud batch service: more setup and lock-in for an occasional need.
+  - A remote desktop session used by hand: not reproducible, and nothing records which build solved the run.

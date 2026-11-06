@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import importlib
+import io
 import json
 import pkgutil
 import sys
@@ -102,7 +103,15 @@ def build_parser(modules: Iterable[ModuleType] | None = None) -> argparse.Argume
     return parser
 
 
+def _use_utf8_output() -> None:
+    """Piped or redirected output on Windows defaults to cp1252, which cannot show author names such as "ł"."""
+    for stream in (sys.stdout, sys.stderr):
+        if isinstance(stream, io.TextIOWrapper) and stream.encoding.lower().replace("-", "") != "utf8":
+            stream.reconfigure(encoding="utf-8", errors="backslashreplace")
+
+
 def main(argv: Sequence[str] | None = None, modules: Iterable[ModuleType] | None = None) -> int:
+    _use_utf8_output()
     parser = build_parser(modules)
     args = parser.parse_args(argv)
     handler: Handler | None = getattr(args, "handler", None)

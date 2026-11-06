@@ -344,8 +344,9 @@ benchmark passes, then unlock with the benchmark report linked.
 - **FR-001**: The studio MUST be usable only by the owner, from the owner's computers on the home network,
   MUST refuse connections from outside the home network, and MUST ask for the owner's password before it
   opens (other people and devices share the home network).
-- **FR-002**: The studio MUST run its simulations on the owner's main simulation PC and MUST be usable from
-  that PC and from the owner's laptop through a web browser.
+- **FR-002**: The studio MUST run on the owner's main simulation PC and MUST be usable from that PC and from
+  the owner's laptop through a web browser. Its simulations run on the main PC or, when the owner chooses, on a
+  rented solver machine (FR-064).
 
 **Conventions**
 
@@ -463,13 +464,16 @@ benchmark passes, then unlock with the benchmark report linked.
 - **FR-022**: A failed run MUST record its reason and MUST NOT show partial results as complete.
 - **FR-023**: Each run MUST record all settings, the library entry versions, the engine version, the model
   detail level, solver convergence information and its dates. For the direct linear solver, convergence
-  information means the force-balance check (the sum of reaction forces against the applied loads, per load
-  case) and the solver's relative residual; a run whose force-balance error exceeds the tolerance in the
-  conventions document MUST fail with that reason.
+  information means, per unit load case: the force-balance check (the sum of reaction forces against the
+  applied load); the energy check (the work of the applied load against twice the strain energy, which a
+  model that is not fully supported breaks); and the solver's relative residual, where the solver reports
+  one. A run whose force-balance, energy or residual error exceeds its tolerance in the conventions document
+  MUST fail with that reason. Before the solve, every part MUST be joined to the supported assembly through
+  shared faces; otherwise the run fails with a plain reason naming the part.
 - **FR-056**: After the main PC restarts or wakes, runs that were in progress MUST be marked "interrupted" and
   put back in the queue, queued runs MUST keep their place, and no interrupted run may be shown as complete.
 - **FR-057**: Before a run or study starts, the studio MUST compare its expected memory and disk space with
-  what the main PC has. It MUST refuse a run whose expected memory is too high, suggesting a lower detail
+  what the machine that will solve it has (the main PC, or the rented solver machine, FR-064). It MUST refuse a run whose expected memory is too high, suggesting a lower detail
   level, and MUST warn when disk space is short. A run that still runs out of memory MUST stop cleanly and be
   recorded as failed with that reason.
 - **FR-058**: Stored meshes, previews and results MUST be tied to every input that affects them (settings,
@@ -478,6 +482,18 @@ benchmark passes, then unlock with the benchmark report linked.
   (Constitution, Principle VI: re-solve only when inputs change). When any of these no longer matches, the
   stored item MUST be flagged "out of date", MUST NOT be reused silently, and MUST be re-run before it can be
   newly published (Constitution, Principle VI).
+- **FR-064**: The owner MAY add a rented solver machine for heavy runs and studies that are too large or too
+  slow for the main PC (Constitution, Scope: Compute). The studio, its database and every stored result stay
+  on the main PC; previews always run on the main PC. A run sent to the rented machine MUST:
+  - send only the generated solver input and receive only the solver output, over an encrypted,
+    key-authenticated connection;
+  - use a solver build identified like any other (version, equation solver, SHA-256) that has passed the
+    benchmarks of every capability it needs on that machine; until then, runs there are refused, naming the
+    benchmark (FR-011a);
+  - use that machine's own estimates and memory limit (FR-057), and record which machine solved it;
+  - fail cleanly with its reason, storing nothing partial, if the connection is lost (FR-022), and be
+    re-queued like an interrupted run (FR-056) when the owner chooses;
+  - leave no inputs or results on the rented machine when it finishes.
 
 **Results**
 
@@ -639,8 +655,10 @@ benchmark passes, then unlock with the benchmark report linked.
 - The studio is built from scratch. The earlier `fea-implant-teaching/` project is reference material only;
   its verified numbers may be used as benchmark cases.
 - The owner is the only user. The interface is in English.
-- The main simulation PC has an RTX 4060 Ti and about 32 GB of memory; the laptop has 24 GB. Both run Windows
-  and share the home network. Overnight runs are acceptable.
+- The main simulation PC has an RTX 4060 Ti, 10 physical cores and about 32 GB of memory; the laptop has
+  24 GB. Both run Windows and share the home network. Overnight runs are acceptable. Measured on the main PC,
+  32 GB holds direct-solver models up to about 1.2 M degrees of freedom (research R8). If a model is too large
+  or too slow for it, the owner may rent a more powerful machine as a solver machine (FR-064).
 - Only free, open-source simulation tools are used (Constitution, Scope).
 - This feature includes a seed literature library for the bonded-elastic blocks (bone, implant, abutment,
   screw, crown, pontic, connector materials and bite loads), proposed by Claude and approved by the owner.
@@ -663,7 +681,7 @@ benchmark passes, then unlock with the benchmark report linked.
   contact shares are design settings, not library settings (FR-052); verification cases use their own sources'
   inputs (FR-035); a chewing cycle is reported at its worst instant (FR-008).
 - 3D file import is out of scope for this feature.
-- Full-arch and complete-denture models are the largest; they may need a lower detail level or an overnight
-  run on the main simulation PC.
+- Full-arch and complete-denture models are the largest; they may need a lower detail level, an overnight
+  run on the main simulation PC, or the rented solver machine (FR-064).
 - Story 9 is split into separate later features (screw preload, ligament, contact, fatigue); this feature
   delivers only its lock and unlock framework (see Story 9, "Scope in this feature").

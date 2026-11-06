@@ -29,3 +29,32 @@ class Refused(Exception):
 
     def to_dict(self) -> dict[str, Any]:
         return {"code": self.code, "message": self.message, "problems": self.problems, "missing": self.missing}
+
+
+class DentalsimError(Exception):
+    """Base class for engine errors that are not refusals. The command line maps them to exit code 2."""
+
+
+class ConventionsMissing(DentalsimError):
+    """docs/conventions.md is missing, has no `yaml conventions` block, or the block is invalid. Nothing runs."""
+
+
+class SolverNotFound(DentalsimError):
+    """No CalculiX binary is configured (`DENTALSIM_CCX`), or the configured path does not exist."""
+
+
+class SolverFailed(DentalsimError):
+    """The solver ran but did not produce a usable result. `reason` is plain language for the owner."""
+
+    def __init__(self, reason: str, *, log_tail: str = "") -> None:
+        super().__init__(reason)
+        self.reason = reason
+        self.log_tail = log_tail
+
+
+class NotFound(DentalsimError):
+    """A requested record does not exist."""
+
+
+class Conflict(DentalsimError):
+    """A record changed while it was being edited, or a uniqueness rule would be broken."""

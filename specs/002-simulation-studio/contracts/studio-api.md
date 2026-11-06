@@ -31,6 +31,7 @@ network (research R10).
 | `publish_refused` | 409 | One or more checklist items fail, all listed in `missing` |
 | `not_found` | 404 | |
 | `conflict` | 409 | The scenario revision changed while it was being edited |
+| `out_of_date` | 409 | A stored item no longer matches the current engine, conventions or library, so it cannot be reused (FR-058) |
 
 ## Auth and system
 
