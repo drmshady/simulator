@@ -181,7 +181,24 @@ Fit (power law):
 What it predicts: a single contact point (3 cases) at 758 k DOF takes about 5.7 min; memory reaches the 27 GB
 limit (85% of 31.8 GB) at about 1.1 M DOF.
 
-Owner's run after T011: *recorded by the owner*
+**Owner's run after T011, 6 Nov 2026, main PC** (`D:\DentalSimTools\calculix\ccx_static.exe`, run by Claude at the
+owner's request; coefficients saved to `D:\DentalSimData\estimate\coefficients.json`). Same solver build, 8 threads.
+
+| Size (mm) | Nodes | Elements | DOF | Cases | Threads | Wall time (s) | Peak memory (MB) | Disk (MB) |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1.6 | 16,145 | 10,333 | 48,435 | 3 | 8 | 6.38 | 552 | 37.5 |
+| 1.0 | 54,837 | 37,176 | 164,511 | 3 | 8 | 33.17 | 2,427 | 134.3 |
+| 0.6 | 252,606 | 178,906 | 757,818 | 3 | 8 | 346.83 | 16,607 | 644.8 |
+
+Fit (power law, 2026-11-06 03:21 UTC):
+
+- time = cases × 3.039e-07 × DOF^1.4565 s
+- memory = 897.7 × DOF^1.2388 bytes
+- disk = 284.3 × DOF × cases bytes
+
+It agrees with the preliminary run: the same meshes, wall times within 10% (2% at 758 k DOF) and the same memory.
+It predicts about 5.6 min for one contact point (3 cases) at 758 k DOF, and the 27 GB memory limit at about
+1.1 M DOF.
 
 ## A rented solver machine (optional)
 

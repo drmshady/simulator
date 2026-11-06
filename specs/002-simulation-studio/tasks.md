@@ -425,7 +425,7 @@ the seed library is approved.
   - measure wall time, peak memory (polling the ccx process with psutil) and disk use
   - fit, per solver build: time ≈ a·DOF^b, memory ≈ c·DOF^d, disk ≈ e·DOF·cases
   - write `<data>/estimate/coefficients.json`; `refit()` later adds finished runs
-- [ ] T059 **Owner (main PC)**: run `uv run python -m dentalsim.estimate.calibrate` (it uses the heavy lane's thread
+- [X] T059 **Owner (main PC)**: run `uv run python -m dentalsim.estimate.calibrate` (it uses the heavy lane's thread
   count, `dentalsim.threads`; about 10 minutes, so choose a time when the PC is free), then record the measured
   numbers in `docs/setup/solver.md`
 
