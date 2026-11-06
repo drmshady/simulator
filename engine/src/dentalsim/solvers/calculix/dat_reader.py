@@ -95,8 +95,12 @@ class DatStep:
     displacements: Mapping[str, NodalValues] = field(default_factory=dict)
 
     def ip_volumes(self) -> NDArray[np.float64]:
-        """The volume carried by each integration-point row: its element's volume divided by the number of
-        integration points of that element (4 for C3D10)."""
+        """Each integration-point row's share of its element's volume, split equally (4 for C3D10).
+
+        Exact only for straight-edged elements. Statistics and the energy check use det J × Gauss weight instead
+        (`dentalsim.post.integration`, conventions `statistics.ip_volume`); this is kept as a cross-check, since the
+        four shares of an element must add up to its printed volume either way.
+        """
         if not self.element_ids.size:
             return np.empty(0, np.float64)
         elements, counts = np.unique(self.element_ids, return_counts=True)

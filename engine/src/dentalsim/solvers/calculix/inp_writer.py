@@ -250,8 +250,10 @@ def _patch_forces(case: UnitLoadCase, node_set: set[int]) -> list[tuple[int, int
         return []
     weights: dict[int, float] = {}
     for node, weight in case.patch:
-        if not (math.isfinite(weight) and weight >= 0.0):
-            raise ValueError(f"load case {case.name!r}: weights must be finite and not negative")
+        # Consistent nodal loads of quadratic faces are 0 at flat-face corners and can be slightly negative on curved
+        # faces (dentalsim.mesh.load_patch), so only finiteness and the sum are checked.
+        if not math.isfinite(weight):
+            raise ValueError(f"load case {case.name!r}: weights must be finite")
         if int(node) not in node_set:
             raise ValueError(f"load case {case.name!r}: patch node {node} is not defined")
         weights[int(node)] = weights.get(int(node), 0.0) + float(weight)
@@ -361,7 +363,10 @@ def _lines(model: SolverModel, static_card: str, extensions: tuple[InpExtension,
         yield f"*EL PRINT, ELSET={ALL_ELEMENTS}"
         yield "EVOL"
         for support in model.supports:
+            # The solver's double-precision total for the force balance, and the nodal values for the moment balance.
             yield f"*NODE PRINT, NSET={support.name}, TOTALS=ONLY"
+            yield "RF"
+            yield f"*NODE PRINT, NSET={support.name}"
             yield "RF"
         yield "*END STEP"
 

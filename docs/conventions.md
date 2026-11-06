@@ -12,8 +12,7 @@ It has two parts:
 Changing any value in the block needs a new `version`. A new version flags every stored run and published
 scenario made under an older one for re-verification (FR-051).
 
-> **Status**: draft 1.0.0, proposed by Claude on 2026-11-05. The owner reviews and approves it in task T022; until
-> then the values below are proposals.
+> **Status**: version 1.1.0, proposed by Claude on 2026-11-06, approved by the owner on 2026-11-06 (task T180).
 
 ## Units
 
@@ -35,7 +34,10 @@ paper's 13.7 GPa is entered as 13 700 MPa.
 - **+z**: occlusal, along the long axis of the reference implant (the first implant, or the first tooth).
 - **+x**: mesial.
 - **+y**: buccal (labial in the anterior region).
-- The frame is right-handed: x × y = z.
+- **Handedness**: the model frame is abstract and right-handed by definition (x × y = z). Anatomically it
+  corresponds to a **maxillary-right or mandibular-left** site, where mesial × buccal = occlusal. Sites in the
+  **maxillary-left and mandibular-right** quadrants are represented by mirroring them into this frame. A mirrored
+  mesh must have its element connectivity reordered so that every element Jacobian stays positive.
 
 All placements, contact points and reported locations are given in this frame, in mm.
 
@@ -43,8 +45,9 @@ All placements, contact points and reported locations are given in this frame, i
 
 A load has a magnitude (from the literature library) and a direction given by two design settings:
 
-- **Angle** (`angle_deg`): measured from the axial bite. 0° is a purely axial force, pushing toward apical
-  (along −z).
+- **Angle** (`angle_deg`): measured from the axial bite, in the range **0° to 90°**; the engine refuses other
+  values. 0° is a purely axial force, pushing toward apical (along −z). A negative angle is not needed: (−a, b)
+  is the same direction as (a, b + 180°).
 - **Azimuth** (`azimuth_deg`): the side the load comes from, measured in the occlusal plane from +x (mesial)
   toward +y (buccal). 90° means the load comes from the buccal side, which is the usual oblique bite on a buccal
   cusp. The default is 90°.
@@ -58,8 +61,29 @@ F = F · (−sin a · cos b, −sin a · sin b, −cos a)
 ## Load patch
 
 A force acts on a small patch of the occlusal surface, not on one node, so that no artificial point-load
-singularity is created. The patch is a disc of radius `load_patch_radius_mm` (proposed: 1.0 mm) around the
-contact point on the outer surface; the force is shared over the patch nodes.
+singularity is created.
+
+- **Which faces**: the outer-surface element faces whose centroids lie within `radius_mm` (1.0 mm) of the contact
+  point, by straight-line (Euclidean) distance.
+- **How the force is applied**: as a uniform traction vector in the load direction (not along the surface
+  normal) over those faces, scaled so that the total equals F. The nodal forces are the consistent ones, from the
+  face shape functions; splitting the force equally between nodes is not allowed.
+- **Crown and pontic statistics** leave out the integration points within `crown_stats_exclude_radius_mm`
+  (2.0 mm) of each contact point. The stress there is set by the patch radius, and the mesh check cannot detect
+  that sensitivity.
+
+## Analysis assumptions
+
+Every scenario in this version is a **linear static** analysis with **tied** (bonded) interfaces, **no contact**
+and **no screw preload**. Only under these assumptions may unit load cases be superposed (research R4). Adding
+contact or preload invalidates superposition and needs a scenario type without interactive load controls. Every
+report of retention-screw stress carries the label **"excludes screw preload"**.
+
+## Detail levels
+
+Detail levels (`preview`, `standard`, `fine`, `extra_fine`) differ in **mesh density only**. The geometry (threads,
+cortical thickness, block size) is identical at every level. Threads on or off is a separate, named sensitivity
+study, not a detail level.
 
 ## Regions used for reported values
 
@@ -67,12 +91,20 @@ Reported values are computed at integration points, weighted by integration-poin
 region **mean** and the volume-weighted **95th percentile** (constitution, Principle II). Singular corner peaks and
 nodal maxima are never reported.
 
+- **Source**: statistics use integration-point output only (CalculiX `*EL PRINT` to the `.dat` file). Nodal values
+  extrapolated or averaged from the integration points (for example the `.frd` file) are never used for statistics.
+- **Integration-point volume**: det(J) at the point times its Gauss weight (1/24 for each of the 4 points of a
+  10-node tetrahedron), computed by the pipeline from the mesh. This is the volume the solver itself integrates
+  with: a quarter of the element volume for a straight-edged element, unequal shares for a curved one.
+- **Percentile**: the values are sorted from smallest to largest, each weighted by its integration-point volume;
+  the 95th percentile is the smallest value at which the cumulative volume fraction reaches at least 0.95.
+
 Regions are geometric tests on integration-point positions plus the material or component of the element. They
 are not mesh partitions, so the same region exists at every detail level, which the mesh check needs.
 
 | Region | Definition |
 |---|---|
-| **Crestal ring** (`crestal_ring`) | Cortical bone within 1.5 mm of the implant (or root) surface and no deeper than 2.0 mm below the crest, around each implant or tooth. The implant surface is taken at the core (minor) radius of the threads, so bone between the threads belongs to the ring at every detail level. Depth is measured along the implant axis, from the crest taken as a plane at right angles to that axis. |
+| **Crestal ring** (`crestal_ring`) | Cortical bone within 1.5 mm of the implant (or root) surface and no deeper than 2.0 mm below the crest, around each implant or tooth. The distance is measured from the thread core (minor) radius at that depth (for a root, from the root surface), so bone between the threads belongs to the ring at every detail level. Depth is measured along the implant axis from the crest plane: the plane at right angles to that axis through the point where the axis meets the bone crest surface. |
 | **Implant neck** (`implant_neck`) | The top 2.0 mm of the implant body, measured from the implant platform along its axis. |
 | **Whole components** | The whole implant (`implant`), abutment (`abutment`), retention screw (`screw`), crown (`crown`), pontic (`pontic`), splinting connector (`connector`) and cantilever extension (`cantilever`). |
 
@@ -95,11 +127,15 @@ distal side, mean 1 240 µε".
 ## Bone strain and the Frost windows
 
 - **Measure**: the von Mises equivalent strain, in µε, is what the Frost colours show. The maximum and minimum
-  principal strains are also stored.
-- **Definition**: ε_eq = 1/(1 + ν′) · √(½ [(ε₁ − ε₂)² + (ε₂ − ε₃)² + (ε₃ − ε₁)²]), with ν′ = 0.5. This equals
-  √(⅔ e : e), where e is the deviatoric strain. *Note for the owner*: some commercial codes report an "equivalent
-  elastic strain" with ν′ set to the material's own Poisson's ratio, which gives larger values for bone
-  (ν ≈ 0.3). Published strain values must be compared with that difference in mind.
+  principal strains are also stored, and the result view can switch the strain gauge to |maximum principal
+  strain|.
+- **Definition**: ε_eq = 1/(1 + ν′) · √(½ [(ε₁ − ε₂)² + (ε₂ − ε₃)² + (ε₃ − ε₁)²]), with ν′ equal to **each
+  material's own Poisson's ratio**. Under uniaxial stress ε_eq then equals the axial strain, which is what the
+  strain-gauge measurements behind Frost's windows recorded.
+- *Note for the owner*: with ν′ = 0.5 (the plastic-flow convention) the value would read (1 + ν)/1.5 times the
+  uniaxial strain, about 0.87 times for ν = 0.3. With ν′ = ν it reads 1.0 times. Most commercial finite element
+  codes use ν′ = ν, so values are directly comparable with published ones. Ring means also sit below the
+  single-point peak values most published finite element papers report.
 - **Frost scale**: four categories, labelled **teaching reference** wherever they are shown, with their source.
 
   | Category | Colour |
@@ -125,26 +161,54 @@ Component stress is reported as a percentage of the material's strength referenc
 | Metals | titanium grade 4, titanium grade 5 (Ti-6Al-4V), cobalt-chromium | von Mises stress | Yield strength (`material.<id>.yield_strength`) |
 | Brittle materials | zirconia, lithium disilicate, feldspathic porcelain, resin composite | Maximum principal (tensile) stress | Flexural strength (`material.<id>.flexural_strength`) |
 | Bone | cortical and cancellous bone | Strain, as above | Not compared with a strength |
-| Not compared | resin cement | — | Not compared |
+| Not compared | resin cement, enamel, dentin, periodontal ligament, gutta-percha | — | Not compared |
 
 ## Mesh check and convergence checks
 
-- **Mesh-check limit**: a scenario's mesh is justified when every key result changes by no more than 5% between
-  two detail levels (FR-037).
+- **Mesh check** (FR-037): a scenario's mesh is justified when every key result below changes by no more than
+  **5%** between two detail levels:
+  - crestal ring equivalent strain, mean and 95th percentile, for each implant or tooth site (on its worse side)
+  - implant neck stress as % of strength, mean and 95th percentile, for each implant
+  - stress as % of strength, mean and 95th percentile, of each implant, abutment, crown, pontic, connector and
+    cantilever extension
+
+  The retention screw is left out while its stress is not reported (it needs screw preload).
 - **Convergence checks** (FR-023), after every solve and for each unit load case. Any one failing fails the run
   with that reason:
-  - **Force balance**: the sum of the support reactions against the applied load. Relative error at most
-    1 × 10⁻⁶.
-  - **Energy check**: the work of the applied load (F · u) against twice the strain energy (summed at the
-    integration points). For a correct linear solution they are equal; a part that is not fully supported can
-    still balance its forces but breaks this. Relative error at most 1 × 10⁻⁴ (the displacements in the solver's
-    result file carry 6 significant digits).
+  - **Force balance**: the total support reaction, summed by the solver in double precision (CalculiX
+    `*NODE PRINT, TOTALS=ONLY` on each support node set, not added up from 6-digit nodal values), against the
+    applied load, component by component (x, y and z). Relative error at most 1 × 10⁻⁶ of |F|.
+  - **Moment balance**: the reaction moment about the origin against the applied moment (the patch nodal forces
+    times their positions). Relative error at most 1 × 10⁻⁵ of the larger of |M applied| and |F| × 1 mm.
+  - **Energy check**: the external work Σ fᵢ · uᵢ over all loaded nodes against twice the strain energy (summed at
+    the integration points). Relative error at most 1 × 10⁻⁴ (the displacements in the solver's result file carry
+    6 significant digits).
   - **Solver residual**: where the equation solver reports one (PaStiX does), at most 1 × 10⁻¹⁰. PaStiX
     refines to below 1 × 10⁻¹²; a value far above that means the stiffness matrix is singular or nearly so.
 
+  The force, moment and energy checks verify the solve and the post-processing. Any exact solution satisfies
+  them, whatever its boundary conditions or tie definitions, so a pass does not validate the model itself.
+
+## Rules defined in code
+
+These rules are not values in the block but code. Changing any of them changes results, so it needs a new
+conventions version as well as the code change.
+
+| Rule | Where |
+|---|---|
+| Load direction from angle and azimuth (the formula above) | `dentalsim/conventions/frame.py`, `force_direction` |
+| Distance from the implant surface: radial distance from the axis minus the core radius, interpolated linearly along the radius profile; beyond the apex, the distance to the apical face | `dentalsim/conventions/regions.py`, `surface_distance` |
+| Sector of a point and the worse side (highest volume-weighted mean) | `dentalsim/conventions/regions.py`, `sector_of`, `worse_side` |
+| Integration-point positions and volumes (det J × Gauss weight, with CalculiX's 4-point rule and node order) | `dentalsim/post/integration.py`, `integration_points` |
+| Volume-weighted mean and percentile | `dentalsim/post/statistics.py`, `weighted_mean`, `weighted_percentile` |
+| Load-patch face selection and consistent nodal forces | `dentalsim/mesh/load_patch.py` |
+| Force, moment and energy checks | `dentalsim/post/convergence.py` |
+| Equivalent and principal strains, stress invariants | `dentalsim/post/fields.py` (task T076) |
+| Mirroring a site into the frame, with connectivity reordered | assembly and geometry (tasks T066, T069) |
+
 ## Published assets in git
 
-A published asset larger than 1 MB goes to the published-media folder, named by its SHA-256, instead of git
+A published asset larger than 1 MiB goes to the published-media folder, named by its SHA-256, instead of git
 (constitution, Scope).
 
 ## Teaching-only notice
@@ -157,7 +221,8 @@ Every result view, export and published page carries this notice (FR-028):
 ## Library units
 
 Every literature entry's units must match the row of this table that its parameter key matches. In a pattern,
-`*` stands for exactly one dot-separated part of the key.
+`*` stands for exactly one dot-separated part of the key. Tooth tissues use the material rows, for example
+`material.pdl.E` and `material.pdl.nu`.
 
 | Category | Parameter key | Quantity | Units |
 |---|---|---|---|
@@ -178,12 +243,13 @@ Every literature entry's units must match the row of this table that its paramet
 
 | Version | Date | Change | Approved by the owner |
 |---|---|---|---|
-| 1.0.0 | 2026-11-05 | First draft, proposed by Claude; energy and residual tolerances added the same day, before approval and before any run | *pending (T022)* |
+| 1.0.0 | 2026-11-05 | First draft, proposed by Claude; energy and residual tolerances added the same day, before approval and before any run | 2026-11-06 (T022) |
+| 1.1.0 | 2026-11-06 | Independent review: frame handedness and mirrored quadrants; angle range [0°, 90°]; equivalent strain with each material's own ν (was 0.5); formula and measure in one place; region rules, statistics source and percentile method as block fields; integration-point volume as det J × Gauss weight (owner's choice, was element volume ÷ 4); detail levels vary mesh only; load patch as uniform traction with consistent nodal forces and a 2 mm crown-statistics exclusion; analysis assumptions; mesh-check key results listed; force balance from solver totals per component; moment balance added; energy check over all loaded nodes; tooth tissues not compared; rules defined in code listed. No runs existed under 1.0.0. | 2026-11-06 (T180) |
 
 ## Machine-readable block
 
 ```yaml conventions
-version: 1.0.0
+version: "1.1.0"
 
 units:
   length: mm
@@ -196,6 +262,8 @@ units:
 frame:
   origin: crest centre of the first implant or tooth site
   handedness: right
+  anatomical_quadrants: [maxillary_right, mandibular_left]
+  other_quadrants: mirrored
   axes:
     x: {direction: mesial, vector: [1, 0, 0]}
     y: {direction: buccal, vector: [0, 1, 0]}
@@ -207,13 +275,32 @@ load_angle:
   azimuth_toward: buccal
   positive_tilt: away_from_azimuth
   default_azimuth_deg: 90
+  angle_range_deg: [0, 90]
 
-load_patch_radius_mm: 1.0
+load_patch:
+  radius_mm: 1.0
+  selection: face_centroid_within_radius
+  application: uniform_traction
+  crown_stats_exclude_radius_mm: 2.0
+
+analysis:
+  type: linear_static
+  interfaces: tied
+  contact: none
+  screw_preload: none
+  superposition: unit_load_cases
+
+detail_levels:
+  vary: mesh_density_only
+  geometry: fixed
 
 statistics:
+  source: integration_points
   weighting: integration_point_volume
+  ip_volume: jacobian_times_gauss_weight
   reported: [mean, p95]
   percentile: 95
+  percentile_method: smallest_value_with_cumulative_volume_fraction_at_least_p
 
 regions:
   crestal_ring:
@@ -223,6 +310,10 @@ regions:
     max_distance_from_surface_mm: 1.5
     max_depth_below_crest_mm: 2.0
     worse_side: highest_mean
+    implant_surface: core_radius
+    crest_plane: {normal: implant_axis, through: axis_crest_intersection}
+    sector_boundary: first_included
+    sector_direction: projected_to_occlusal_plane
     sectors:
       mesial: {centre_deg: 0, half_width_deg: 45}
       buccal: {centre_deg: 90, half_width_deg: 45}
@@ -244,13 +335,13 @@ regions:
 
 strain_measure:
   frost: von_mises_equivalent
-  effective_poisson_ratio: 0.5
+  effective_poisson_ratio: material_nu
+  formula: "eps_eq = 1/(1 + nu_eff) * sqrt(0.5 * ((e1 - e2)^2 + (e2 - e3)^2 + (e3 - e1)^2)); nu_eff = the material's own nu; e1..e3 principal strains"
   stored: [von_mises_equivalent, max_principal, min_principal]
   unit: microstrain
 
 frost_scale:
   label: teaching reference
-  measure: von_mises_equivalent
   categories:
     - {id: disuse, label: Disuse, colour: "#56B4E9"}
     - {id: adapted, label: Adapted window, colour: "#009E73"}
@@ -275,7 +366,7 @@ material_classes:
   metal: [titanium_g4, titanium_g5, cocr]
   brittle: [zirconia, lithium_disilicate, feldspathic, composite]
   bone: [cortical_bone, cancellous_bone]
-  not_compared: [resin_cement]
+  not_compared: [resin_cement, enamel, dentin, pdl, gutta_percha]
 
 strength_rules:
   - {material_class: metal, stress_measure: von_mises, reference: yield_strength}
@@ -283,8 +374,20 @@ strength_rules:
   - {material_class: bone, stress_measure: none, reference: none}
   - {material_class: not_compared, stress_measure: none, reference: none}
 
-mesh_check_limit: 0.05
+mesh_check:
+  limit: 0.05
+  key_results:
+    - {region: crestal_ring, quantity: equivalent_strain, statistics: [mean, p95], per: site}
+    - {region: implant_neck, quantity: percent_of_strength, statistics: [mean, p95], per: implant}
+    - {region: implant, quantity: percent_of_strength, statistics: [mean, p95], per: component}
+    - {region: abutment, quantity: percent_of_strength, statistics: [mean, p95], per: component}
+    - {region: crown, quantity: percent_of_strength, statistics: [mean, p95], per: component}
+    - {region: pontic, quantity: percent_of_strength, statistics: [mean, p95], per: component}
+    - {region: connector, quantity: percent_of_strength, statistics: [mean, p95], per: component}
+    - {region: cantilever, quantity: percent_of_strength, statistics: [mean, p95], per: component}
+
 equilibrium_tolerance: 1.0e-6
+moment_tolerance: 1.0e-5
 energy_tolerance: 1.0e-4
 residual_tolerance: 1.0e-10
 max_committed_asset_bytes: 1048576

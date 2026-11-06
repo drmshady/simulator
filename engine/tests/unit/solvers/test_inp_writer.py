@@ -199,7 +199,7 @@ def test_extensions_and_extra_cards() -> None:
         ({"supports": (SupportSet("Base", np.array([99])),)}, "not defined"),
         ({"supports": (SupportSet("Base", np.array([5]), dofs=(1, 1)),)}, "dofs"),
         ({"load_cases": (UnitLoadCase("Fx", ((4, 0.5),), (1.0, 0.0, 0.0)),)}, "sum to"),
-        ({"load_cases": (UnitLoadCase("Fx", ((4, -1.0), (1, 2.0)), (1.0, 0.0, 0.0)),)}, "negative"),
+        ({"load_cases": (UnitLoadCase("Fx", ((4, float("nan")), (1, 1.0)), (1.0, 0.0, 0.0)),)}, "finite"),
         ({"load_cases": (UnitLoadCase("Fx", (), (1.0, 0.0, 0.0)),)}, "patch"),
         ({"load_cases": ()}, "no load cases"),
         ({"materials": (MaterialDef("Ti", 110000.0, 0.5), MaterialDef("Bone", 1.0, 0.3))}, "Poisson"),

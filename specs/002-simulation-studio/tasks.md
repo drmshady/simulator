@@ -127,7 +127,7 @@ the seed library is approved.
 
 ### Solver (research R3)
 
-- [ ] T011 **Owner (main PC)**: get CalculiX ccx 2.23 for Windows, the open-source build with PaStiX
+- [X] T011 **Owner (main PC)**: get CalculiX ccx 2.23 for Windows, the open-source build with PaStiX
   (revised 2026-11-05: research R3)
   - `ccx_static.exe` from the dhondt.de Windows package; no Intel MKL DLLs (MKL is not open source)
   - put it in `D:\DentalSimTools\calculix\` and set `DENTALSIM_CCX`
@@ -196,7 +196,13 @@ the seed library is approved.
   - the load-angle sign turns +30° into a force tilted lingually
   - every region named by a registered block type exists
   - the generated TypeScript file is up to date
-- [ ] T022 **Owner**: review `docs/conventions.md`. Confirm or change the frame, load-angle sign, regions, strength
+- [X] T180 **Owner**: review `docs/conventions.md` 1.1.0 (the independent-review revision, proposed 2026-11-06):
+  above all the strain measure (ν′ = each material's own ν instead of 0.5) and the 2 mm crown-statistics
+  exclusion around each contact point. The integration-point volume rule is decided: det J × Gauss weight
+  (owner, 2026-11-06). Record the approval date in its change log.
+  - Approved by the owner on 2026-11-06: ν′ = each material's own ν; 2 mm crown-statistics exclusion; 1.1.0 as a
+    whole.
+- [X] T022 **Owner**: review `docs/conventions.md`. Confirm or change the frame, load-angle sign, regions, strength
   rules and the 5% mesh-check limit, and record the approval date in the document's change log.
 
 ### Core models (data-model.md, contracts/scenario-format.md)
@@ -518,6 +524,8 @@ this is gated by the bonded-elastic textbook benchmarks.
   - `engine/src/dentalsim/mesh/build.py`:
     - C3D10 elements, meshed single-threaded with a fixed seed
     - a quality check (minimum SICN) that fails with a plain reason
+    - the load patch from `engine/src/dentalsim/mesh/load_patch.py` (written with conventions 1.1.0: faces by
+      centroid distance, uniform traction, consistent nodal weights)
     - a connectivity check (FR-023): every part must be joined to a supported part through shared faces, not only
       nodes or edges; otherwise the run fails before the solve, naming the part ("the crown does not touch the
       abutment")
@@ -579,8 +587,11 @@ this is gated by the bonded-elastic textbook benchmarks.
     named (FR-008)
   - acts on the displacement, stress and strain tensors before invariants are computed
   - refuses if any capability in use is non-linear
-- [ ] T078 [P] [US1] Implement `engine/src/dentalsim/post/statistics.py`: the volume-weighted mean and 95th
-  percentile over integration points (weight = element volume / 4). Nodal peaks are never reported.
+- [ ] T078 [P] [US1] Complete `engine/src/dentalsim/post/statistics.py` (the weighted mean and the conventions
+  percentile method were written with conventions 1.1.0; add the crown and pontic exclusion within
+  `crown_stats_exclude_radius_mm` of each contact point): the volume-weighted mean and 95th
+  percentile over integration points (weight = det J × Gauss weight, from `post/integration.py`; conventions
+  1.1.0). Nodal peaks are never reported.
 - [ ] T079 [US1] Implement `engine/src/dentalsim/post/key_numbers.py`:
   - **Crestal strain** per implant on the worse side, with the sector named and its Frost window
   - **Component stress** as % of the strength reference, by the conventions rules (metals: von Mises against yield;
@@ -600,8 +611,12 @@ this is gated by the bonded-elastic textbook benchmarks.
   - a failure stores nothing partial (FR-022)
   - the convergence checks per unit case after the solve (FR-023; research R3), each failing the run with its
     reason:
-    - force balance: the sum of support reactions against the applied load, within `equilibrium_tolerance`
-    - energy: the work of the load (F · u at the patch nodes) against twice the strain energy (from the
+    - with `engine/src/dentalsim/post/convergence.py` (written with conventions 1.1.0)
+    - force balance: the solver's total support reaction against the applied load, per component, within
+      `equilibrium_tolerance`
+    - moment balance: the nodal support reactions' moment against the patch forces' moment, within
+      `moment_tolerance`
+    - energy: the work of the loads (Σ fᵢ · uᵢ over the patch nodes) against twice the strain energy (from the
       integration-point stress, strain and volumes), within `energy_tolerance`
     - the solver residual of the step (`SolverRunResult.step_residuals`), within `residual_tolerance`, where the
       solver reports one
@@ -701,6 +716,9 @@ this is gated by the bonded-elastic textbook benchmarks.
   - a component stress table: % of the strength reference, mean and p95, source, "teaching reference"
   - displacement values
   - the movement animation, with a magnification slider and the magnification stated
+  - a switch from the von Mises equivalent strain gauge to |maximum principal strain| (conventions 1.1.0)
+  - retention-screw stress, once reported, labelled "excludes screw preload" (conventions 1.1.0, "Analysis
+    assumptions")
   - the locked results, for example "not reported: needs screw preload"
   - the run record: versions, convergence and flags
   - the TeachingNotice on every panel

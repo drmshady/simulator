@@ -13,7 +13,7 @@ from numpy.typing import NDArray
 
 from dentalsim.conventions.loader import get_conventions
 from dentalsim.conventions.schema import Conventions
-from dentalsim.errors import ConventionsMissing
+from dentalsim.errors import ConventionsMissing, Refused
 
 Vector = NDArray[np.float64]
 
@@ -61,6 +61,13 @@ def force_direction(
     rule = conventions.load_angle
     if (rule.zero, rule.azimuth_reference, rule.azimuth_toward, rule.positive_tilt) != SUPPORTED_LOAD_ANGLE_RULE:
         raise ConventionsMissing(f"this engine cannot apply the load-angle rule {rule.model_dump()}")
+    low, high = rule.angle_range_deg
+    if not low <= angle_deg <= high:
+        raise Refused(
+            f"the load angle {angle_deg:g}° is outside {low:g}°–{high:g}°; use azimuth + 180° instead of a "
+            "negative angle",
+            code="validation_failed",
+        )
     reference = _axis_with_direction(conventions, rule.azimuth_reference)
     toward = _axis_with_direction(conventions, rule.azimuth_toward)
     occlusal = frame_axes(conventions)[2]

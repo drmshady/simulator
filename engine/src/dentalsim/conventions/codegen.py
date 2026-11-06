@@ -94,7 +94,7 @@ def render_typescript(loaded: LoadedConventions) -> str:
         "  readonly edges: readonly string[];\n"
         "} = {\n"
         f"  label: {_ts_string(frost.label)},\n"
-        f"  measure: {_ts_string(frost.measure)},\n"
+        f"  measure: {_ts_string(c.strain_measure.frost)},\n"
         "  categories: [\n"
         f"{categories}"
         "  ],\n"

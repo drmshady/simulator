@@ -464,11 +464,12 @@ benchmark passes, then unlock with the benchmark report linked.
 - **FR-022**: A failed run MUST record its reason and MUST NOT show partial results as complete.
 - **FR-023**: Each run MUST record all settings, the library entry versions, the engine version, the model
   detail level, solver convergence information and its dates. For the direct linear solver, convergence
-  information means, per unit load case: the force-balance check (the sum of reaction forces against the
-  applied load); the energy check (the work of the applied load against twice the strain energy, which a
-  model that is not fully supported breaks); and the solver's relative residual, where the solver reports
-  one. A run whose force-balance, energy or residual error exceeds its tolerance in the conventions document
-  MUST fail with that reason. Before the solve, every part MUST be joined to the supported assembly through
+  information means, per unit load case: the force-balance check (the solver's total reaction against the
+  applied load, per component); the moment-balance check (the reaction moment against the applied moment);
+  the energy check (the work of the loads, Σ fᵢ·uᵢ, against twice the strain energy); and the solver's
+  relative residual, where the solver reports one. A run whose force-balance, moment, energy or residual
+  error exceeds its tolerance in the conventions document MUST fail with that reason. These checks verify the
+  solve, not the model: an exact solution passes them whatever its boundary conditions. Before the solve, every part MUST be joined to the supported assembly through
   shared faces; otherwise the run fails with a plain reason naming the part.
 - **FR-056**: After the main PC restarts or wakes, runs that were in progress MUST be marked "interrupted" and
   put back in the queue, queued runs MUST keep their place, and no interrupted run may be shown as complete.

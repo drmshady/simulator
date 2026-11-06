@@ -136,7 +136,8 @@ conventions document or library is written; they do not block planning.
 
 - **Decision**:
   - **Where values come from**: reported values are computed from integration-point values, weighted by the
-    integration-point volume (element volume / 4 for 10-node tetrahedra).
+    integration-point volume: det(J) × Gauss weight, the volume the solver itself integrates with (a quarter of
+    the element volume only for straight-edged 10-node tetrahedra; owner's choice in conventions 1.1.0).
   - **Statistics**: region mean and volume-weighted 95th percentile (Principle II). Nodal peaks are never
     reported.
   - **Regions**: defined as geometric tests on integration-point positions plus the material group. Examples:

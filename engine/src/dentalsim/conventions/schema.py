@@ -43,10 +43,28 @@ class Axes(_Model):
     z: Axis
 
 
+Quadrant = Literal["maxillary_right", "maxillary_left", "mandibular_left", "mandibular_right"]
+
+
 class Frame(_Model):
+    """An abstract right-handed frame. Anatomically it is a site in `anatomical_quadrants` (mesial × buccal =
+    occlusal there); sites in the other quadrants are mirrored into it (`other_quadrants`)."""
+
     origin: str
     handedness: Literal["right"]
+    anatomical_quadrants: tuple[Quadrant, ...]
+    other_quadrants: Literal["mirrored"]
     axes: Axes
+
+    @field_validator("anatomical_quadrants")
+    @classmethod
+    def _right_handed_quadrants(cls, value: tuple[str, ...]) -> tuple[str, ...]:
+        if set(value) != {"maxillary_right", "mandibular_left"}:
+            raise ValueError(
+                "mesial × buccal = occlusal holds for maxillary-right and mandibular-left sites only; "
+                "anatomical_quadrants must be exactly those two"
+            )
+        return value
 
     @model_validator(mode="after")
     def _orthonormal_and_right_handed(self) -> Frame:
@@ -75,12 +93,51 @@ class LoadAngle(_Model):
     azimuth_toward: Literal["buccal"]
     positive_tilt: Literal["away_from_azimuth"]
     default_azimuth_deg: float = Field(ge=0, lt=360)
+    angle_range_deg: tuple[float, float]
+
+    @field_validator("angle_range_deg")
+    @classmethod
+    def _range(cls, value: tuple[float, float]) -> tuple[float, float]:
+        low, high = value
+        if not 0 <= low < high <= 90:
+            raise ValueError("angle_range_deg must lie within [0, 90]; a negative angle duplicates azimuth + 180°")
+        return value
+
+
+class LoadPatch(_Model):
+    """A uniform traction (in the load direction) over the surface faces whose centroids lie within `radius_mm`."""
+
+    radius_mm: float = Field(gt=0)
+    selection: Literal["face_centroid_within_radius"]
+    application: Literal["uniform_traction"]
+    crown_stats_exclude_radius_mm: float = Field(ge=0)
+
+
+class Analysis(_Model):
+    """The assumptions under which unit-load superposition is valid."""
+
+    type: Literal["linear_static"]
+    interfaces: Literal["tied"]
+    contact: Literal["none"]
+    screw_preload: Literal["none"]
+    superposition: Literal["unit_load_cases"]
+
+
+class DetailLevels(_Model):
+    vary: Literal["mesh_density_only"]
+    geometry: Literal["fixed"]
+
+
+PercentileMethod = Literal["smallest_value_with_cumulative_volume_fraction_at_least_p"]
 
 
 class Statistics(_Model):
+    source: Literal["integration_points"]
     weighting: Literal["integration_point_volume"]
+    ip_volume: Literal["jacobian_times_gauss_weight"]
     reported: tuple[Literal["mean", "p95"], ...]
     percentile: float = Field(gt=0, lt=100)
+    percentile_method: PercentileMethod
 
 
 class Sector(_Model):
@@ -91,6 +148,14 @@ class Sector(_Model):
 SectorName = Literal["mesial", "distal", "buccal", "lingual"]
 
 
+class CrestPlane(_Model):
+    """The crest plane: at right angles to the implant (or tooth) axis, through the point where that axis meets the
+    bone crest surface."""
+
+    normal: Literal["implant_axis"]
+    through: Literal["axis_crest_intersection"]
+
+
 class CrestalRingRegion(_Model):
     kind: Literal["crestal_ring"]
     label: str
@@ -98,6 +163,10 @@ class CrestalRingRegion(_Model):
     max_distance_from_surface_mm: float = Field(gt=0)
     max_depth_below_crest_mm: float = Field(gt=0)
     worse_side: Literal["highest_mean"]
+    implant_surface: Literal["core_radius"]
+    crest_plane: CrestPlane
+    sector_boundary: Literal["first_included"]
+    sector_direction: Literal["projected_to_occlusal_plane"]
     sectors: dict[SectorName, Sector]
 
     @model_validator(mode="after")
@@ -129,7 +198,9 @@ Region = Annotated[CrestalRingRegion | ComponentBandRegion | ComponentRegion, Fi
 
 class StrainMeasure(_Model):
     frost: Literal["von_mises_equivalent"]
-    effective_poisson_ratio: float = Field(gt=-1, le=0.5)
+    effective_poisson_ratio: Literal["material_nu"] | Annotated[float, Field(gt=-1, le=0.5)]
+    """`material_nu`: each material's own Poisson's ratio, so ε_eq equals the axial strain under uniaxial stress."""
+    formula: str = Field(min_length=10)
     stored: tuple[Literal["von_mises_equivalent", "max_principal", "min_principal"], ...]
     unit: Literal["microstrain"]
 
@@ -148,8 +219,9 @@ class FrostCategory(_Model):
 
 
 class FrostScale(_Model):
+    """Coloured by the measure `strain_measure.frost`."""
+
     label: str
-    measure: Literal["von_mises_equivalent"]
     categories: tuple[FrostCategory, ...]
     edges: tuple[str, ...]
 
@@ -194,6 +266,20 @@ class StrengthRule(_Model):
         return self
 
 
+class KeyResult(_Model):
+    """A result the mesh check compares between two detail levels (FR-037)."""
+
+    region: str
+    quantity: Literal["equivalent_strain", "percent_of_strength"]
+    statistics: tuple[Literal["mean", "p95"], ...] = Field(min_length=1)
+    per: Literal["site", "implant", "component"]
+
+
+class MeshCheck(_Model):
+    limit: float = Field(gt=0, lt=1)
+    key_results: tuple[KeyResult, ...] = Field(min_length=1)
+
+
 class LibraryUnit(_Model):
     category: LibraryCategory
     pattern: str
@@ -213,7 +299,9 @@ class Conventions(_Model):
     units: Units
     frame: Frame
     load_angle: LoadAngle
-    load_patch_radius_mm: float = Field(gt=0)
+    load_patch: LoadPatch
+    analysis: Analysis
+    detail_levels: DetailLevels
     statistics: Statistics
     regions: dict[str, Region]
     strain_measure: StrainMeasure
@@ -221,8 +309,9 @@ class Conventions(_Model):
     continuous_scale: ContinuousScale
     material_classes: dict[MaterialClass, tuple[str, ...]]
     strength_rules: tuple[StrengthRule, ...]
-    mesh_check_limit: float = Field(gt=0, lt=1)
+    mesh_check: MeshCheck
     equilibrium_tolerance: float = Field(gt=0, lt=1)
+    moment_tolerance: float = Field(gt=0, lt=1)
     energy_tolerance: float = Field(gt=0, lt=1)
     residual_tolerance: float = Field(gt=0, lt=1)
     max_committed_asset_bytes: int = Field(gt=0)
@@ -246,7 +335,14 @@ class Conventions(_Model):
             raise ValueError("every material class needs exactly one strength rule")
         if "crestal_ring" not in self.regions:
             raise ValueError("the regions must include the crestal ring")
+        unknown = sorted({k.region for k in self.mesh_check.key_results} - set(self.regions))
+        if unknown:
+            raise ValueError(f"mesh_check.key_results name regions that are not defined: {', '.join(unknown)}")
         return self
+
+    @property
+    def mesh_check_limit(self) -> float:
+        return self.mesh_check.limit
 
     def material_class_of(self, material: str) -> MaterialClass | None:
         for name, members in self.material_classes.items():

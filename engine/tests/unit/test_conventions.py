@@ -70,11 +70,11 @@ def test_the_block_parses_and_has_a_semver_version() -> None:
     [
         ("```yaml conventions\n", "```yaml\n", "has no ```yaml conventions``` block"),
         ("\nunits:\n", "\nunits: [unclosed\n", "not valid YAML"),
-        ("load_patch_radius_mm: 1.0\n", "load_patch_radius_mm: 1.0\nload_patch_shape: disc\n", "load_patch_shape"),
+        ("  radius_mm: 1.0\n", "  radius_mm: 1.0\n  load_patch_shape: disc\n", "load_patch_shape"),
         ("  length: mm\n", "  length: cm\n", "units.length"),
-        ("version: 1.0.0\n", "version: 1.0.0-draft\n", "semantic version"),
-        ("version: 1.0.0\n", 'version: "1.0"\n', "semantic version"),
-        ("mesh_check_limit: 0.05\n", "", "mesh_check_limit"),
+        ('version: "1.1.0"\n', 'version: "1.1.0-draft"\n', "semantic version"),
+        ('version: "1.1.0"\n', 'version: "1.1"\n', "semantic version"),
+        ("  limit: 0.05\n", "", "mesh_check.limit"),
     ],
     ids=["missing block", "invalid yaml", "unknown key", "wrong unit", "not semver", "two-part version", "missing"],
 )
@@ -98,14 +98,14 @@ def test_a_missing_document_is_refused(tmp_path: Path) -> None:
 def test_the_hash_ignores_comments_and_formatting_but_not_values() -> None:
     original = _parse(_text()).content_hash
     reformatted = _edit("  length: mm\n", "  length:   mm   # millimetres\n")
-    reformatted = _edit("version: 1.0.0\n", "version: 1.0.0\n# a comment inside the block\n", reformatted)
+    reformatted = _edit('version: "1.1.0"\n', 'version: "1.1.0"\n# a comment inside the block\n', reformatted)
     reformatted = _edit(
         "      mesial: {centre_deg: 0, half_width_deg: 45}\n",
         "      mesial:\n        half_width_deg: 45\n        centre_deg: 0\n",
         reformatted,
     )
     assert _parse(reformatted).content_hash == original
-    assert _parse(_edit("mesh_check_limit: 0.05\n", "mesh_check_limit: 0.04\n")).content_hash != original
+    assert _parse(_edit("  limit: 0.05\n", "  limit: 0.04\n")).content_hash != original
 
 
 # --- frame, load angle, regions ----------------------------------------------------------------------------------
@@ -257,7 +257,7 @@ def test_check_refuses_a_stale_generated_file(
     assert "is up to date" in capsys.readouterr().out
 
     old_hash = get_loaded_conventions().content_hash
-    changed = _edit("mesh_check_limit: 0.05\n", "mesh_check_limit: 0.04\n")
+    changed = _edit("  limit: 0.05\n", "  limit: 0.04\n")
     (root / "docs" / "conventions.md").write_text(changed, encoding="utf-8")
     get_loaded_conventions.cache_clear()
     assert _run("check", "--json") == 1
@@ -269,7 +269,7 @@ def test_check_refuses_a_stale_generated_file(
 def test_codegen_main_exits_2_on_invalid_conventions(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    root = _repo_copy(tmp_path, monkeypatch, _edit("version: 1.0.0\n", "version: one\n"))
+    root = _repo_copy(tmp_path, monkeypatch, _edit('version: "1.1.0"\n', "version: one\n"))
     assert codegen.main() == 2
     assert "semantic version" in capsys.readouterr().err
     assert not (root / codegen.GENERATED_TS_PATH).exists()

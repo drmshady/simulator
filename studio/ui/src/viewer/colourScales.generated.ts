@@ -1,8 +1,8 @@
-// Generated from docs/conventions.md version 1.0.0 (hash dca81af57ab8fbbd3a1e40260f0cc15a1b1732d3d2465811b40f78c751a7e834).
+// Generated from docs/conventions.md version 1.1.0 (hash 3a9ebb0bd8b9abd05158cc9c3482c4d4b18482ae6c20e7678cc3b79f97499405).
 // Do not edit: change the conventions block, then run `npm --prefix studio/ui run gen:conventions`.
 
-export const CONVENTIONS_VERSION: string = '1.0.0';
-export const CONVENTIONS_HASH: string = 'dca81af57ab8fbbd3a1e40260f0cc15a1b1732d3d2465811b40f78c751a7e834';
+export const CONVENTIONS_VERSION: string = '1.1.0';
+export const CONVENTIONS_HASH: string = '3a9ebb0bd8b9abd05158cc9c3482c4d4b18482ae6c20e7678cc3b79f97499405';
 
 export const UNITS: {
   readonly length: string;

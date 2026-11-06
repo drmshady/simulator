@@ -116,18 +116,20 @@ Each fallback is recorded as a different solver build, so its runs never mix wit
   `DENTALSIM_CCX` and `solver check` expect a Windows program, so this route is not set up.
 - **conda-forge `calculix` 2.23** has a win-64 package. *Not checked: which equation solvers it includes.*
 
-## Recorded by the owner on the main PC
+## Recorded on the main PC (T011)
+
+Installed at `D:\DentalSimTools\calculix\ccx_static.exe`; `DENTALSIM_CCX` set with `setx` for the owner's user.
 
 | Item | Value |
 |---|---|
-| Date | *recorded by the owner* |
-| Source (URL) | *recorded by the owner* |
-| SHA-256 of the downloaded zip | *recorded by the owner* |
-| `solver check`: version string | *recorded by the owner* |
-| `solver check`: equation solver | *recorded by the owner* |
-| `solver check`: SHA-256 of `ccx_static.exe` | *recorded by the owner* |
-| `solver check`: build id | *recorded by the owner* |
-| Smoke test (`pytest engine/tests/benchmark`) passed | *recorded by the owner* |
+| Date | 2026-11-06 (installed by Claude at the owner's request) |
+| Source (URL) | <http://www.dhondt.de/calculix_2.23_4win.zip> |
+| SHA-256 of the downloaded zip | `87fc4e1721df37370ec67d0a244bb14f9bf804b0a95df49e2ae7369d30ec72e8` |
+| `solver check`: version string | 2.23 |
+| `solver check`: equation solver | PASTIX |
+| `solver check`: SHA-256 of `ccx_static.exe` | `e18360eb32a5cd48f91a212c57069212cd8e27d2f798a599a78106bd0b3ecc1f` |
+| `solver check`: build id | `ccx-2.23-pastix-sha256:e18360eb32a5cd48f91a212c57069212cd8e27d2f798a599a78106bd0b3ecc1f` |
+| Smoke test (`pytest engine/tests/benchmark`) passed | yes, 3 of 3 (2026-11-06) |
 
 ## Things learned while checking the build (main PC, 5 Nov 2026)
 
