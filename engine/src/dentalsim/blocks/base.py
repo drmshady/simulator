@@ -27,6 +27,15 @@ call; `build(ctx)` places them. Parts may overlap where they are meant to (an im
 whose `displaces` names the other's component takes the overlap when the assembly is joined. A `Cutter` removes
 material afterwards from the components it names, such as an empty screw-access channel. Any other overlap is a
 collision (`overlap`, found by the assembly).
+
+**Sockets.** A block attaches to a socket of its parent by name. A keyed attach point gives one socket per value of
+a list setting (`site:34`, `site:35`, … one per tooth of the jaw segment's region); see `AttachPoint`.
+
+**Joints and links** (slice 1b). The placement tree says where a block sits, not what holds it up: a pontic sits
+at a site of the jaw segment but is carried only by the connectors that join it to its neighbours. A prosthesis
+unit lists its contact areas as `Joint`s, a connector reports the two joints it joins as a `Link`, and both reach
+every block through its `Environment`, so a pontic or a cantilever extension can check that it is held
+(`Environment.supported_at`, problem `unsupported_pontic`).
 """
 
 from __future__ import annotations
@@ -286,15 +295,45 @@ class ResultType:
     needs_physics: frozenset[str] = frozenset()
 
 
+KEY_SEPARATOR = ":"
+X_TOWARD = "x_toward"
+"""Socket property: whether the socket's +x points `mesial` or `distal` (see `BlockContext.mesial_sign`)."""
+
+
+def split_socket_name(name: str) -> tuple[str, str | None]:
+    """The attach point and the key of a socket name: `site:36` is (`site`, `36`), `platform` is (`platform`, None)."""
+    base, separator, key = name.partition(KEY_SEPARATOR)
+    return base, (key if separator else None)
+
+
 @dataclass(frozen=True)
 class AttachPoint:
-    """A socket a block offers to others, such as the implant's `platform`. `capacity` is how many blocks it
-    holds: one for every socket so far (an implant site holds one implant, a platform one abutment)."""
+    """A socket a block offers to others, such as the implant's `platform`. `capacity` is how many blocks each
+    socket holds: one for every socket so far (an implant site holds one implant, a platform one abutment).
+
+    A **keyed** attach point is offered once per value of a list setting of the block: `keys_from` names that
+    string-list design setting, and each socket is named `<name>:<value>` (the jaw segment offers `site:34`,
+    `site:35`, … for the teeth of its region). `default_key_from` names the design setting whose value a bare
+    `<name>` stands for, so a scenario that names the attach point alone (written before it was keyed) keeps its
+    meaning.
+    """
 
     name: str
     label: str
     description: str = ""
     capacity: int = 1
+    keys_from: str | None = None
+    default_key_from: str | None = None
+
+    @property
+    def keyed(self) -> bool:
+        return self.keys_from is not None
+
+    def socket_name(self, key: str | None = None) -> str:
+        return self.name if key is None else f"{self.name}{KEY_SEPARATOR}{key}"
+
+    def socket_label(self, key: str | None = None) -> str:
+        return self.label if key is None else f"{self.label} {key}"
 
 
 @dataclass(frozen=True)
@@ -309,6 +348,11 @@ class Socket:
     name: str
     frame: Transform
     properties: Mapping[str, float | str] = field(default_factory=dict)
+
+    @property
+    def attach_point(self) -> str:
+        """The attach point it belongs to: `site` for the keyed socket `site:36`."""
+        return split_socket_name(self.name)[0]
 
     def number(self, key: str) -> float:
         value = self.properties.get(key)
@@ -345,13 +389,91 @@ class KeepOut:
     """The block instance it belongs to."""
 
 
+@dataclass(frozen=True)
+class Joint:
+    """A contact area of a prosthesis unit (a crown, a pontic) where a connector can join it to its neighbour, in
+    the conventions frame (FR-011 "unsupported pontics").
+
+    - `socket` is the unit's socket a connector hangs from there (`connector_mesial`, `connector_distal`).
+    - `normal` points out of the unit, toward the neighbour it would be joined to.
+    - `carried`: the unit stands on its own support (a crown on its abutment), rather than only on the units it is
+      joined to (a pontic, a cantilever extension).
+    """
+
+    owner: str
+    label: str
+    """How a message names the unit: "Crown 'crown-1'"."""
+    socket: str
+    position_mm: Point
+    normal: Point
+    carried: bool
+    occlusal: Point = (0.0, 0.0, 1.0)
+    """The unit's occlusal direction."""
+    half_widths_mm: tuple[float, float] = (0.0, 0.0)
+    """The unit's mesiodistal and buccolingual half-widths at the contact's height (0 when not known)."""
+    max_depth_mm: float = 0.0
+    """How far a connector may reach into the unit from the contact area (to keep clear of an abutment post, or of
+    the connector on its other side); 0 when not known."""
+    room_below_mm: float = math.inf
+    room_above_mm: float = math.inf
+    """The unit's height below and above the contact area: to its base or margin, and to its occlusal table."""
+
+
+@dataclass(frozen=True)
+class Link:
+    """Two units joined by a connector `by`: `a` is the joint it hangs from, `b` the one it reaches; each is an
+    (owner, socket) pair of a `Joint`."""
+
+    by: str
+    a: tuple[str, str]
+    b: tuple[str, str]
+
+
 @dataclass(frozen=True, eq=False)
 class Environment:
     """What a block's checks and anchors can see of the rest of the assembly, in the conventions frame: the bone
-    (from every block's `bone_volumes`) and the keep-out volumes of the other blocks."""
+    (from every block's `bone_volumes`), the keep-out volumes of the other blocks, every prosthesis unit's joints
+    (from `joints`) and the links the connectors make between them (from `links`)."""
 
     bone: tuple[Volume, ...] = ()
     keep_outs: tuple[KeepOut, ...] = ()
+    joints: tuple[Joint, ...] = ()
+    links: tuple[Link, ...] = ()
+
+    def joint(self, owner: str, socket: str) -> Joint | None:
+        return next((j for j in self.joints if (j.owner, j.socket) == (owner, socket)), None)
+
+    def joined_at(self, owner: str, socket: str) -> list[tuple[str, str]]:
+        """The joints of other units linked to the joint (owner, socket)."""
+        found = []
+        for link in self.links:
+            if link.a == (owner, socket):
+                found.append(link.b)
+            elif link.b == (owner, socket):
+                found.append(link.a)
+        return found
+
+    def is_carried(self, owner: str) -> bool:
+        return any(j.carried for j in self.joints if j.owner == owner)
+
+    def supported_at(self, owner: str, socket: str) -> bool:
+        """Whether the unit `owner` is held at its joint `socket`: a link there leads, through linked units that do
+        not come back through `owner`, to a unit that stands on its own support. Two pontics side by side between
+        two crowns are each held on both sides."""
+        neighbours: dict[str, set[str]] = {}
+        for link in self.links:
+            neighbours.setdefault(link.a[0], set()).add(link.b[0])
+            neighbours.setdefault(link.b[0], set()).add(link.a[0])
+        start = {unit for unit, _ in self.joined_at(owner, socket)} - {owner}
+        reached, frontier = set(start), list(start)
+        while frontier:
+            unit = frontier.pop()
+            if self.is_carried(unit):
+                return True
+            for following in neighbours.get(unit, set()) - reached - {owner}:
+                reached.add(following)
+                frontier.append(following)
+        return False
 
     def in_bone(self, points: ArrayLike) -> BoolArray:
         p = as_points(points)
@@ -394,8 +516,9 @@ class BlockContext[S: BlockSettings]:
         return Socket(name, self.to_frame @ local, dict(properties or {}))
 
     def parent_socket(self, *names: str) -> Socket:
-        """The socket the block is attached to; refused when it is not attached to one of `names`."""
-        if self.parent is None or self.parent.socket.name not in names:
+        """The socket the block is attached to; refused when it is not attached to one of `names` (attach point
+        names: a keyed socket `site:36` is a `site` socket)."""
+        if self.parent is None or split_socket_name(self.parent.socket.name)[0] not in names:
             wanted = " or ".join(repr(n) for n in names)
             raise Refused(
                 f"block {self.instance_id!r} must be attached to a {wanted} socket",
@@ -403,6 +526,20 @@ class BlockContext[S: BlockSettings]:
                 problems=[{"block": self.instance_id, "message": f"attach it to a {wanted} socket"}],
             )
         return self.parent.socket
+
+    @property
+    def mesial_sign(self) -> float:
+        """+1 when the block's local +x points mesial, −1 when it points distal: a site past the midline of a full
+        arch (the jaw segment's sockets say so in their `x_toward` property, and each block passes it on to the
+        sockets it offers), so that blocks name their mesial and distal sides anatomically."""
+        if self.parent is None:
+            return 1.0
+        return -1.0 if self.parent.socket.properties.get(X_TOWARD) == "distal" else 1.0
+
+    @property
+    def x_toward(self) -> str:
+        """`mesial` or `distal`: for a block to pass on in the properties of the sockets it offers."""
+        return "mesial" if self.mesial_sign > 0 else "distal"
 
     def problem(self, code: ProblemCode, message: str, location: ArrayLike | None = None) -> Problem:
         where = None
@@ -713,6 +850,28 @@ class BlockType[S: BlockSettings](ABC):
 
     # --- physics and catalogue ----------------------------------------------------------------------------------
 
+    # --- sockets ----------------------------------------------------------------------------------------------
+
+    def attach_point(self, socket_name: str) -> AttachPoint | None:
+        """The attach point a socket name belongs to (`site:36` belongs to `site`)."""
+        base, _ = split_socket_name(socket_name)
+        return next((a for a in self.attach_points if a.name == base), None)
+
+    def resolve_socket_name(self, socket_name: str, design: Mapping[str, Any]) -> str:
+        """The full name of the socket `socket_name` stands for, given this block's design values: a bare name of a
+        keyed attach point means its default key (`site` is `site:<the jaw segment's site>`)."""
+        point = self.attach_point(socket_name)
+        _, key = split_socket_name(socket_name)
+        if point is None or not point.keyed or key is not None or point.default_key_from is None:
+            return socket_name
+        return point.socket_name(str(design[point.default_key_from]))
+
+    def socket_keys(self, point: AttachPoint, design: Mapping[str, Any]) -> tuple[str, ...]:
+        """The keys of a keyed attach point's sockets for these design values (none for an unkeyed one)."""
+        if point.keys_from is None:
+            return ()
+        return tuple(str(v) for v in design[point.keys_from])
+
     def needs_physics(self, settings: Mapping[str, SettingValue]) -> frozenset[str]:
         """The capabilities an instance with these (raw) settings needs. The gate reads only this and the result
         types (FR-011a), and calls it even when the settings have problems."""
@@ -728,7 +887,14 @@ class BlockType[S: BlockSettings](ABC):
             "description": self.description,
             "settings_schema": self.settings_json_schema(),
             "attach_points": [
-                {"name": a.name, "label": a.label, "description": a.description, "capacity": a.capacity}
+                {
+                    "name": a.name,
+                    "label": a.label,
+                    "description": a.description,
+                    "capacity": a.capacity,
+                    "keys_from": a.keys_from,
+                    "default_key_from": a.default_key_from,
+                }
                 for a in self.attach_points
             ],
             "attaches_to": list(self.attaches_to),
@@ -812,6 +978,16 @@ class BlockType[S: BlockSettings](ABC):
 
     def report_anchors(self, ctx: BlockContext[S]) -> tuple[ReportAnchor, ...]:
         """Axes and radius profiles for the region rules (crestal ring, implant neck), in the conventions frame."""
+        return ()
+
+    def joints(self, ctx: BlockContext[S]) -> tuple[Joint, ...]:
+        """The contact areas where connectors can join this prosthesis unit to its neighbours, in the conventions
+        frame. Called before the environment is known."""
+        return ()
+
+    def links(self, ctx: BlockContext[S]) -> tuple[Link, ...]:
+        """The units this block joins (a connector), found among `ctx.environment.joints`; the environment's links
+        are not known yet when this is called."""
         return ()
 
 

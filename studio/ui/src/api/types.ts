@@ -143,8 +143,17 @@ export interface BlockTypeEntry {
     required: string[];
     groups: { id: string; label: string }[];
   };
-  /** `capacity`: how many blocks the socket holds (one for every socket so far). */
-  attach_points: { name: string; label: string; description: string; capacity?: number }[];
+  /** `capacity`: how many blocks each socket holds (one for every socket so far). A keyed attach point
+   * (`keys_from`, a string-list design setting) is offered once per value of that setting, as `<name>:<value>`;
+   * a bare `<name>` means the key in the design setting `default_key_from`. */
+  attach_points: {
+    name: string;
+    label: string;
+    description: string;
+    capacity?: number;
+    keys_from?: string | null;
+    default_key_from?: string | null;
+  }[];
   attaches_to: string[];
   needs_physics: string[];
   result_types: {

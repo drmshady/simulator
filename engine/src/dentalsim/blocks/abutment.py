@@ -24,7 +24,7 @@ Stress in the screw is reported only once screw preload passes its benchmark; un
 **Socket** `crown_seat`: origin at the margin centre, z along the post axis. Properties: `margin_radius_mm`,
 `margin_tilt_deg` (the margin plane is the seat's xy-plane turned by −margin_tilt_deg about the seat's x-axis),
 `core_height_mm`, `core_base_radius_mm`, `core_top_radius_mm`, `retention`, `channel_radius_mm` (the access
-channel runs along the margin plane's normal through the seat origin).
+channel runs along the margin plane's normal through the seat origin), and `x_toward` passed on from the platform.
 """
 
 from __future__ import annotations
@@ -33,6 +33,7 @@ import math
 from typing import Annotated, Literal
 
 from dentalsim.blocks.base import (
+    X_TOWARD,
     AttachPoint,
     BlockContext,
     BlockSettings,
@@ -282,6 +283,7 @@ class Abutment(BlockType[AbutmentSettings]):
                     "core_top_radius_mm": s.post_top_radius,
                     "retention": s.retention,
                     "channel_radius_mm": channel,
+                    X_TOWARD: ctx.x_toward,
                 },
             ),
         )

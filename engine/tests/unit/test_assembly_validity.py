@@ -56,8 +56,14 @@ def test_the_template_as_delivered_is_valid(snapshot_library: SnapshotLibrary) -
 
 def test_every_builtin_template_loads() -> None:
     templates = builtin_templates()
-    assert [t.id for t in templates] == ["single_crown_implant"]
-    assert templates[0].approval is not None and templates[0].approval.status in ("proposed", "approved")
+    assert {t.id for t in templates} == {
+        "single_crown_implant",
+        "splinted_crowns",
+        "bridge_implant",
+        "cantilever_bridge",
+        "full_arch_fixed",
+    }
+    assert all(t.approval is not None and t.approval.status in ("proposed", "approved") for t in templates)
 
 
 @pytest.mark.parametrize(
@@ -191,7 +197,7 @@ def test_a_second_block_on_an_occupied_socket_is_named_at_once(snapshot_library:
     for mode in ("fast", "full"):
         result = check_validity(scenario, mode=mode)
         assert [(p.code, p.block) for p in result.problems] == [("overlap", "implant-2")], result.problems
-        assert "implant site of Jaw segment 'jaw', which already holds 'implant-1'" in result.problems[0].message
+        assert "attached to site 36 of Jaw segment 'jaw', which already holds 'implant-1'" in result.problems[0].message
     assert place(scenario).block("implant-2").context is None  # left unplaced: not built, not overlapping twice
 
 

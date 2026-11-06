@@ -2,7 +2,11 @@
 
 1. The level's size fields (`dentalsim.mesh.levels`) and a first-order mesh, single-threaded with a fixed seed.
 2. **Quality**: the smallest scaled Jacobian (minimum SICN) of the straight tetrahedra must be at least
-   `MIN_QUALITY`; otherwise meshing fails with a plain reason naming the part.
+   `MIN_QUALITY`. Below it, the mesh is made finer around the worst element and meshed again, up to
+   `MAX_REFINEMENTS` times (a narrow strip of surface meshed coarsely gives such an element; more optimisation or
+   another random seed does not move it); then meshing fails with a plain reason naming the part. When the mesher
+   refuses a surface mesh that folds over itself and names the surfaces, the mesh is made finer around them in the
+   same way.
 3. **Second order**: the edge nodes are placed on the curved geometry. Where that makes an element's Jacobian
    fall to `MIN_CURVED_JACOBIAN` of its straight value or below at an integration point (a thin feature, a tight
    curve), the element's edges are made straight again, so every element is valid for the solver.
@@ -15,6 +19,8 @@
 
 from __future__ import annotations
 
+import math
+import re
 import time
 from collections import deque
 from collections.abc import Callable, Sequence
@@ -27,7 +33,7 @@ from numpy.typing import NDArray
 from dentalsim.errors import DentalsimError
 from dentalsim.geometry.assemble import AssembledModel, solver_name
 from dentalsim.geometry.transform import Point
-from dentalsim.mesh.levels import MeshLevel, add_size_fields, set_mesh_options
+from dentalsim.mesh.levels import REFINE_RADIUS_MM, MeshLevel, add_size_fields, refine_around, set_mesh_options
 from dentalsim.mesh.load_patch import TET10_FACES
 from dentalsim.model.scenario import DetailLevel
 from dentalsim.post.integration import SHAPE_DERIVATIVES
@@ -38,6 +44,7 @@ MIN_QUALITY = 0.01
 MIN_CURVED_JACOBIAN = 0.05
 """A curved element whose Jacobian falls to this fraction of its straight value is made straight."""
 MAX_STRAIGHTENING_PASSES = 10
+MAX_REFINEMENTS = 4
 GMSH_TET4, GMSH_TET10 = 4, 11
 _FLIP = np.array([0, 2, 1, 3, 6, 5, 4, 7, 9, 8])
 """Reverses a C3D10 element (swaps corners 2 and 3 and their edge nodes)."""
@@ -164,22 +171,61 @@ def _straighten(coords: FloatArray, conn_rows: IntArray) -> int:
     raise MeshFailed("the mesh has elements that stay invalid even with straight edges; try another detail level")
 
 
-def _quality_check(volume_tags: dict[int, int], parts_labels: Sequence[str]) -> float:
+def _worst_element(volume_tags: dict[int, int], parts_labels: Sequence[str]) -> tuple[float, str, Point]:
+    """The smallest quality of the first-order mesh, the part it is in and the element's centre."""
     types, tags, _ = gmsh.model.mesh.getElements(3)
     all_tags = np.concatenate([np.asarray(t, dtype=np.int64) for t in tags]) if tags else np.empty(0, np.int64)
     if not all_tags.size:
         raise MeshFailed("meshing produced no elements")
     quality = np.asarray(gmsh.model.mesh.getElementQualities(all_tags, "minSICN"), dtype=np.float64)
     worst = int(np.argmin(quality))
-    if quality[worst] >= MIN_QUALITY:
-        return float(quality[worst])
-    _, _, dim, entity = gmsh.model.mesh.getElement(int(all_tags[worst]))
+    _, nodes, dim, entity = gmsh.model.mesh.getElement(int(all_tags[worst]))
     where = parts_labels[volume_tags[entity]] if dim == 3 and entity in volume_tags else "the model"
-    raise MeshFailed(
-        f"the mesh has a badly shaped element in {where} (quality {quality[worst]:.3f}, at least {MIN_QUALITY:g} is "
-        "needed); a thin or very small feature there is probably the cause, so try another detail level or change "
-        "the block's settings"
-    )
+    x, y, z = np.mean([gmsh.model.mesh.getNode(int(n))[0] for n in nodes], axis=0)
+    return float(quality[worst]), where, (float(x), float(y), float(z))
+
+
+def _generate(model: AssembledModel, level: MeshLevel, background: int) -> float:
+    """Mesh in first order, refining around a badly shaped element and meshing again while one is left."""
+    volume_part = {tag: index for index, part in enumerate(model.parts) for tag in part.volumes}
+    labels = [f"{p.block_label} ({p.part.name})" for p in model.parts]
+    tried: list[Point] = []
+
+    def refine(centres: Sequence[Point]) -> None:
+        nonlocal background
+        gmsh.model.mesh.clear()
+        for centre in centres:
+            again = sum(1 for p in tried if math.dist(p, centre) < REFINE_RADIUS_MM)
+            tried.append(centre)
+            background = refine_around(background, centre, level, again)
+
+    for attempt in range(MAX_REFINEMENTS + 1):
+        try:
+            gmsh.model.mesh.generate(3)
+        except Exception as exc:  # gmsh raises a bare Exception with its last error
+            failed = f"the mesher could not mesh the model at the {level.name} level: {exc}"
+            surfaces = [int(t) for t in re.findall(r"surface (\d+)", str(exc))]
+            if attempt == MAX_REFINEMENTS or not surfaces:
+                raise MeshFailed(failed) from exc
+            # The surface mesh folded where two surfaces meet in a thin strip: finer there, then again.
+            refine([_surface_centre(s) for s in surfaces])
+            continue
+        quality, where, centre = _worst_element(volume_part, labels)
+        if quality >= MIN_QUALITY:
+            return quality
+        if attempt == MAX_REFINEMENTS:
+            raise MeshFailed(
+                f"the mesh has a badly shaped element in {where} (quality {quality:.3f}, at least {MIN_QUALITY:g} "
+                "is needed); a thin or very small feature there is probably the cause, so try another detail level "
+                "or change the block's settings"
+            )
+        refine([centre])
+    raise AssertionError("unreachable")
+
+
+def _surface_centre(tag: int) -> Point:
+    x, y, z = gmsh.model.occ.getCenterOfMass(2, tag)
+    return (float(x), float(y), float(z))
 
 
 def _check_connected(
@@ -227,15 +273,10 @@ def build_mesh(
     """Mesh the joined model in the current gmsh session at `level`."""
     start = time.perf_counter()
     set_mesh_options(level)
-    add_size_fields(model, level, load_points)
+    background = add_size_fields(model, level, load_points)
     if progress:
         progress("meshing")
-    try:
-        gmsh.model.mesh.generate(3)
-    except Exception as exc:  # gmsh raises a bare Exception with its last error
-        raise MeshFailed(f"the mesher could not mesh the model at the {level.name} level: {exc}") from exc
-    volume_part = {tag: index for index, part in enumerate(model.parts) for tag in part.volumes}
-    min_quality = _quality_check(volume_part, [f"{p.block_label} ({p.part.name})" for p in model.parts])
+    min_quality = _generate(model, level, background)
     gmsh.model.mesh.setOrder(2)
 
     raw_tags, raw_coords, _ = gmsh.model.mesh.getNodes()

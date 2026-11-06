@@ -41,7 +41,7 @@ def test_bounding_box_and_part_tags(kit, occ_model) -> None:
     assert 5.0 <= -x0 <= 5.25 and 5.0 <= x1 <= 5.25
     assert 4.5 <= -y0 <= 4.75 and 4.5 <= y1 <= 4.75
     assert (body.component, body.material, body.strength_setting) == ("crown", "cocr", "strength")
-    assert body.displaces == frozenset()
+    assert body.displaces == frozenset({"connector"})  # a splinting connector entering it gives way (slice 1b)
     assert volume_mm3(body.volumes) < 10.0 * 9.0 * 8.0
 
 

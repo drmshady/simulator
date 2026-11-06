@@ -19,8 +19,11 @@ inner surface fits the post exactly and is bonded to it; no cement layer is mode
 **Occlusal points**: `buccal_cusp`, `lingual_cusp` (the ridge tops), `central_fossa` (where the ridges meet),
 `mesial_marginal_ridge` and `distal_marginal_ridge` (on the table near its mesial and distal ends).
 
-**Sockets** `connector_mesial` and `connector_distal` (for splinting connectors and pontics, slice 1b): at the
-mesial and distal ends of the height of contour, +z pointing out of the crown, +y buccal.
+**Sockets** `connector_mesial` and `connector_distal` (for splinting connectors, slice 1b): at the mesial and
+distal ends of the height of contour, +z pointing out of the crown, +y buccal (mesial is +x, or −x past the midline
+of a full arch: the seat's `x_toward`). The same two contact areas are the
+crown's **joints**, carried (the crown stands on its abutment), and where a connector enters the crown the crown
+keeps its shape (it displaces the connector).
 """
 
 from __future__ import annotations
@@ -35,6 +38,7 @@ from dentalsim.blocks.base import (
     BlockSettings,
     BlockType,
     Design,
+    Joint,
     Library,
     OcclusalPoint,
     Part,
@@ -61,6 +65,8 @@ SEAL_MM = 1.5
 MIN_OCCLUSAL_MM = 1.0
 MIN_WALL_MM = 0.3
 MIN_CUSP_CLEARANCE_MM = 0.3
+POST_CLEARANCE_MM = 0.5
+"""How far short of the abutment post a connector entering the crown stops."""
 
 
 class CrownSettings(BlockSettings):
@@ -218,12 +224,13 @@ class Crown(BlockType[CrownSettings]):
             end = tuple(reach * c for c in normal)
             channel = Cylinder((start[0], start[1], start[2]), (end[0], end[1], end[2]), channel_radius)
             crown = occ_tools.cut(crown, channel.build_occ())
-        return Parts(parts=(Part("body", "crown", s.material, s.E, s.nu, tuple(crown), strength_setting="strength"),))
+        part = Part("body", "crown", s.material, s.E, s.nu, tuple(crown), frozenset({"connector"}), "strength")
+        return Parts(parts=(part,))
 
     def occlusal_points(self, ctx: BlockContext[CrownSettings]) -> tuple[OcclusalPoint, ...]:
         shape = self._shape(ctx)
         top = shape.table_z + shape.cusp_height
-        ridge = MARGINAL_RIDGE * shape.table_md
+        ridge = ctx.mesial_sign * MARGINAL_RIDGE * shape.table_md
         local = (
             ("buccal_cusp", "Buccal cusp", (0.0, shape.cusp_centre_y, top)),
             ("lingual_cusp", "Lingual cusp", (0.0, -shape.cusp_centre_y, top)),
@@ -236,9 +243,39 @@ class Crown(BlockType[CrownSettings]):
 
     def sockets(self, ctx: BlockContext[CrownSettings]) -> tuple[Socket, ...]:
         shape = self._shape(ctx)
-        mesial = Transform.from_axes((shape.half_md, 0.0, shape.contour_z), (0.0, 0.0, -1.0), (0.0, 1.0, 0.0))
-        distal = Transform.from_axes((-shape.half_md, 0.0, shape.contour_z), (0.0, 0.0, 1.0), (0.0, 1.0, 0.0))
+        plus = Transform.from_axes((shape.half_md, 0.0, shape.contour_z), (0.0, 0.0, -1.0), (0.0, 1.0, 0.0))
+        minus = Transform.from_axes((-shape.half_md, 0.0, shape.contour_z), (0.0, 0.0, 1.0), (0.0, 1.0, 0.0))
+        mesial, distal = (plus, minus) if ctx.mesial_sign > 0 else (minus, plus)
         return (ctx.socket("connector_mesial", mesial), ctx.socket("connector_distal", distal))
+
+    def joints(self, ctx: BlockContext[CrownSettings]) -> tuple[Joint, ...]:
+        """The contact areas, carried, with the room a connector has there: down to the margin, up to the occlusal
+        table, and inward until `POST_CLEARANCE_MM` short of the abutment post."""
+        shape = self._shape(ctx)
+        depth = 0.0
+        if ctx.parent is not None and ctx.parent.socket.name == "crown_seat":
+            seat = ctx.parent.socket
+            base, top = seat.number("core_base_radius_mm"), seat.number("core_top_radius_mm")
+            post = base + (top - base) * min(shape.contour_z / seat.number("core_height_mm"), 1.0)
+            depth = max(shape.half_md - post - POST_CLEARANCE_MM, 0.0)
+        label = f"{self.label} {ctx.instance_id!r}"
+        up = ctx.to_frame.direction((0.0, 0.0, 1.0))
+        return tuple(
+            Joint(
+                ctx.instance_id,
+                label,
+                socket.name,
+                socket.frame.origin,
+                socket.frame.axes[2],
+                carried=True,
+                occlusal=up,
+                half_widths_mm=(shape.half_md, shape.half_bl),
+                max_depth_mm=depth,
+                room_below_mm=shape.contour_z,
+                room_above_mm=shape.table_z - shape.contour_z,
+            )
+            for socket in self.sockets(ctx)
+        )
 
     def _shape(self, ctx: BlockContext[CrownSettings]) -> CrownShape:
         if ctx.parent is None or ctx.parent.socket.name != "crown_seat":

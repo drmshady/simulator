@@ -65,6 +65,19 @@ Each block type is one Python module under `engine/src/dentalsim/blocks/` and re
 | `keep_out(ctx) -> Volumes` | Spaces others may not enter, such as the nerve canal, the sinus or a root envelope. Used by the validity checks. |
 | `check(ctx) -> list[Problem]` | Block-specific validity rules, for example an implant longer than the available bone |
 | `occlusal_points(ctx)` | Named contact points, if it carries load |
+| `joints(ctx)` | Contact areas where connectors can join it to its neighbours, if it is a prosthesis unit (slice 1b): position, outward normal, and whether the unit stands on its own support (`carried`: a crown on its abutment, not a pontic) |
+| `links(ctx)` | The units it joins, if it is a connector, found among the other blocks' joints (slice 1b) |
+
+**Sockets.** A block attaches to a socket of its parent by name (`attach_to.attach_point`). An attach point may be
+**keyed** (`keys_from`, a string-list design setting): it then gives one socket per value, named `<name>:<value>`.
+The jaw segment offers `site:<FDI>` for each tooth of its region, where implants, pontics and cantilever extensions
+sit; a bare `site` means its reference site (`default_key_from`), so slice 1a scenarios keep their meaning. Each
+socket holds at most its attach point's `capacity` blocks.
+
+**Placement is not support** (slice 1b). The tree says where a block sits; what holds it up is the joined
+geometry. A pontic sits at a jaw site but rests on nothing there; the splinting connectors that join it to the units
+beside it hold it. Blocks see every unit's joints and every connector's links through their context's environment,
+so a pontic or cantilever extension can report `unsupported_pontic` while the owner builds.
 
 **Rules**:
 

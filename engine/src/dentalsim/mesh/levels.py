@@ -8,7 +8,10 @@ The geometry is the same at every level; a level sets only gmsh size fields:
   size at the hint's `extent_mm`;
 - around each **loaded contact point**, a Ball field of `patch_size_mm` reaching `PATCH_REACH_MM` beyond the load
   patch radius, so that each patch has several faces;
-- **curvature**: `curvature_elements` elements per full turn of a curved surface (0 leaves it to the fields).
+- **curvature**: `curvature_elements` elements per full turn of a curved surface (0 leaves it to the fields);
+- where a mesh came out with a badly shaped element (a narrow strip of surface meshed coarsely, such as where a
+  crown's cusp ridge ends close to the edge of its table), a Ball field of `patch_size_mm` around it, halved at each
+  further attempt (`refine_around`; `dentalsim.mesh.build`). A mesh that passes is never refined.
 
 Measured on the single-crown template (threaded implant): preview about 46 k DOF, standard about 200 k, fine about
 390 k. The preview is twice research R7's 15–25 k because the geometry keeps its threads and thin walls (the 0.4 mm
@@ -33,6 +36,8 @@ PATCH_REACH_MM = 0.5
 PATCH_BLEND_MM = 2.5
 """Over how much farther the size grows from the patch size to the bulk size."""
 DISTANCE_SAMPLING = 20
+REFINE_RADIUS_MM = 1.5
+"""How far around a badly shaped element the mesh is made finer before meshing again (`refine_around`)."""
 
 
 @dataclass(frozen=True)
@@ -94,16 +99,22 @@ def add_size_fields(
     patch_radius = (conventions or get_conventions()).load_patch.radius_mm
     field = gmsh.model.mesh.field
     fields = []
+    # Hints of the same feature size and extent (the threads of several implants, their screws, the connectors of a
+    # bridge) share one Distance field: every field is evaluated wherever the mesher asks for a size, so one field
+    # per hint made meshing time grow with the number of implants times the model's size.
+    grouped: dict[tuple[float, float], set[int]] = {}
     for hinted in model.hints:
+        grouped.setdefault((hinted.hint.feature_mm, hinted.hint.extent_mm), set()).update(hinted.surfaces)
+    for (feature_mm, extent_mm), surfaces in grouped.items():
         distance = field.add("Distance")
-        field.setNumbers(distance, "SurfacesList", list(hinted.surfaces))
+        field.setNumbers(distance, "SurfacesList", sorted(surfaces))
         field.setNumber(distance, "Sampling", DISTANCE_SAMPLING)
         threshold = field.add("Threshold")
         field.setNumber(threshold, "InField", distance)
-        field.setNumber(threshold, "SizeMin", level.hint_size(hinted.hint.feature_mm))
+        field.setNumber(threshold, "SizeMin", level.hint_size(feature_mm))
         field.setNumber(threshold, "SizeMax", level.max_size_mm)
         field.setNumber(threshold, "DistMin", 0.0)
-        field.setNumber(threshold, "DistMax", hinted.hint.extent_mm)
+        field.setNumber(threshold, "DistMax", extent_mm)
         fields.append(threshold)
     for x, y, z in load_points:
         ball = field.add("Ball")
@@ -120,5 +131,23 @@ def add_size_fields(
     fields.append(bulk)
     smallest = field.add("Min")
     field.setNumbers(smallest, "FieldsList", fields)
+    field.setAsBackgroundMesh(smallest)
+    return int(smallest)
+
+
+def refine_around(background: int, point: Point, level: MeshLevel, attempt: int = 0) -> int:
+    """A new background field: `background`, made as fine as a load patch within `REFINE_RADIUS_MM` of `point`
+    (blending out over `PATCH_BLEND_MM`), and half as fine again for each earlier `attempt` there. Used where a mesh
+    came out with a badly shaped element."""
+    field = gmsh.model.mesh.field
+    ball = field.add("Ball")
+    field.setNumber(ball, "Radius", REFINE_RADIUS_MM)
+    field.setNumber(ball, "Thickness", PATCH_BLEND_MM)
+    field.setNumber(ball, "VIn", level.patch_size_mm * 0.5**attempt)
+    field.setNumber(ball, "VOut", level.max_size_mm)
+    for axis, value in zip(("XCenter", "YCenter", "ZCenter"), point, strict=True):
+        field.setNumber(ball, axis, value)
+    smallest = field.add("Min")
+    field.setNumbers(smallest, "FieldsList", [background, ball])
     field.setAsBackgroundMesh(smallest)
     return int(smallest)

@@ -58,18 +58,45 @@ export function removeBlock(scenario: Scenario, instanceId: string): Scenario {
   return { ...scenario, blocks: scenario.blocks.filter((b) => !gone.has(b.instance_id)), loads };
 }
 
-/** Sockets a new block of `type` can plug into: each placed block's attach points that the type attaches to and
- * that still have room (a socket holds `capacity` blocks, one by default). */
+type AttachPointEntry = BlockTypeEntry['attach_points'][number];
+
+/** A design value of a block: the scenario's, or the block type's default. */
+function designValue(block: BlockInstance, type: BlockTypeEntry | undefined, setting: string): unknown {
+  const given = block.settings?.[setting];
+  if (given && given.kind === 'design') return given.value;
+  return type?.settings_schema.properties[setting]?.default;
+}
+
+/** The sockets a block offers at an attach point, `[socket name, key or null]`: one per value of the setting a
+ * keyed point takes its keys from, otherwise the point itself. */
+function offeredSockets(block: BlockInstance, type: BlockTypeEntry | undefined, point: AttachPointEntry): [string, string | null][] {
+  if (!point.keys_from) return [[point.name, null]];
+  const keys = designValue(block, type, point.keys_from);
+  return (Array.isArray(keys) ? keys : []).map((key) => [`${point.name}:${String(key)}`, String(key)]);
+}
+
+/** The full name of the socket an attachment names: a bare keyed name means its default key. */
+function resolvedSocket(parent: BlockInstance | undefined, type: BlockTypeEntry | undefined, socket: string): string {
+  const point = type?.attach_points.find((p) => p.name === socket);
+  if (!parent || !point?.keys_from || !point.default_key_from) return socket;
+  return `${socket}:${String(designValue(parent, type, point.default_key_from))}`;
+}
+
+/** Sockets a new block of `type` can plug into: each placed block's sockets that the type attaches to and that
+ * still have room (a socket holds `capacity` blocks, one by default). */
 export function socketsFor(
   scenario: Scenario,
   type: BlockTypeEntry,
   types: BlockTypeEntry[],
 ): { instanceId: string; socket: string; label: string }[] {
   const byId = new Map(types.map((t) => [t.type_id, t]));
+  const blocks = new Map(scenario.blocks.map((b) => [b.instance_id, b]));
   const held = new Map<string, number>();
   for (const block of scenario.blocks) {
     if (block.attach_to) {
-      const key = `${block.attach_to.instance_id}|${block.attach_to.attach_point}`;
+      const parent = blocks.get(block.attach_to.instance_id);
+      const socket = resolvedSocket(parent, parent && byId.get(parent.type_id), block.attach_to.attach_point);
+      const key = `${block.attach_to.instance_id}|${socket}`;
       held.set(key, (held.get(key) ?? 0) + 1);
     }
   }
@@ -77,9 +104,11 @@ export function socketsFor(
   for (const block of scenario.blocks) {
     const parent = byId.get(block.type_id);
     for (const point of parent?.attach_points ?? []) {
-      const full = (held.get(`${block.instance_id}|${point.name}`) ?? 0) >= (point.capacity ?? 1);
-      if (type.attaches_to.includes(point.name) && !full) {
-        found.push({ instanceId: block.instance_id, socket: point.name, label: `${block.instance_id}: ${point.label}` });
+      if (!type.attaches_to.includes(point.name)) continue;
+      for (const [socket, key] of offeredSockets(block, parent, point)) {
+        const full = (held.get(`${block.instance_id}|${socket}`) ?? 0) >= (point.capacity ?? 1);
+        const label = key === null ? point.label : `${point.label} ${key}`;
+        if (!full) found.push({ instanceId: block.instance_id, socket, label: `${block.instance_id}: ${label}` });
       }
     }
   }

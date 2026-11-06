@@ -46,7 +46,7 @@ def test_bounding_box_spans_the_ridge(kit, occ_model) -> None:
 def test_the_site_socket_is_the_crest_centre_raised_by_the_bone_loss(kit, occ_model) -> None:
     jaw = kit.block("jaw_segment")
     site = jaw.sockets(kit.context("jaw_segment", "jaw"))[0]
-    assert site.name == "site" and site.frame.is_identity(1e-9)
+    assert site.name == "site:36" and site.frame.is_identity(1e-9)
     assert site.properties["fdi"] == "36"
     lowered = kit.context("jaw_segment", "jaw", crestal_bone_loss_mm=1.5)
     raised = jaw.sockets(lowered)[0]

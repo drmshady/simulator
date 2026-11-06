@@ -132,7 +132,8 @@ function PlacementControls({ placement, onChange }: { placement: Placement; onCh
         Placement
       </Text>
       <Text size="xs" c="dimmed">
-        Offsets along the axes of the socket the block sits on (for blocks on the jaw: x mesial, y buccal, z occlusal).
+        Offsets along the axes of the socket the block sits on (for blocks on a site of the jaw: x along the arch,
+        mesial, or distal past the midline of a full arch; y buccal; z occlusal).
         You can also drag the selected block in the 3D view.
       </Text>
       <Group grow gap="xs">

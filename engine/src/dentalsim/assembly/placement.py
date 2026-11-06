@@ -18,21 +18,40 @@ in scenario order, whose type is an axis reference), so when that block is tilte
 about the origin by the smallest rotation that makes its axis +z. Mirrored quadrants need nothing here: the jaw
 segment builds them as mirror-image arches, so no reflection reaches the geometry or the mesh.
 
+**Sockets.** A block names its parent's socket in `attach_to.attach_point`. A keyed socket carries its key
+(`site:35`, a site of the jaw segment's region); a bare name of a keyed attach point means its default key (`site`
+is the jaw segment's own site, as in slice 1a scenarios). Each socket holds at most its attach point's capacity.
+
+**Environment.** Every placed block sees the bone and the other blocks' keep-out volumes, then the joints of every
+prosthesis unit, then the links the connectors make between those joints (found from the joints in a second pass),
+so a pontic can tell whether it is held on both sides.
+
 A block whose settings break a design limit has no context, and neither do the blocks attached below it: they
-cannot be placed until it is fixed. Their problems are reported; the rest of the assembly is still placed.
+cannot be placed until it is fixed. A block attached to a socket its parent does not offer (a site outside the
+jaw segment's region) is not placed either. Their problems are reported; the rest of the assembly is still placed.
 """
 
 from __future__ import annotations
 
 import dataclasses
 import math
-from collections.abc import Iterator, Mapping, Sequence
+from collections.abc import Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
 
-from dentalsim.blocks.base import BlockContext, Environment, KeepOut, ParentLink, SettingsReading, Socket
+from dentalsim.blocks.base import (
+    BlockContext,
+    Environment,
+    Joint,
+    KeepOut,
+    Link,
+    ParentLink,
+    SettingsReading,
+    Socket,
+    split_socket_name,
+)
 from dentalsim.blocks.registry import AnyBlockType, Catalogue, catalogue
 from dentalsim.conventions.loader import get_conventions
 from dentalsim.conventions.schema import Conventions
@@ -168,15 +187,17 @@ def _tree_order(scenario: Scenario, types: Mapping[str, AnyBlockType]) -> list[B
 def _check_attachment(block: BlockInstance, block_type: AnyBlockType, parent_type: AnyBlockType) -> None:
     assert block.attach_to is not None
     point = block.attach_to.attach_point
-    offered = [a.name for a in parent_type.attach_points]
+    base, key = split_socket_name(point)
+    offered = parent_type.attach_point(point)
     problems = []
-    if point not in block_type.attaches_to:
+    if base not in block_type.attaches_to:
         wanted = " or ".join(repr(name) for name in block_type.attaches_to) or "no socket"
-        problems.append(f"{block_type.label} {block.instance_id!r} attaches to {wanted}, not to {point!r}")
-    elif point not in offered:
+        problems.append(f"{block_type.label} {block.instance_id!r} attaches to {wanted}, not to {base!r}")
+    elif offered is None or (key is not None and not offered.keyed):
+        names = [a.name for a in parent_type.attach_points]
         problems.append(
             f"{parent_type.label} {block.attach_to.instance_id!r} offers no {point!r} socket "
-            f"(it offers {', '.join(repr(o) for o in offered) or 'none'})"
+            f"(it offers {', '.join(repr(o) for o in names) or 'none'})"
         )
     if problems:
         raise Refused(
@@ -186,8 +207,30 @@ def _check_attachment(block: BlockInstance, block_type: AnyBlockType, parent_typ
         )
 
 
+def _resolved_sockets(
+    scenario: Scenario, order: Sequence[BlockInstance], types: Mapping[str, AnyBlockType]
+) -> dict[str, str]:
+    """The full name of the socket each attached block sits on (a bare keyed name takes its default key)."""
+    resolved = {}
+    for block in order:
+        if block.attach_to is None:
+            continue
+        parent_type = types[block.attach_to.instance_id]
+        design = parent_type.design_values(scenario.block(block.attach_to.instance_id).settings)
+        resolved[block.instance_id] = parent_type.resolve_socket_name(block.attach_to.attach_point, design)
+    return resolved
+
+
+def _socket_label(parent_type: AnyBlockType, socket_name: str) -> str:
+    """How a message names a socket: "site 35" for a keyed one, "the implant platform" otherwise."""
+    point = parent_type.attach_point(socket_name)
+    assert point is not None
+    key = split_socket_name(socket_name)[1]
+    return point.socket_label(key).lower() if key is not None else f"the {point.label.lower()}"
+
+
 def _occupancy_problems(
-    order: Sequence[BlockInstance], types: Mapping[str, AnyBlockType], blocked: set[str]
+    order: Sequence[BlockInstance], types: Mapping[str, AnyBlockType], resolved: Mapping[str, str], blocked: set[str]
 ) -> list[Problem]:
     """A socket holds at most its capacity of blocks. The blocks beyond it, in tree order, are reported at once and
     left unplaced (added to `blocked`), so the full check does not report them again as a volume overlap."""
@@ -197,17 +240,19 @@ def _occupancy_problems(
         if block.attach_to is None:
             continue
         parent_type = types[block.attach_to.instance_id]
-        point = next(a for a in parent_type.attach_points if a.name == block.attach_to.attach_point)
-        held = holders.setdefault((block.attach_to.instance_id, point.name), [])
+        socket = resolved[block.instance_id]
+        point = parent_type.attach_point(socket)
+        assert point is not None
+        held = holders.setdefault((block.attach_to.instance_id, socket), [])
         if len(held) < point.capacity:
             held.append(block.instance_id)
             continue
         problems.append(
             Problem(
                 code="overlap",
-                message=f"{types[block.instance_id].label} {block.instance_id!r} is attached to the "
-                f"{point.label.lower()} of {parent_type.label} {block.attach_to.instance_id!r}, which already holds "
-                f"{', '.join(repr(h) for h in held)}. Remove one of them, or attach it elsewhere.",
+                message=f"{types[block.instance_id].label} {block.instance_id!r} is attached to "
+                f"{_socket_label(parent_type, socket)} of {parent_type.label} {block.attach_to.instance_id!r}, which "
+                f"already holds {', '.join(repr(h) for h in held)}. Remove one of them, or attach it elsewhere.",
                 block=block.instance_id,
             )
         )
@@ -245,15 +290,37 @@ def _placement_problems(placed: PlacedBlock, is_root: bool) -> list[Problem]:
     return problems
 
 
+def _missing_socket(
+    block: BlockInstance, block_type: AnyBlockType, parent_type: AnyBlockType, socket: str, offered: Iterable[str]
+) -> Problem:
+    """A block attached to a keyed socket its placed parent does not offer (a site outside the region)."""
+    assert block.attach_to is not None
+    point = parent_type.attach_point(socket)
+    assert point is not None
+    keys = [key for base, key in map(split_socket_name, offered) if base == point.name and key is not None]
+    others = f" (it offers {', '.join(keys)})" if keys else ""
+    parent = f"{parent_type.label} {block.attach_to.instance_id!r}"
+    return Problem(
+        code="design_limit",
+        message=f"{block_type.label} {block.instance_id!r} is attached to {_socket_label(parent_type, socket)} of "
+        f"{parent}, which offers no such socket{others}. Attach it to another one, or change the settings of "
+        f"{parent}.",
+        block=block.instance_id,
+    )
+
+
 def _walk(
     order: list[BlockInstance],
     types: Mapping[str, AnyBlockType],
     readings: Mapping[str, SettingsReading[Any]],
+    resolved: Mapping[str, str],
     blocked: set[str],
     root_frame: Transform,
     conventions: Conventions,
+    missing: list[Problem] | None = None,
 ) -> dict[str, BlockContext[Any]]:
-    """Contexts (without environment) of every placeable block, with the root at `root_frame`."""
+    """Contexts (without environment) of every placeable block, with the root at `root_frame`. A block attached to
+    a socket its placed parent does not offer is reported in `missing`, when given."""
     contexts: dict[str, BlockContext[Any]] = {}
     sockets: dict[str, dict[str, Socket]] = {}
     for block in order:
@@ -267,8 +334,13 @@ def _walk(
             parent_sockets = sockets.get(block.attach_to.instance_id)
             if parent_sockets is None:
                 continue
-            socket = parent_sockets.get(block.attach_to.attach_point)
+            socket = parent_sockets.get(resolved[block.instance_id])
             if socket is None:
+                if missing is not None:
+                    parent_type = types[block.attach_to.instance_id]
+                    missing.append(
+                        _missing_socket(block, block_type, parent_type, resolved[block.instance_id], parent_sockets)
+                    )
                 continue
             ctx = block_type.context(
                 block.instance_id,
@@ -292,6 +364,23 @@ def environment_of(
         bone += types[instance_id].bone_volumes(ctx)
         keep_outs += types[instance_id].keep_out(ctx)
     return tuple(bone), tuple(keep_outs)
+
+
+def _with_environments(
+    contexts: Mapping[str, BlockContext[Any]], types: Mapping[str, AnyBlockType]
+) -> dict[str, BlockContext[Any]]:
+    """The contexts with their environments: the bone and the other blocks' keep-out volumes, every unit's joints,
+    then the links the connectors find between those joints."""
+    bone, keep_outs = environment_of(contexts, types)
+    joints: tuple[Joint, ...] = tuple(j for i, ctx in contexts.items() for j in types[i].joints(ctx))
+
+    def environment(instance_id: str, links: tuple[Link, ...] = ()) -> Environment:
+        others = tuple(k for k in keep_outs if k.owner != instance_id)
+        return Environment(bone=bone, keep_outs=others, joints=joints, links=links)
+
+    first = {i: dataclasses.replace(ctx, environment=environment(i)) for i, ctx in contexts.items()}
+    links = tuple(link for i, ctx in first.items() for link in types[i].links(ctx))
+    return {i: dataclasses.replace(ctx, environment=environment(i, links)) for i, ctx in contexts.items()}
 
 
 def place(scenario: Scenario, *, conventions: Conventions | None = None, blocks: Catalogue | None = None) -> Assembly:
@@ -324,9 +413,12 @@ def place(scenario: Scenario, *, conventions: Conventions | None = None, blocks:
         problems += placement_problems
         if placement_problems:
             blocked.add(block.instance_id)
-    problems += _occupancy_problems(order, types, blocked)
+    resolved = _resolved_sockets(scenario, order, types)
+    problems += _occupancy_problems(order, types, resolved, blocked)
 
-    anatomical = _walk(order, types, readings, blocked, IDENTITY, conventions)
+    missing: list[Problem] = []
+    anatomical = _walk(order, types, readings, resolved, blocked, IDENTITY, conventions, missing)
+    problems += missing
     reference = next(
         (
             b.instance_id
@@ -338,15 +430,11 @@ def place(scenario: Scenario, *, conventions: Conventions | None = None, blocks:
     frame = IDENTITY
     if reference is not None:
         frame = axis_alignment(anatomical[reference].to_frame.direction((0.0, 0.0, 1.0)))
-    contexts = _walk(order, types, readings, blocked, frame, conventions)
+    contexts = _with_environments(_walk(order, types, readings, resolved, blocked, frame, conventions), types)
 
-    bone, keep_outs = environment_of(contexts, types)
     placed = []
     for block in order:
-        ctx = contexts.get(block.instance_id)
-        if ctx is not None:
-            others = tuple(k for k in keep_outs if k.owner != block.instance_id)
-            ctx = dataclasses.replace(ctx, environment=Environment(bone=bone, keep_outs=others))
         parent = block.attach_to.instance_id if block.attach_to is not None else None
+        ctx = contexts.get(block.instance_id)
         placed.append(PlacedBlock(block, types[block.instance_id], readings[block.instance_id], parent, ctx))
     return Assembly(scenario, tuple(placed), frame, reference, tuple(problems))

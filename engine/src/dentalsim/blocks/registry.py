@@ -16,7 +16,7 @@ from collections.abc import Iterable
 from functools import cache
 from typing import Any
 
-from dentalsim.blocks.base import SEMVER, SLICE, TYPE_ID, BlockType
+from dentalsim.blocks.base import KEY_SEPARATOR, SEMVER, SLICE, TYPE_ID, BlockType
 from dentalsim.errors import DentalsimError, Refused
 from dentalsim.model.scenario import BlockInstance
 from dentalsim.physics.registry import get_capability
@@ -63,6 +63,22 @@ def _validate(block_type: AnyBlockType, module: str) -> None:
     names = [a.name for a in block_type.attach_points]
     if len(names) != len(set(names)):
         raise DentalsimError(f"{where}: attach point names must be unique")
+    specs = {s.id: s for s in block_type.setting_specs()}
+    for point in block_type.attach_points:
+        if KEY_SEPARATOR in point.name or KEY_SEPARATOR in "".join(block_type.attaches_to):
+            raise DentalsimError(f"{where}: attach point names may not contain {KEY_SEPARATOR!r}")
+        keys, default = specs.get(point.keys_from or ""), specs.get(point.default_key_from or "")
+        if point.keys_from is not None and (keys is None or keys.kind != "design" or keys.value_type != "string_list"):
+            raise DentalsimError(
+                f"{where}: attach point {point.name!r} keys_from must name a string-list design setting"
+            )
+        if point.default_key_from is not None and (
+            point.keys_from is None or default is None or default.kind != "design" or default.value_type != "string"
+        ):
+            raise DentalsimError(
+                f"{where}: attach point {point.name!r} default_key_from must name a string design setting of a keyed "
+                "attach point"
+            )
 
 
 @cache

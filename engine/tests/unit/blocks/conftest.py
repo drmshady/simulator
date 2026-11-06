@@ -15,8 +15,10 @@ import pytest
 
 from dentalsim.blocks.base import BlockContext, Environment, ParentLink, Socket
 from dentalsim.blocks.registry import catalogue
+from dentalsim.conventions.loader import get_conventions
 from dentalsim.geometry.occ import session
 from dentalsim.geometry.transform import IDENTITY, Transform
+from dentalsim.model.scenario import AttachTo, BlockInstance, Scenario
 from dentalsim.model.settings import DesignValue, LibraryValue, SettingValue
 
 LIBRARY: dict[str, dict[str, float]] = {
@@ -37,6 +39,9 @@ LIBRARY: dict[str, dict[str, float]] = {
         "screw_strength": 880.0,
     },
     "crown": {"E": 210000.0, "nu": 0.3, "strength": 1000.0},
+    "pontic": {"E": 210000.0, "nu": 0.3, "strength": 1000.0},
+    "cantilever_extension": {"E": 210000.0, "nu": 0.3, "strength": 1000.0},
+    "splinting_connector": {"E": 210000.0, "nu": 0.3, "strength": 1000.0},
 }
 
 
@@ -133,6 +138,48 @@ class Kit:
             "crown", "crown-1", to_frame=seat.frame, parent=seat, parent_id="abutment-1", **(crown or {})
         )
         return Chain(jaw_ctx, implant_ctx, abutment_ctx, crown_ctx)
+
+    def scenario(self, *blocks: tuple[str, str, tuple[str, str] | None, dict[str, Any]]) -> Scenario:
+        """A scenario of (instance id, type id, (parent, socket) or None, design values), with test library values."""
+        instances = [
+            BlockInstance(
+                instance_id=instance_id,
+                type_id=type_id,
+                type_version=self.block(type_id).version,
+                attach_to=None if parent is None else AttachTo(instance_id=parent[0], attach_point=parent[1]),
+                settings=self.raw(type_id, **design),
+            )
+            for instance_id, type_id, parent, design in blocks
+        ]
+        return Scenario(name="test", conventions_version=get_conventions().version, blocks=instances)
+
+    def unit_on_implant(
+        self, n: int, site: str, crown: dict[str, Any] | None = None
+    ) -> list[tuple[str, str, tuple[str, str] | None, dict[str, Any]]]:
+        """An implant at `site` of block "jaw", with an abutment and a crown (premolar-sized unless given)."""
+        return [
+            (f"implant-{n}", "implant", ("jaw", f"site:{site}"), {}),
+            (f"abutment-{n}", "abutment", (f"implant-{n}", "platform"), {}),
+            (
+                f"crown-{n}",
+                "crown",
+                (f"abutment-{n}", "crown_seat"),
+                crown or {"mesiodistal_mm": 6.6, "buccolingual_mm": 8.0},
+            ),
+        ]
+
+    def bridge(self, *, without: tuple[str, ...] = ()) -> Scenario:
+        """A three-unit bridge 34–36 on implants at 34 and 36, a pontic at 35 and a connector on each side of it,
+        leaving out the named blocks."""
+        blocks = [
+            ("jaw", "jaw_segment", None, {"region": ("34", "35", "36"), "site": "34", "neighbours": ("33", "37")}),
+            *self.unit_on_implant(1, "34"),
+            *self.unit_on_implant(2, "36", {"mesiodistal_mm": 10.5, "buccolingual_mm": 10.0}),
+            ("pontic-1", "pontic", ("jaw", "site:35"), {"mesiodistal_mm": 6.6}),
+            ("connector-1", "splinting_connector", ("pontic-1", "connector_mesial"), {}),
+            ("connector-2", "splinting_connector", ("crown-2", "connector_mesial"), {}),
+        ]
+        return self.scenario(*(b for b in blocks if b[0] not in without))
 
 
 @pytest.fixture

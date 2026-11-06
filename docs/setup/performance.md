@@ -59,3 +59,34 @@ Each run refits the estimate.
    takes 11.8–13.3 s; on an SSD, 10.3–11.5 s. The data folder can be moved with `DENTALSIM_DATA` (it is 149 MB
    now); free space on 6 Nov 2026: C: 267 GB, E: 151 GB. **The owner kept it on D: and accepted a preview of
    about 13 s (SC-002, 6 Nov 2026).**
+
+## Slice 1b templates (T099–T106; before the owner's check, T107)
+
+Measured by Claude on 6 Nov 2026 on the main PC, from the command line, with the four slice 1b templates as
+delivered (design defaults still awaiting the owner's approval). These are previews only (detail level `preview`,
+2 solver threads); the standard runs, including the 3-implant run for SC-013, are the owner's check in T107.
+
+| Template | Validity, fast / full | Geometry + mesh (unthrottled) | Preview DOF | Preview test, both load cases |
+|---|---|---|---|---|
+| Single crown (implant), for comparison | 0.01 s / 1.4 s | 5.4–5.8 s | 65,952 | — (11.8–13.3 s, one load case; above) |
+| Splinted crowns (implants), 2 implants | 0.03 s / 1.9 s | 12.8 s | 121,200 | 32 s |
+| Bridge (implants), 2 implants and a pontic | 0.08 s / 4.4 s | 32.7 s | 137,121 | 62 s |
+| Cantilever bridge (implants), 2 implants and a cantilever | 0.08 s / 4.6 s | 14.7 s | 131,613 | 34 s |
+| Full-arch fixed (implants), 4 implants, 6 pontics, 2 cantilevers | 0.2 s / 16 s | 85 s | 295,815 | 170 s |
+
+"Preview test" is `test_each_template_preview_solves` (open the template, validate, join, mesh, solve both load
+cases, results and store, data in a temporary folder on C:), so it is longer than one preview in the studio,
+which solves only the active load case. The previews of slice 1b scenarios are therefore well above the 13 s of
+SC-002, which was set and measured on the single implant crown. **The owner accepted these preview times on
+6 Nov 2026** (SC-002 and FR-017 now say the 13 s target is the single crown's).
+
+Two meshing changes came with slice 1b, both leaving the single crown's mesh identical:
+
+1. **Refinement hints of the same size share one size field.** Each hint used to be its own field, evaluated
+   wherever the mesher asks for a size, so meshing time grew with the number of implants times the model's size:
+   the bridge's preview mesh went from 27 s to 14 s with the same mesh.
+2. **A mesh with a badly shaped element is refined around it and meshed again**, up to 4 times, finer each time
+   there (and so is one the mesher refuses for a folded surface mesh, around the surfaces it names). The slice 1a
+   crown's cusp ridges end about 0.15 mm short of the edge of its occlusal table; in some positions along the arch
+   that strip meshed into slivers (quality 0.009 against the 0.01 floor). The bridge's 32.7 s includes such
+   rounds. A better crown shape (the owner's later spec on realistic crowns) would remove the strip.

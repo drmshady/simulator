@@ -174,7 +174,15 @@ def test_a_queued_run_lists_the_locked_screw_stress(
 
 def test_the_catalogue_lists_blocks_physics_and_templates(client: TestClient) -> None:
     blocks = {b["type_id"]: b for b in client.get("/api/blocks").json()}
-    assert {"jaw_segment", "implant", "abutment", "crown"} <= set(blocks)
+    assert {
+        "jaw_segment",
+        "implant",
+        "abutment",
+        "crown",
+        "pontic",
+        "splinting_connector",
+        "cantilever_extension",
+    } <= set(blocks)
     implant = blocks["implant"]
     assert implant["status"] == "awaiting_benchmark" and implant["awaiting"] == ["Bonded elastic"]
     assert implant["settings_schema"]["properties"]["diameter_mm"]["group"] == "implant"
@@ -182,8 +190,11 @@ def test_the_catalogue_lists_blocks_physics_and_templates(client: TestClient) ->
     assert screw["locked_message"] == "not reported: needs screw preload"
     physics = {p["id"]: p for p in client.get("/api/physics").json()}
     assert physics["bonded_elastic"]["status"] == "awaiting_benchmark"
-    templates = client.get("/api/templates").json()
-    assert templates[0]["id"] == "single_crown_implant" and templates[0]["approval"] == "approved"
+    templates = {t["id"]: t for t in client.get("/api/templates").json()}
+    assert templates["single_crown_implant"]["approval"] == "approved"
+    assert {"splinted_crowns", "bridge_implant", "cantilever_bridge", "full_arch_fixed"} <= set(templates)
+    site = blocks["jaw_segment"]["attach_points"][0]
+    assert (site["name"], site["keys_from"], site["default_key_from"]) == ("site", "region", "site")
 
 
 def test_a_scenario_from_a_template_that_does_not_fit_lists_the_misfits(client: TestClient) -> None:
@@ -223,7 +234,8 @@ def test_saving_a_scenario_as_an_owner_template(client: TestClient) -> None:
     )
     assert response.status_code == 201, response.json()
     assert response.json()["origin"] == "owner"
-    assert [t["id"] for t in client.get("/api/templates").json()] == ["single_crown_implant", "my-molar"]
+    ids = [t["id"] for t in client.get("/api/templates").json()]
+    assert ids[-1] == "my-molar" and "single_crown_implant" in ids  # the built-in templates first
 
 
 def test_a_changed_material_takes_the_new_materials_values(client: TestClient) -> None:

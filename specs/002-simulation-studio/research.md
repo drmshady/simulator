@@ -235,6 +235,9 @@ conventions document or library is written; they do not block planning.
   D:, 10.3–11.5 s on an SSD. Details in `docs/setup/performance.md`.
 - **Owner decision 2026-11-06 (T098)**: keep the data folder on D: and accept a preview of about 13 s (13.1 s
   measured in the studio) as the target (SC-002, FR-017), rather than moving the data folder to an SSD.
+- **Owner decision 2026-11-06 (slice 1b)**: the 13 s target is for the single implant crown. The slice 1b
+  templates' previews (both load cases, from the command line: splinted crowns 32 s, cantilever bridge 34 s,
+  bridge 62 s, full arch 170 s; 121–296 k DOF) are accepted as they are.
 
 ## R8. Run time, memory and disk estimates (FR-009, FR-057)
 

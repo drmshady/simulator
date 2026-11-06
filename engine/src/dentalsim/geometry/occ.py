@@ -141,14 +141,17 @@ def ellipsoid(centre: Point, semi_axes: Point) -> int:
     return tag
 
 
-def ellipse_loop(centre: Point, rx: float, ry: float) -> int:
+def ellipse_loop(centre: Point, rx: float, ry: float, start_deg: float = 0.0) -> int:
     """A closed wire: the exact ellipse with semi-axes `rx` (along x) and `ry` (along y) in the plane z = centre z,
-    running counter-clockwise from +x whichever semi-axis is larger, so that lofts line up their seams."""
+    running counter-clockwise from the angle `start_deg` (its seam; 0 is +x) whichever semi-axis is larger, so that
+    lofts through loops with the same start line up their seams."""
     kernel = occ()
+    start = math.radians(start_deg)
     if rx >= ry:
-        curve = kernel.addEllipse(*centre, rx, ry)
-    else:  # gmsh wants the major axis first: put it on y and start the full turn a quarter back, at +x
-        curve = kernel.addEllipse(*centre, ry, rx, -1, -math.pi / 2, 1.5 * math.pi, [0, 0, 1], [0, 1, 0])
+        curve = kernel.addEllipse(*centre, rx, ry, -1, start, start + 2 * math.pi)
+    else:  # gmsh wants the major axis first: put it on y, so the angles count from y, a quarter later
+        start -= math.pi / 2
+        curve = kernel.addEllipse(*centre, ry, rx, -1, start, start + 2 * math.pi, [0, 0, 1], [0, 1, 0])
     return int(kernel.addCurveLoop([curve]))
 
 

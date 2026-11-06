@@ -76,7 +76,8 @@ its results.
    owner tries to run it, **Then** the run is refused with a plain explanation and the location of the
    problem.
 4. **Given** a scenario whose blocks are all ready, **When** any setting changes, **Then** the preview result
-   updates within about 13 seconds and is labelled "preview".
+   updates within about 13 seconds for a single implant crown (longer for larger assemblies, see FR-017) and is
+   labelled "preview".
 5. **Given** a scenario whose blocks are all ready, **When** the owner starts a detailed run, **Then** the
    expected run time and memory are shown before it starts, progress and remaining time are shown while it
    runs, and a single implant crown finishes within 30 minutes on the main simulation PC.
@@ -443,8 +444,10 @@ benchmark passes, then unlock with the benchmark report linked.
 
 **Running**
 
-- **FR-017**: The studio MUST show a preview result within about 13 seconds of a setting change (owner decisions
-  of 2026-11-06: 10 seconds, then 11, then 13 with the data folder on the main PC's hard disk; see research R7),
+- **FR-017**: The studio MUST show a preview result within about 13 seconds of a setting change for a single
+  implant crown (owner decisions of 2026-11-06: 10 seconds, then 11, then 13 with the data folder on the main PC's
+  hard disk; see research R7); larger assemblies take longer, as the slice 1b templates' previews measured on
+  2026-11-06 (about 30 seconds to 3 minutes for both load cases), which the owner accepted the same day. It is
   clearly labelled as
   a preview and never publishable. Beside each preview the studio MUST show how far previews differ from
   detailed results, as measured on the verification cases (the dental published-study cases once they exist,
@@ -634,7 +637,8 @@ benchmark passes, then unlock with the benchmark report linked.
   detail. The remaining templates are measured the same way in the later Story 9 features.
 - **SC-002**: Preview results appear within about 13 seconds of a setting change, for the active load case of a
   single implant crown on the main PC with its data folder on the hard disk D: (owner decisions of 2026-11-06:
-  10 seconds, then 11, then 13; research R7).
+  10 seconds, then 11, then 13; research R7). Multi-implant assemblies are not held to it: the owner accepted the
+  slice 1b templates' preview times on 2026-11-06 (`docs/setup/performance.md`).
 - **SC-003**: A detailed single implant crown run finishes in 30 minutes or less on the main simulation PC.
 - **SC-004**: An overnight study of at least 18 detailed single implant crown runs completes unattended within
   10 hours.

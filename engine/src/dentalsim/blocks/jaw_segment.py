@@ -1,9 +1,11 @@
-"""Jaw segment: the bone an assembly sits in, and the root of every assembly (slice 1a; FR-004, FR-007).
+"""Jaw segment: the bone an assembly sits in, and the root of every assembly (slice 1a, sites of slice 1b; FR-004,
+FR-007).
 
 **Settings** (all in the patient-bone group): the jaw; the region as FDI tooth codes, any contiguous run up to a full
-arch; the implant site; the natural teeth present next to the region; the density class D1–D4; the ridge height
-and widths; the crestal bone loss; the nerve canal (mandible) or the sinus floor (maxilla); the arch width. The
-cortical thickness (by density class), the cortical and cancellous elastic constants come from the library.
+arch; the reference site (the frame's origin); the natural teeth present next to the region; the density class
+D1–D4; the ridge height and widths; the crestal bone loss; the nerve canal (mandible) or the sinus floor (maxilla);
+the arch width. The cortical thickness (by density class), the cortical and cancellous elastic constants come from
+the library.
 
 **Arch.** The dental arch is a parabola in the occlusal plane. Teeth sit along it by arc length, each taking its
 mean mesiodistal crown width from `TOOTH_WIDTHS_MM` (design geometry of this block, owner to review with the
@@ -18,14 +20,20 @@ the region to as far beyond it. Its outer layer, `cortical_thickness` thick, is 
 cancellous bone. The two cut faces, at right angles to the arch, are the supports. In the maxilla the base of the
 section is the sinus floor when the sinus is present (the bone above it is the residual bone height).
 
-**Frame.** The local frame is the conventions frame: origin at the crest centre of the site, +x mesial along the
-arch, +y buccal, +z occlusal. The crestal bone loss lowers the bone, so the crest is at z = 0 and the `site`
-socket, where the implant platform goes, is `crestal_bone_loss_mm` above it.
+**Frame.** The local frame is the conventions frame: origin at the crest centre of the reference site, +x mesial
+along the arch, +y buccal, +z occlusal. The crestal bone loss lowers the bone, so the crest is at z = 0 and the site
+sockets, where implant platforms and pontics go, are `crestal_bone_loss_mm` above it.
 
 **Keep-out volumes**: the nerve canal (a tube along the arch), the maxillary sinus (a slab above the residual
 bone), and an envelope around the root of each neighbouring tooth (a cone from the crest to the apex).
 
-**Socket** `site`: axes x mesial, y buccal, z occlusal. Properties: `fdi`, `crestal_bone_loss_mm`.
+**Sockets** `site:<FDI>`, one per tooth of the region (slice 1b), at the crest centre of the tooth's place on the
+arch (spaced by the tooth widths): x along the arch, y buccal (outward), z occlusal. On the reference site's side of
+the midline x points mesial; past the midline it keeps running the same way along the arch, so it points distal
+there (the frame stays right-handed with y buccal, so no reflection reaches the mesh). Placement offsets on such a
+site run along its axes. A bare `site` is the reference site, as in slice 1a
+scenarios. Properties: `fdi`, `crestal_bone_loss_mm`, `tooth_width_mm` (the tooth's mean mesiodistal width) and
+`x_toward` (`mesial` or `distal`, which the blocks built on the site pass on, so they name their sides anatomically).
 """
 
 from __future__ import annotations
@@ -40,6 +48,7 @@ import numpy as np
 from scipy.optimize import brentq  # type: ignore[import-untyped]
 
 from dentalsim.blocks.base import (
+    X_TOWARD,
     AttachPoint,
     BlockContext,
     BlockSettings,
@@ -96,7 +105,13 @@ class JawSegmentSettings(BlockSettings):
         ),
     ] = ("36",)
     site: Annotated[
-        str, Design("patient_bone", "Implant site", help="The FDI code of the site; it is in the region.")
+        str,
+        Design(
+            "patient_bone",
+            "Reference site",
+            help="The FDI code of the tooth whose crest centre is the frame's origin; it is in the region. Implants "
+            "and pontics sit at the sites of the region's teeth.",
+        ),
     ] = "36"
     neighbours: Annotated[
         tuple[str, ...],
@@ -421,7 +436,13 @@ class JawSegment(BlockType[JawSegmentSettings]):
     description = "A segment of the mandible or maxilla: cortical shell, cancellous core, nerve canal or sinus floor."
     settings_model = JawSegmentSettings
     attach_points = (
-        AttachPoint("site", "Implant site", "The crest centre of the site, where an implant platform sits."),
+        AttachPoint(
+            "site",
+            "Site",
+            "The crest centre of a tooth of the region, where an implant platform or a pontic sits.",
+            keys_from="region",
+            default_key_from="site",
+        ),
     )
     attaches_to = ()
     result_types = (ResultType("bone_strain", "Bone strain", regions=("crestal_ring",)),)
@@ -485,14 +506,27 @@ class JawSegment(BlockType[JawSegmentSettings]):
         )
 
     def sockets(self, ctx: BlockContext[JawSegmentSettings]) -> tuple[Socket, ...]:
-        loss = ctx.settings.crestal_bone_loss_mm
-        return (
-            ctx.socket(
-                "site",
-                Transform.translation_by((0.0, 0.0, loss)),
-                {"fdi": ctx.settings.site, "crestal_bone_loss_mm": loss},
-            ),
-        )
+        s, plan = ctx.settings, layout(ctx.settings)
+        point = self.attach_points[0]
+        found = []
+        for code in s.region:
+            key = plan.keys[code]
+            if code == s.site:
+                local = Transform.translation_by((0.0, 0.0, s.crestal_bone_loss_mm))  # the origin, exactly
+            else:
+                at, tangent = plan.path.at(plan.arch.centre(key))
+                along = -tangent
+                local = Transform.from_axes(
+                    (float(at[0]), float(at[1]), s.crestal_bone_loss_mm), _p(along), _p(np.cross((0, 0, 1), along))
+                )
+            properties: dict[str, float | str] = {
+                "fdi": code,
+                "crestal_bone_loss_mm": s.crestal_bone_loss_mm,
+                "tooth_width_mm": plan.arch.widths[abs(key) - 1],
+                X_TOWARD: "mesial" if key > 0 else "distal",
+            }
+            found.append(ctx.socket(point.socket_name(code), local, properties))
+        return tuple(found)
 
     def bone_volumes(self, ctx: BlockContext[JawSegmentSettings]) -> tuple[Volume, ...]:
         plan = layout(ctx.settings)

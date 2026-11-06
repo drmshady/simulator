@@ -73,7 +73,7 @@ example a rented solver machine's, FR-064) needs a passing report made with that
 | version | semver | Bumped when its geometry or settings change |
 | settings_schema | JSON Schema | Each setting tagged with `group` (one of the 5 groups) and `kind` (`library` or `design`) |
 | design_limits | per design setting | Minimum, maximum and allowed choices (FR-052) |
-| attach_points | list | Where it can attach, for example `implant.platform → abutment.base` |
+| attach_points | list | Where it can attach, for example `implant.platform → abutment.base`. A keyed attach point gives one socket per value of a list setting, named `<name>:<value>` (the jaw segment's `site:34`, `site:35`, … one per tooth of its region; slice 1b) |
 | needs_physics | list of PhysicsCapability ids | FR-011a |
 | result_types | list of ResultType | Each with its own `needs_physics`, for example screw stress needs `screw_preload` |
 | report_regions | list of region ids | Taken from the conventions document |
@@ -160,7 +160,7 @@ example a rented solver machine's, FR-064) needs a passing report made with that
 | Code | Meaning |
 |---|---|
 | `overlap` | Parts overlap |
-| `unsupported_pontic` | A pontic has no support |
+| `unsupported_pontic` | A pontic, cantilever extension or connector is not held: a pontic must be joined on both sides, a cantilever at its joined end, to a supported unit; a connector must reach a unit (slice 1b) |
 | `in_nerve_canal` | An implant enters the nerve canal |
 | `in_sinus` | An implant enters the sinus |
 | `in_root` | An implant enters a neighbouring root |

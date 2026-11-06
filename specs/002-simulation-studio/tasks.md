@@ -836,34 +836,82 @@ cantilever bridge and full-arch fixed templates. No changes outside `blocks/` an
 **Independent Test**: build a cantilever bridge on two implants, delete one implant (the unsupported part is
 reported), restore it, save, run in detail and check the results (quickstart row 1b).
 
-- [ ] T099 [P] [US1] Implement `engine/src/dentalsim/blocks/pontic.py`:
+- [X] T099 [P] [US1] Implement `engine/src/dentalsim/blocks/pontic.py`:
   - **Settings**: width, height and occlusal shape; material from the library; named occlusal points
   - **Attachment**: attaches through `connector` sockets
   - **Results**: result type `pontic_stress`
   - **Check**: `unsupported_pontic` unless the pontic is connected on both sides to a supported unit
-- [ ] T100 [P] [US1] Implement `engine/src/dentalsim/blocks/splinting_connector.py`: connector cross-section (height,
+  - Done 2026-11-06. A pontic sits at a site of the jaw segment (`site:<FDI>`, T103), 2 mm over the ridge (the
+    clearance is a setting, where the mucosa would be), and rests on nothing there: only the splinting connectors
+    that join its `connector_mesial` and `connector_distal` contact areas to the units beside it hold it. So the
+    placement tree is not the load path, and deleting an implant (which removes its abutment and crown) leaves the
+    pontic in place, reported unsupported (quickstart row 1b). Support is read from the blocks' joints and the
+    connectors' links (`blocks/base.py`, `Joint`, `Link`, `Environment.supported_at`): two pontics side by side
+    between two crowns are each held. Its shape (`blocks/_unit.py`) follows the crown's, so contact areas and
+    occlusal tables line up with the crowns beside it; a flat table is the same body without its cusp ridges.
+- [X] T100 [P] [US1] Implement `engine/src/dentalsim/blocks/splinting_connector.py`: connector cross-section (height,
   width); joins two neighbouring units; result `connector_stress`; region `connector`
-- [ ] T101 [P] [US1] Implement `engine/src/dentalsim/blocks/cantilever_extension.py`: cantilever length, unit size and
+  - Done 2026-11-06. It hangs from a unit's contact area and finds the facing contact area of the unit beside it
+    (within 3 mm), so it follows when a unit is moved or resized; the units displace it, so the connector is the
+    elliptical neck between them, bonded to both. Each unit's joint gives its room (half-widths, how deep a
+    connector may enter short of an abutment post, room to its margin or base and its table), and the bar's ends
+    and height keep clear of grazing a surface or a crown margin. Checks: reaching no unit (`unsupported_pontic`),
+    two connectors on the same contact areas (`overlap`), a section taller than its units allow (`design_limit`).
+    Its refinement hint makes the joins about 1 mm fine at the preview level and 0.5 mm at the standard level; the
+    bar's and the units' geometric seams run away from the joins, which otherwise left micrometre-long edges.
+- [X] T101 [P] [US1] Implement `engine/src/dentalsim/blocks/cantilever_extension.py`: cantilever length, unit size and
   material; attaches by a connector to the mesial or distal end of a supported unit; a design limit on the maximum
   length; result `cantilever_stress`
-- [ ] T102 [P] [US1] Add the block unit tests `engine/tests/unit/blocks/test_pontic.py`,
+  - Done 2026-11-06. Like the pontic it sits at a jaw site (so deleting the implant beside it leaves it reported,
+    not silently removed); its joined end is at the edge of its site and it reaches `length_mm` toward its free end
+    (distal or mesial). A splinting connector joins it to the end of a supported unit. The length's design limit is
+    4–15 mm (`MAX_LENGTH_MM`, for the owner to review; not a clinical recommendation).
+- [X] T102 [P] [US1] Add the block unit tests `engine/tests/unit/blocks/test_pontic.py`,
   `test_splinting_connector.py` and `test_cantilever_extension.py`: geometry, attach positions and validity rules
-- [ ] T103 [US1] Extend `engine/src/dentalsim/blocks/jaw_segment.py` and `engine/src/dentalsim/assembly/placement.py`
+- [X] T103 [US1] Extend `engine/src/dentalsim/blocks/jaw_segment.py` and `engine/src/dentalsim/assembly/placement.py`
   for several sites along the arch (a site list, and spacing from the tooth widths), and confirm that connectors get
   refinement hints in `engine/src/dentalsim/mesh/levels.py`
-- [ ] T104 [US1] Add the templates `engine/src/dentalsim/templates/splinted_crowns.yaml`, `bridge_implant.yaml`,
+  - Done 2026-11-06. The site list is the region: a keyed attach point (`AttachPoint.keys_from`, generic in
+    `blocks/base.py`) gives one socket per tooth, `site:34`, `site:35`, …, at the crest centre of the tooth's place
+    on the arch; a bare `site` is the reference site, so slice 1a scenarios are unchanged (jaw segment still 1.0.0;
+    the single crown builds exactly as before). Past the midline of a full arch the site's +x points distal; the
+    sockets say so (`x_toward`), implant, abutment and crown pass it on, and every block names its mesial and distal
+    sides anatomically. Placement resolves keyed sockets, counts each socket's capacity, and reports a block on a
+    site outside the region. The builder offers the keyed sockets (`studio/ui/src/builder.ts`, generic: it reads
+    `keys_from` and the setting's value). Connectors carry refinement hints; hints of the same size now share one
+    Distance field (the bridge's preview meshing went from 27 to 14 s with the same mesh). A mesh with a badly
+    shaped element is now refined around it and meshed again, up to 4 times (finer each time there), before
+    failing, and so is one the mesher refuses for a folded surface mesh, around the surfaces it names: the slice 1a
+    crown's cusp ridges end about 0.15 mm short of the table's edge, a strip that some crown positions meshed into
+    slivers. A mesh that passes at once is unchanged, so slice 1a meshes are identical.
+- [X] T104 [US1] Add the templates `engine/src/dentalsim/templates/splinted_crowns.yaml`, `bridge_implant.yaml`,
   `cantilever_bridge.yaml` and `full_arch_fixed.yaml`, each with fit rules (minimum segment length, region, number of
   sites)
-- [ ] T105 [US1] Add `engine/tests/integration/test_templates_1b.py`:
+  - Done 2026-11-06; the design defaults are **proposed, awaiting the owner's approval** (as T067 was): splinted
+    crowns on 35 and 36; a bridge 34–36 on implants at 34 and 36 with a pontic at 35; a cantilever bridge on
+    implants at 35 and 36 with a 10 mm distal cantilever at 37; a mandibular full arch 46–36 on four implants (33,
+    35, 43, 45) with six pontics and a first-molar cantilever on each side. The implants and abutments are the
+    single crown's; the zirconia units are 0.4 mm narrower than their tooth's mean width (molars 10.5 mm); the
+    connectors 4 × 5 mm posteriorly (about 16 mm²) and 4 × 3 mm from the canines forward. Fit rules: the
+    region's tooth count, every block's site in the region (new `sites_in_region`), each unit's width against its
+    own site (`site_space` now reads the block's own site), and each implant's bone height.
+- [X] T105 [US1] Add `engine/tests/integration/test_templates_1b.py`:
   - each template validates on a suitable segment and reports `template_misfit` on an unsuitable one
   - deleting an implant from the cantilever bridge reports the unsupported part
   - each template's preview solves (marker `benchmark`)
-- [ ] T106 [US1] Check SC-012 for slice 1b:
+- [X] T106 [US1] Check SC-012 for slice 1b:
   - `engine/tests/unit/test_import_boundaries.py` passes
   - the Builder and Results show the new blocks with no interface change
   - fix any leak in generic code itself, not by adding block-specific code
+  - Done 2026-11-06: the boundary test passes and no slice 1b type id appears in generic code. Results lists
+    component stress by region and block, so pontics, connectors and cantilevers appear unchanged. One generic
+    gap was fixed in the builder: offering keyed sockets (`socketsFor`, tested in `studio/ui/tests/slice1b.test.ts`),
+    plus a help line on what x means on a jaw site. Not yet seen in a browser against the running studio (T107).
 - [ ] T107 [US1] **Owner (main PC)**: work through quickstart row 1b. Then run a 3-implant scenario in detail, which
   must finish within 10 h (SC-013), and record the time in `docs/setup/performance.md`.
+  - 2026-11-06: the owner accepted the slice 1b preview times (30 s to 3 min, `docs/setup/performance.md`;
+    SC-002 and FR-017 amended). Still open: approving the four templates' design defaults (T104), quickstart row
+    1b in the browser, and the detailed runs.
 
 **Checkpoint**: every implant-supported fixed scenario in the year-one plan can be built and run.
 

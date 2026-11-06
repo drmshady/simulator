@@ -27,7 +27,8 @@ block's generic implant design, not a product's:
 
 **Socket** `platform`: the platform centre, axes as the implant. Properties: `connection`, `platform_radius_mm`,
 `connection_depth_mm`, `connection_radius_mm` (cone top radius, or half the hex across flats),
-`connection_taper_deg`, `screw_radius_mm`, `screw_depth_mm`, `boss_height_mm`, `boss_across_flats_mm`.
+`connection_taper_deg`, `screw_radius_mm`, `screw_depth_mm`, `boss_height_mm`, `boss_across_flats_mm`, and
+`x_toward` passed on from its site.
 
 **Checks**: the implant must stay in the bone (`exceeds_bone`, beyond `EXPOSURE_TOLERANCE_MM` below the crest) and
 out of every keep-out volume of other blocks (`in_nerve_canal`, `in_sinus`, `in_root`). Points of the implant's
@@ -44,6 +45,7 @@ from typing import Annotated, Literal
 import numpy as np
 
 from dentalsim.blocks.base import (
+    X_TOWARD,
     AttachPoint,
     BlockContext,
     BlockSettings,
@@ -318,7 +320,8 @@ class Implant(BlockType[ImplantSettings]):
 
     def sockets(self, ctx: BlockContext[ImplantSettings]) -> tuple[Socket, ...]:
         shape = ImplantShape.of(ctx.settings)
-        return (ctx.socket("platform", properties=connection_properties(ctx.settings, shape)),)
+        properties = {**connection_properties(ctx.settings, shape), X_TOWARD: ctx.x_toward}
+        return (ctx.socket("platform", properties=properties),)
 
     # --- checks and reporting -----------------------------------------------------------------------------------
 
