@@ -196,7 +196,7 @@ Fit (power law, 2026-11-06 03:21 UTC):
 - memory = 897.7 × DOF^1.2388 bytes
 - disk = 284.3 × DOF × cases bytes
 
-It agrees with the preliminary run: the same meshes, wall times within 10% (2% at 758 k DOF) and the same memory.
+It agrees with the preliminary run: the same meshes, wall times 2–10% longer (2% at 758 k DOF) and the same memory.
 It predicts about 5.6 min for one contact point (3 cases) at 758 k DOF, and the 27 GB memory limit at about
 1.1 M DOF.
 
