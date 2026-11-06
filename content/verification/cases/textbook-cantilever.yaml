@@ -1,0 +1,38 @@
+# Textbook case for bonded elastic (task T074). Drafted by Claude and approved by the owner on 2026-11-06;
+# committed in a commit of its own before it was first run. The inputs are chosen for this case; the source states
+# the formula for any inputs.
+id: textbook-cantilever
+title: Cantilever beam with an end load, tip deflection
+kind: textbook
+capability: bonded_elastic
+required: true
+model:
+  builder: cantilever
+  parameters:
+    length_mm: 200.0
+    width_mm: 10.0
+    height_mm: 10.0
+    E_mpa: 210000.0
+    nu: 0.3
+    load_n: 10.0
+    mesh_size_mm: {standard: 2.5, preview: 5.0}
+levels: [standard, preview]
+quantities:
+  - id: tip_deflection
+    description: >-
+      Mean deflection of the loaded end face (area-weighted), under a uniform shear traction totalling the load,
+      with the root face clamped.
+    unit: mm
+    expected: 0.152672
+    expected_source: >-
+      Timoshenko beam: δ = PL³/(3EI) + PL/(κGA) = 0.152381 + 0.000291 mm, with I = bh³/12, G = E/(2(1 + ν)) and
+      Cowper's shear coefficient for a rectangle κ = 10(1 + ν)/(12 + 11ν) = 0.8497.
+    compare: relative
+    tolerance: 0.02
+source:
+  citation: >-
+    Gere JM, Timoshenko SP. Mechanics of Materials, 4th ed. Boston: PWS Publishing; 1997 (deflection of a
+    cantilever beam with a concentrated end load, δ = PL³/3EI). Shear correction: Cowper GR. The shear coefficient
+    in Timoshenko's beam theory. J Appl Mech. 1966;33(2):335-340.
+  doi: 10.1115/1.3625046
+tolerance_changes: []

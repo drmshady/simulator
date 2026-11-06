@@ -1,0 +1,49 @@
+# Textbook case for bonded elastic (task T074). Drafted by Claude and approved by the owner on 2026-11-06;
+# committed in a commit of its own before it was first run. The inputs are chosen for this case; the source states
+# the formula for any inputs. ν/E is the same in both bars (1.5e-6 per MPa), so they contract alike at the bonded
+# interface and the stress is exactly uniaxial.
+id: textbook-bonded-bars
+title: Two bonded bars of different materials in series under an axial load
+kind: textbook
+capability: bonded_elastic
+required: true
+model:
+  builder: bonded_bars
+  parameters:
+    length_1_mm: 50.0
+    length_2_mm: 50.0
+    side_mm: 10.0
+    E1_mpa: 200000.0
+    E2_mpa: 100000.0
+    nu1: 0.3
+    nu2: 0.15
+    load_n: 1000.0
+    mesh_size_mm: {standard: 2.5, preview: 5.0}
+levels: [standard, preview]
+quantities:
+  - id: end_displacement
+    description: Axial displacement of the loaded end face (area-weighted mean); the far end is held axially only.
+    unit: mm
+    expected: 0.0075
+    expected_source: "δ = F L₁/(E₁ A) + F L₂/(E₂ A) = 0.0025 + 0.0050 mm, with A = 100 mm² and F = 1000 N."
+    compare: relative
+    tolerance: 1.0e-4
+  - id: stress_bar_1
+    description: Axial stress in the first bar (volume-weighted mean).
+    unit: MPa
+    expected: 10.0
+    expected_source: "σ = F/A in both bars."
+    compare: relative
+    tolerance: 1.0e-4
+  - id: stress_bar_2
+    description: Axial stress in the second bar (volume-weighted mean).
+    unit: MPa
+    expected: 10.0
+    expected_source: "σ = F/A in both bars."
+    compare: relative
+    tolerance: 1.0e-4
+source:
+  citation: >-
+    Gere JM, Timoshenko SP. Mechanics of Materials, 4th ed. Boston: PWS Publishing; 1997 (changes in lengths of
+    nonuniform bars: δ = Σ Nᵢ Lᵢ / (Eᵢ Aᵢ)).
+tolerance_changes: []

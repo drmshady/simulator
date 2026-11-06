@@ -1,0 +1,40 @@
+# Textbook case for bonded elastic (task T074). Drafted by Claude and approved by the owner on 2026-11-06;
+# committed in a commit of its own before it was first run. The model and reference are those of
+# textbook-lame-cylinder.
+id: textbook-cylinder-convergence
+title: Mesh convergence of the thick-walled cylinder
+kind: textbook
+capability: bonded_elastic
+required: true
+model:
+  builder: cylinder_convergence
+  parameters:
+    inner_radius_mm: 10.0
+    outer_radius_mm: 20.0
+    length_mm: 2.0
+    E_mpa: 210000.0
+    nu: 0.3
+    pressure_mpa: 10.0
+    mesh_sizes_mm: [2.0, 1.0, 0.5]
+    reference_radial_displacement_mm: 0.000907937
+levels: [standard]
+quantities:
+  - id: finest_relative_error
+    description: Relative error of the inner radial displacement on the finest mesh (0.5 mm elements).
+    unit: "1"
+    expected: 0.0
+    expected_source: The Lamé solution, as in textbook-lame-cylinder.
+    compare: absolute
+    tolerance: 0.002
+  - id: errors_decrease
+    description: 1 when the error falls with every refinement (2.0, then 1.0, then 0.5 mm elements), else 0.
+    unit: "1"
+    expected: 1.0
+    expected_source: A convergent element's error falls as the mesh is refined.
+    compare: absolute
+    tolerance: 0.5
+source:
+  citation: >-
+    Timoshenko SP, Goodier JN. Theory of Elasticity, 3rd ed. New York: McGraw-Hill; 1970 (Lamé's solution, as in
+    textbook-lame-cylinder).
+tolerance_changes: []

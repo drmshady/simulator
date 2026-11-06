@@ -1,0 +1,56 @@
+# Textbook case for bonded elastic (task T074). Drafted by Claude and approved by the owner on 2026-11-06;
+# committed in a commit of its own before it was first run. The inputs are chosen for this case; the source states
+# the formulas for any inputs.
+id: textbook-lame-cylinder
+title: Thick-walled cylinder under internal pressure (Lamé), plane strain
+kind: textbook
+capability: bonded_elastic
+required: true
+model:
+  builder: lame_cylinder
+  parameters:
+    inner_radius_mm: 10.0
+    outer_radius_mm: 20.0
+    length_mm: 2.0
+    E_mpa: 210000.0
+    nu: 0.3
+    pressure_mpa: 10.0
+    probe_radius_mm: 15.0
+    probe_half_width_mm: 0.25
+    mesh_size_mm: {standard: 1.0, preview: 2.5}
+levels: [standard, preview]
+quantities:
+  - id: radial_displacement_inner
+    description: Radial displacement of the inner surface (mean over its corner nodes).
+    unit: mm
+    expected: 0.000907937
+    expected_source: >-
+      Plane strain: u(a) = (1 + ν) p a² / (E (b² − a²)) · ((1 − 2ν) a + b²/a), a = 10 mm, b = 20 mm, p = 10 MPa.
+    compare: relative
+    tolerance: 0.005
+  - id: hoop_stress_mid
+    description: Hoop stress at r = 15 mm (volume-weighted mean of the integration points within 0.25 mm of it).
+    unit: MPa
+    expected: 9.259259
+    expected_source: "σθ(r) = p a²/(b² − a²) · (1 + b²/r²) at r = 15 mm."
+    compare: relative
+    tolerance: 0.01
+  - id: radial_stress_mid
+    description: Radial stress at r = 15 mm (volume-weighted mean of the integration points within 0.25 mm of it).
+    unit: MPa
+    expected: -2.592593
+    expected_source: "σr(r) = p a²/(b² − a²) · (1 − b²/r²) at r = 15 mm."
+    compare: relative
+    tolerance: 0.02
+  - id: axial_stress
+    description: Axial stress in plane strain (volume-weighted mean over the whole cylinder).
+    unit: MPa
+    expected: 2.0
+    expected_source: "σz = ν (σr + σθ) = 2ν p a²/(b² − a²), the same everywhere."
+    compare: relative
+    tolerance: 0.01
+source:
+  citation: >-
+    Timoshenko SP, Goodier JN. Theory of Elasticity, 3rd ed. New York: McGraw-Hill; 1970 (thick-walled cylinder
+    under uniform internal pressure, Lamé's solution, among the two-dimensional problems in polar coordinates).
+tolerance_changes: []

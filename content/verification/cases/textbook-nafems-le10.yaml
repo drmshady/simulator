@@ -1,0 +1,38 @@
+# Textbook case for bonded elastic (task T074). Drafted by Claude and approved by the owner on 2026-11-06;
+# committed in a commit of its own before it was first run. The inputs are those the NAFEMS benchmark states.
+id: textbook-nafems-le10
+title: NAFEMS LE10, thick plate with an elliptic hole under pressure, σyy at point D
+kind: textbook
+capability: bonded_elastic
+required: true
+model:
+  builder: nafems_le10
+  parameters:
+    inner_semi_axes_mm_x: 2000.0
+    inner_semi_axes_mm_y: 1000.0
+    outer_semi_axes_mm_x: 3250.0
+    outer_semi_axes_mm_y: 2750.0
+    thickness_mm: 600.0
+    E_mpa: 210000.0
+    nu: 0.3
+    pressure_mpa: 1.0
+    mesh:
+      standard: {near_d_mm: 40.0, far_mm: 200.0, reach_mm: 1000.0}
+      preview: {near_d_mm: 150.0, far_mm: 400.0, reach_mm: 1000.0}
+levels: [standard, preview]
+quantities:
+  - id: sigma_yy_at_d
+    description: >-
+      Direct stress σyy at point D (2000, 0, 300) mm: the integration-point values extrapolated to the node and
+      averaged over the elements that share it.
+    unit: MPa
+    expected: -5.38
+    expected_source: NAFEMS LE10 target value, σyy at D = −5.38 MPa.
+    compare: relative
+    tolerance: 0.03
+source:
+  citation: >-
+    NAFEMS. The Standard NAFEMS Benchmarks, Rev. 3. Glasgow: NAFEMS; 1990 (TNSB), test LE10: thick plate with an
+    elliptic hole under pressure loading. Background: Davies GAO, Fenner RT, Lewis RW. Background to Benchmarks.
+    Glasgow: NAFEMS; 1993.
+tolerance_changes: []

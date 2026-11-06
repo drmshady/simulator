@@ -1,0 +1,45 @@
+# Textbook case for bonded elastic (task T074). Drafted by Claude and approved by the owner on 2026-11-06;
+# committed in a commit of its own before it was first run. The inputs are chosen for this case; the source states
+# the test for any constant strain.
+id: textbook-patch-test
+title: Constant-strain patch test
+kind: textbook
+capability: bonded_elastic
+required: true
+model:
+  builder: patch_test
+  parameters:
+    side_mm: 10.0
+    E_mpa: 210000.0
+    nu: 0.3
+    strain: [1.0e-3, -2.0e-4, 5.0e-4, 3.0e-4, -1.0e-4, 2.0e-4]
+    mesh_size_mm: {standard: 2.5, preview: 5.0}
+levels: [standard, preview]
+quantities:
+  - id: max_strain_error
+    description: >-
+      Largest difference, over every integration point and strain component, between the computed and the imposed
+      strain, divided by the largest imposed component.
+    unit: "1"
+    expected: 0.0
+    expected_source: >-
+      A linear displacement prescribed on the whole boundary must give the same constant strain at every
+      integration point of a conforming mesh of irregular elements.
+    compare: absolute
+    tolerance: 1.0e-5
+  - id: max_stress_error
+    description: >-
+      Largest difference between the computed and the exact stress (Hooke's law of the imposed strain), divided by
+      the largest exact component.
+    unit: "1"
+    expected: 0.0
+    expected_source: "The exact stress is σ = λ tr(ε) I + 2μ ε everywhere."
+    compare: absolute
+    tolerance: 1.0e-5
+source:
+  citation: >-
+    Irons BM, Razzaque A. Experience with the patch test for convergence of finite elements. In: Aziz AK, editor.
+    The Mathematical Foundations of the Finite Element Method with Applications to Partial Differential Equations.
+    New York: Academic Press; 1972. p. 557-587. Also: Zienkiewicz OC, Taylor RL, Zhu JZ. The Finite Element Method:
+    Its Basis and Fundamentals, 7th ed. Oxford: Butterworth-Heinemann; 2013 (the patch test).
+tolerance_changes: []
