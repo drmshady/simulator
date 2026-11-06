@@ -43,6 +43,7 @@ from pydantic import BaseModel, ConfigDict
 
 from dentalsim.config import get_settings
 from dentalsim.errors import SolverFailed, SolverNotFound
+from dentalsim.qos import unthrottle_process
 
 POLL_INTERVAL_S = 0.25
 KILL_TIMEOUT_S = 5.0
@@ -407,12 +408,14 @@ def run_ccx(
     steps_total: int | None = None,
     poll_interval_s: float = POLL_INTERVAL_S,
     kill_timeout_s: float = KILL_TIMEOUT_S,
+    unthrottled: bool = False,
 ) -> SolverRunResult:
     """Solve `<work_dir>/<jobname>.inp` and return the run record.
 
     `command` replaces the solver program (default: `find_ccx(ccx)`); `-i <jobname>` is appended. It serves tests
     and other ways of starting ccx, such as `["wsl", "ccx"]`. `watchdog` gets a `ResourceSample` at each poll and
-    returns a reason to stop (for example "failed: out of memory"), or None to go on.
+    returns a reason to stop (for example "failed: out of memory"), or None to go on. `unthrottled` asks Windows
+    never to power-throttle the solver (previews, which the owner waits for; see `dentalsim.qos`).
     """
     work_dir = Path(work_dir)
     inp_path = work_dir / f"{jobname}.inp"
@@ -442,6 +445,8 @@ def run_ccx(
         )
     except OSError as exc:
         raise SolverFailed(f"the solver could not be started: {exc}") from exc
+    if unthrottled:
+        unthrottle_process(process.pid)
     assert process.stdout is not None
     lines: queue.Queue[str | None] = queue.Queue()
     reader = threading.Thread(target=_pump, args=(process.stdout, lines), name="ccx-output", daemon=True)

@@ -10,13 +10,16 @@ from contextlib import contextmanager
 from functools import cached_property
 from pathlib import Path
 
-from dentalsim.persistence import PublicationRepo, Repos, RunRepo, ScenarioRepo, VerificationRepo
+from dentalsim.persistence import PublicationRepo, Repos
 from dentalsim_studio.db.connection import Database, connect, db_path
 from dentalsim_studio.db.repos.capabilities import SqliteCapabilityRepo
 from dentalsim_studio.db.repos.events import SqliteEventRepo
 from dentalsim_studio.db.repos.jobs import SqliteJobRepo
 from dentalsim_studio.db.repos.library import SqliteLibraryRepo
+from dentalsim_studio.db.repos.runs import SqlitePreviewRepo, SqliteRunRepo
+from dentalsim_studio.db.repos.scenarios import SqliteScenarioRepo
 from dentalsim_studio.db.repos.settings import SqliteSettingsRepo
+from dentalsim_studio.db.repos.verification import SqliteVerificationRepo
 
 
 class SqliteRepos:
@@ -45,17 +48,21 @@ class SqliteRepos:
     def settings(self) -> SqliteSettingsRepo:
         return SqliteSettingsRepo(self.db)
 
-    @property
-    def scenarios(self) -> ScenarioRepo:
-        raise NotImplementedError("the scenario repository arrives in task T084")
+    @cached_property
+    def scenarios(self) -> SqliteScenarioRepo:
+        return SqliteScenarioRepo(self.db)
 
-    @property
-    def runs(self) -> RunRepo:
-        raise NotImplementedError("the run repository arrives in task T084")
+    @cached_property
+    def runs(self) -> SqliteRunRepo:
+        return SqliteRunRepo(self.db)
 
-    @property
-    def verification(self) -> VerificationRepo:
-        raise NotImplementedError("the verification repository arrives in task T071")
+    @cached_property
+    def previews(self) -> SqlitePreviewRepo:
+        return SqlitePreviewRepo(self.db)
+
+    @cached_property
+    def verification(self) -> SqliteVerificationRepo:
+        return SqliteVerificationRepo(self.db)
 
     @property
     def publications(self) -> PublicationRepo:

@@ -123,7 +123,7 @@ example a rented solver machine's, FR-064) needs a passing report made with that
 | instance_id | string | |
 | type_id, type_version | | |
 | attach_to | {instance_id, attach_point} or null | |
-| placement | {position_mm: [x, y, z], axis_angles_deg: {mesiodistal, buccolingual}, rotation_deg} | In the conventions frame |
+| placement | {position_mm: [x, y, z], axis_angles_deg: {mesiodistal, buccolingual}, rotation_deg} | In the frame of the socket the block attaches to (for a block on the jaw, the conventions axes); the root block is not moved |
 | settings | map of setting id → SettingValue | |
 
 **SettingValue**

@@ -9,8 +9,9 @@ Screw preload, the periodontal ligament, contact and fatigue are non-linear and 
   module.
 - **Status** comes from the `CapabilityRepo`, and is `awaiting_benchmark` when there is no row. The verification
   runner sets it to `ready` when every required case passes in one report, and back when one fails (FR-062).
-- **Ready** means the stored status is ready *and* at least one required case exists, so a capability without a
-  benchmark can never be ready.
+- **Ready** means the stored status is ready, at least one required case exists, and the report that made it ready
+  covered every current required case. A capability without a benchmark can never be ready, and adding a required
+  case file returns it to awaiting benchmark until a new report passes.
 """
 
 from __future__ import annotations
@@ -79,9 +80,14 @@ class Capability:
         """The ids of the required case files that name this capability, read now from `cases_dir`."""
         return required_cases_in(self.id, read_case_headers(cases_dir))
 
-    def awaiting_message(self, required_cases: Sequence[str]) -> str:
+    def awaiting_message(self, required_cases: Sequence[str], uncovered: Sequence[str] = ()) -> str:
         if not required_cases:
             return f"{self.label} is awaiting its benchmark: {self.benchmark} have not been written yet."
+        if uncovered:
+            return (
+                f"{self.label} is awaiting its benchmark: {', '.join(uncovered)} has not passed yet "
+                "(a required case added since the last passing report)."
+            )
         return f"{self.label} is awaiting its benchmark: {self.benchmark} have not passed."
 
 
@@ -216,7 +222,7 @@ def summarise(
     capability = get_capability(capability_id)
     required = required_cases_in(capability_id, cases if cases is not None else read_case_headers(cases_dir))
     stored = stored_status(capability_id, repo)
-    ready = stored.status == "ready" and bool(required)
+    ready = stored.status == "ready" and bool(required) and set(required) <= set(stored.cases)
     return CapabilitySummary(
         id=capability.id,
         label=capability.label,
@@ -224,7 +230,11 @@ def summarise(
         status="ready" if ready else "awaiting_benchmark",
         required_cases=list(required),
         report_id=stored.report_id if ready else None,
-        message=None if ready else capability.awaiting_message(required),
+        message=None
+        if ready
+        else capability.awaiting_message(
+            required, sorted(set(required) - set(stored.cases)) if stored.status == "ready" else ()
+        ),
     )
 
 

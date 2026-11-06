@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from dentalsim.testing import data_dir, fixed_time, fixed_ulids, mark_categories  # noqa: F401
+from dentalsim.testing import data_dir, fixed_time, fixed_ulids, mark_categories, snapshot_library  # noqa: F401
 
 HERE = Path(__file__).parent
 

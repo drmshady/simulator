@@ -19,7 +19,9 @@ This document covers three things:
      "placement": {"position_mm": [0, 0, 0], "axis_angles_deg": {"mesiodistal": 0, "buccolingual": 0}, "rotation_deg": 0},
      "settings": {
        "jaw": {"kind": "design", "value": "mandible"},
-       "region": {"kind": "design", "value": "molar_36"},
+       "region": {"kind": "design", "value": ["36"]},
+       "site": {"kind": "design", "value": "36"},
+       "neighbours": {"kind": "design", "value": ["35", "37"]},
        "density_class": {"kind": "design", "value": "D2"},
        "cortical_thickness": {"kind": "library", "entry_id": "01J...", "entry_version": 2, "choice": "typical", "value": 2.0},
        "cortical_E": {"kind": "library", "entry_id": "01J...", "entry_version": 1, "choice": "source:01J...", "value": 13700}
@@ -27,7 +29,7 @@ This document covers three things:
     {"instance_id": "implant-1", "type_id": "implant", "type_version": "1.0.0",
      "attach_to": {"instance_id": "jaw", "attach_point": "site"},
      "placement": {"position_mm": [0, 0, 0], "axis_angles_deg": {"mesiodistal": 0, "buccolingual": 0}, "rotation_deg": 0},
-     "settings": {"diameter": {"kind": "design", "value": 4.1}, "length": {"kind": "design", "value": 10},
+     "settings": {"diameter_mm": {"kind": "design", "value": 4.1}, "length_mm": {"kind": "design", "value": 10},
                   "thread": {"kind": "design", "value": "v_thread"}, "healing_state": {"kind": "design", "value": "osseointegrated"}}}
   ],
   "loads": [

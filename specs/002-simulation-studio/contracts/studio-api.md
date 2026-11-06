@@ -61,9 +61,10 @@ Event types: `preview.ready`, `run.progress {run_id, percent, stage, remaining_s
 | Method and path | Purpose |
 |---|---|
 | `GET/POST /api/projects`, `GET/PATCH/DELETE /api/projects/{id}` | Projects with notes and tags |
-| `POST /api/scenarios` `{project_id, from: {template_id} or {scenario_id}}` | Create a scenario from a template, or duplicate one (FR-032). Returns `template_misfit` problems when the template does not fit the jaw segment. |
+| `POST /api/scenarios` `{project_id, name?, from: {template_id, jaw_settings?} or {scenario_id}}` | Create a scenario from a template, or duplicate one (FR-032). Returns `template_misfit` problems when the template does not fit the jaw segment. |
 | `GET /api/scenarios/{id}` / `PUT /api/scenarios/{id}` `{revision, scenario}` | Read or save. The save body must carry the current `revision`. |
-| `POST /api/scenarios/{id}/validate` | Runs the validity checks and returns a ValidityResult. Also triggered automatically on every block move (FR-011). |
+| `POST /api/scenarios/{id}/validate?mode=fast\|full` | Runs the validity checks and returns a ValidityResult. Also triggered automatically on every block move (FR-011): the fast checks (design limits and block rules, about 0.01 s) on every move, the full ones (adding the OpenCASCADE keep-out and overlap checks, about 1 s) after a pause and before every preview or run. |
+| `POST /api/scenarios/{id}/geometry` | The builder's 3D scene as binary glTF: each placed block's surfaces and every keep-out volume, one mesh each, with extras naming the block, the part or keep-out, and its component or problem code (task T086). |
 | `GET /api/scenarios/{id}/diff/{other_id}` | Lists the settings that differ (FR-032, FR-027) |
 | `GET /api/search?q=&tag=&setting=path:op:value` | Search across projects, scenarios and runs (FR-031) |
 
@@ -71,15 +72,16 @@ Event types: `preview.ready`, `run.progress {run_id, percent, stage, remaining_s
 
 | Method and path | Purpose |
 |---|---|
-| `POST /api/scenarios/{id}/preview` → `{preview_id}` | Queued in the preview lane. Answers `preview.ready` within 10 s. Refused with `run_refused` when a benchmark is missing. |
+| `POST /api/scenarios/{id}/preview` `{load_ids?}` → `{preview_id}` | Queued in the preview lane. Answers `preview.ready` within about 13 s (SC-002). Refused with `run_refused` when a benchmark is missing. |
 | `GET /api/previews/{id}` | Key numbers, `.glb` links, `accuracy_note`, `label: "preview"` |
+| `GET /api/previews/{id}/assets/{name}.glb` | A preview's binary glTF, as for runs |
 | `POST /api/scenarios/{id}/estimate` `{detail_level}` | `{dof, time_s, memory_gb, disk_gb, fits: bool, warnings[]}` (FR-009, FR-057) |
 | `POST /api/scenarios/{id}/runs` `{detail_level}` → `{run_id}` | Queued in the heavy lane |
 | `GET /api/runs/{id}` | Run record: status, flags, versions, convergence, `locked_results` |
 | `POST /api/runs/{id}/cancel` | |
 | `GET /api/runs/{id}/results` | Key numbers (with statistic, region, side, reference, % of reference) and visuals |
 | `GET /api/runs/{id}/assets/{name}.glb` | Binary glTF: surface mesh, result attributes, displacement morph target |
-| `GET /api/queue` | Both lanes in order, with estimates |
+| `GET /api/queue` | Both lanes in order, with estimates, and `recent`: the 10 latest finished jobs other than previews, newest first, with their outcome |
 
 ## Compare and studies
 

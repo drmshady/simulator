@@ -86,6 +86,19 @@ def _integrals(points: NDArray[np.float64]) -> tuple[NDArray[np.float64], float]
     return integral, float(integral.sum())
 
 
+def face_area_vectors(points: ArrayLike) -> NDArray[np.float64]:
+    """∫ Nᵢ n dA (6, 3) of one quadratic face with node coordinates (6, 3): each node's share of the face's area
+    vector, the normal by the right-hand rule on the corner order. A uniform pressure p on the face gives the
+    consistent nodal forces p × these (directed along the normal)."""
+    xyz = np.asarray(points, dtype=np.float64)
+    vectors = np.zeros((6, 3))
+    for (xi, eta), weight in zip(_QUAD_POINTS, _QUAD_WEIGHTS, strict=True):
+        n, d = _shape(float(xi), float(eta))
+        tangents = d.T @ xyz
+        vectors += weight * np.outer(n, np.cross(tangents[0], tangents[1]))
+    return vectors
+
+
 def select_faces(
     faces: ArrayLike, node_ids: ArrayLike, coordinates: ArrayLike, contact_point: ArrayLike, radius_mm: float
 ) -> NDArray[np.int64]:

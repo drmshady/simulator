@@ -9,10 +9,14 @@ materials, support node sets and unit load cases. The writer produces:
 - one `*STEP` / `*STATIC, SOLVER=...` per unit load case, with `*CLOAD, OP=NEW` spread over the patch nodes, so
   every step is an independent unit case
 - per step: `*NODE FILE` U (to .frd); `*EL PRINT` S, E, COORD at the integration points; a separate `*EL PRINT`
-  EVOL (whole-element values); `*NODE PRINT, TOTALS=ONLY` RF per support set, for the force-balance check (FR-023)
+  EVOL (whole-element values; COORD and EVOL are left out when `print_coordinates` is false); `*NODE PRINT,
+  TOTALS=ONLY` RF per support set, for the force-balance check (FR-023)
 
-Extra cards (pressure loads in T072, physics capabilities later) are added through `UnitLoadCase.extra_cards`,
-`SolverModel.extra_model_cards`, or an `InpExtension` passed to `write_inp`.
+A load case may also carry pressures on element faces (`*DLOAD`, face numbers 1–4 as in CalculiX: P1 is the face of
+corners 1-2-3, P2 of 1-4-2, P3 of 2-4-3, P4 of 3-4-1; a positive pressure pushes into the element) and prescribed
+displacements (`*BOUNDARY` with a value, for the patch test). Both make a model of that one load case only, since
+CalculiX keeps them into later steps. Other cards (physics capabilities later) are added through
+`UnitLoadCase.extra_cards`, `SolverModel.extra_model_cards`, or an `InpExtension` passed to `write_inp`.
 
 CalculiX reads every real number from the first 20 characters of its field (`read(textpart(i)(1:20),'(f20.0)')`
 in ccx 2.23) and every integer from the first 10, so `ccx_float` writes the shortest round-trip form when it fits
@@ -124,6 +128,10 @@ class UnitLoadCase:
     patch: tuple[tuple[int, float], ...]
     force: tuple[float, float, float]
     extra_cards: tuple[str, ...] = ()
+    pressures: tuple[tuple[int, int, float], ...] = ()
+    """(element id, face 1–4, pressure in MPa), written as `*DLOAD`."""
+    prescribed: tuple[tuple[int, int, float], ...] = ()
+    """(node id, dof 1–3, displacement in mm), written as `*BOUNDARY` in the step."""
 
 
 @dataclass(frozen=True)
@@ -140,6 +148,9 @@ class SolverModel:
     load_cases: tuple[UnitLoadCase, ...]
     heading: str = ""
     extra_model_cards: tuple[str, ...] = ()
+    print_coordinates: bool = True
+    """Print the integration-point coordinates (`COORD`) and element volumes (`EVOL`) too; the pipeline computes
+    both itself, and leaving them out shortens the solver's output."""
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "node_ids", _ids(self.node_ids, "nodes"))
@@ -235,8 +246,17 @@ def validate_model(model: SolverModel) -> None:
     if not model.load_cases:
         raise ValueError("the model has no load cases")
     node_set = set(nodes.tolist())
+    element_set = set(elements.tolist())
     for case in model.load_cases:
         _patch_forces(case, node_set)
+        if (case.pressures or case.prescribed) and len(model.load_cases) > 1:
+            raise ValueError(f"load case {case.name!r}: pressures and prescribed displacements need a one-case model")
+        for element, face, value in case.pressures:
+            if int(element) not in element_set or int(face) not in (1, 2, 3, 4) or not math.isfinite(value):
+                raise ValueError(f"load case {case.name!r}: pressure ({element}, P{face}, {value}) is not valid")
+        for node, dof, value in case.prescribed:
+            if int(node) not in node_set or int(dof) not in (1, 2, 3) or not math.isfinite(value):
+                raise ValueError(f"load case {case.name!r}: prescribed displacement ({node}, {dof}) is not valid")
 
 
 def _patch_forces(case: UnitLoadCase, node_set: set[int]) -> list[tuple[int, int, float]]:
@@ -352,16 +372,25 @@ def _lines(model: SolverModel, static_card: str, extensions: tuple[InpExtension,
         yield "*CLOAD, OP=NEW"
         for node, dof, value in _patch_forces(case, node_set):
             yield f"{node}, {dof}, {ccx_float(value)}"
+        if case.pressures:
+            yield "*DLOAD"
+            for element, face, value in sorted(case.pressures):
+                yield f"{int(element)}, P{int(face)}, {ccx_float(value)}"
+        if case.prescribed:
+            yield "*BOUNDARY"
+            for node, dof, value in sorted(case.prescribed):
+                yield f"{int(node)}, {int(dof)}, {int(dof)}, {ccx_float(value)}"
         yield from case.extra_cards
         for extension in extensions:
             yield from extension.step_cards(model, step, case)
         yield "*NODE FILE"
         yield "U"
         yield f"*EL PRINT, ELSET={ALL_ELEMENTS}"
-        yield "S, E, COORD"
-        # Whole-element variables cannot share an *EL PRINT card with integration-point variables.
-        yield f"*EL PRINT, ELSET={ALL_ELEMENTS}"
-        yield "EVOL"
+        yield "S, E, COORD" if model.print_coordinates else "S, E"
+        if model.print_coordinates:
+            # Whole-element variables cannot share an *EL PRINT card with integration-point variables.
+            yield f"*EL PRINT, ELSET={ALL_ELEMENTS}"
+            yield "EVOL"
         for support in model.supports:
             # The solver's double-precision total for the force balance, and the nodal values for the moment balance.
             yield f"*NODE PRINT, NSET={support.name}, TOTALS=ONLY"

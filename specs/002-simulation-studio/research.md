@@ -191,7 +191,7 @@ conventions document or library is written; they do not block planning.
 - **Alternatives considered**: a separate YAML file plus a doc, which would be two sources; code constants, which
   the owner cannot review.
 
-## R7. Preview within 10 seconds (FR-017, SC-002)
+## R7. Preview within about 13 seconds (FR-017, SC-002)
 
 - **Decision**: the preview uses the same pipeline at the **preview** detail level:
   - coarse mesh of about 15–25 k degrees of freedom (about 5–8 k nodes; revised 2026-11-05 from the
@@ -220,6 +220,21 @@ conventions document or library is written; they do not block planning.
 - **Alternatives considered**:
   - A reduced-order or surrogate model: faster, but unverified physics.
   - Running the preview in the browser: forbidden by the spirit of Principle V, and too slow anyway.
+- **Revised 2026-11-06 (task T070; owner decision)**: conventions 1.1.0 keep the geometry the same at every
+  detail level, so the preview keeps its threads and thin walls (the 0.4 mm implant wall round the conical
+  connection). Measured on the single-crown template: about 59–65 k DOF at the preview level, not 15–25 k. A preview
+  solves one unit case per active load case (not 3 per contact point) and only the active load case. Timings for
+  one load case: geometry 1.7 s, mesh 3.4 s, solve 5.0 s (2 threads; 4.8 s on 4), the rest 0.4 s: about 11 s in
+  all. In the solve, PaStiX's refinement reaches 1e-15 after 4 iterations but runs to its 50-iteration cap, about
+  1.6 s per solve; only a patched ccx build (as in R4) could stop it earlier. The owner accepted about 11 s as the
+  preview target (SC-002, FR-017) rather than simplifying the preview geometry or patching the solver.
+- **Measured 2026-11-06 (task T098)**: on the main PC's hybrid CPU, Windows power throttling put the
+  single-threaded mesher on an efficiency core (mesh 7.5 s, preview 16–18 s). A preview's thread and its solver
+  now ask Windows not to throttle them (`dentalsim/qos.py`); detailed runs keep the default and give way to other
+  work. The data folder on the hard disk D: adds 1–2 s to each preview for storing the results: 11.8–13.3 s on
+  D:, 10.3–11.5 s on an SSD. Details in `docs/setup/performance.md`.
+- **Owner decision 2026-11-06 (T098)**: keep the data folder on D: and accept a preview of about 13 s (13.1 s
+  measured in the studio) as the target (SC-002, FR-017), rather than moving the data folder to an SSD.
 
 ## R8. Run time, memory and disk estimates (FR-009, FR-057)
 

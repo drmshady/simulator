@@ -87,6 +87,15 @@ class SqliteJobRepo:
         rows = self.db.all(f"SELECT * FROM jobs {where} ORDER BY lane, position, created_at, id", params)
         return [_job(row) for row in rows]
 
+    def recent_finished(self, *, limit: int, exclude_kinds: Sequence[JobKind] = ()) -> list[JobRecord]:
+        excluded = f"AND kind NOT IN ({', '.join('?' for _ in exclude_kinds)})" if exclude_kinds else ""
+        rows = self.db.all(
+            f"""SELECT * FROM jobs WHERE status IN ('succeeded', 'failed', 'cancelled') {excluded}
+                ORDER BY finished_at DESC, id DESC LIMIT ?""",
+            [*exclude_kinds, limit],
+        )
+        return [_job(row) for row in rows]
+
     def claim(self, lane: JobLane) -> JobRecord | None:
         with self.db.transaction():
             if self.db.one("SELECT 1 FROM jobs WHERE lane = ? AND status = 'running' LIMIT 1", (lane,)) is not None:

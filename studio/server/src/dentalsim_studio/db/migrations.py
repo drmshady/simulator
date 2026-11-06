@@ -37,7 +37,7 @@ def _run_script(name: str) -> Migration:
     return migrate
 
 
-MIGRATIONS: tuple[Migration, ...] = (_run_script("schema.sql"),)
+MIGRATIONS: tuple[Migration, ...] = (_run_script("schema.sql"), _run_script("migration_002.sql"))
 SCHEMA_VERSION = len(MIGRATIONS)
 
 

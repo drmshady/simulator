@@ -26,6 +26,7 @@ from pydantic import BaseModel, ConfigDict
 from dentalsim.config import ensure_data_folder
 from dentalsim.errors import DentalsimError
 from dentalsim.estimate.model import BuildFit, EstimateSample, coefficients_path, fit, record_calibration
+from dentalsim.geometry import occ as occ_tools
 from dentalsim.solvers.calculix.build import solver_build
 from dentalsim.solvers.calculix.inp_writer import (
     MaterialDef,
@@ -78,12 +79,8 @@ def default_threads() -> int:
 def box_model(size_mm: float, box_mm: Sequence[float] = BOX_MM, seed: int = MESH_SEED) -> SolverModel:
     """The calibration model at one element size."""
     lx, ly, lz = (float(v) for v in box_mm)
-    started_here = not gmsh.isInitialized()
-    if started_here:
-        gmsh.initialize(readConfigFiles=False, interruptible=False)
-    try:
+    with occ_tools.session("dentalsim-calibration"):
         gmsh.option.setNumber("General.Terminal", 0)
-        gmsh.model.add("dentalsim-calibration")
         for name, value in (
             ("General.NumThreads", 1),
             ("Mesh.RandomSeed", seed),
@@ -99,10 +96,6 @@ def box_model(size_mm: float, box_mm: Sequence[float] = BOX_MM, seed: int = MESH
         gmsh.model.mesh.generate(3)
         node_tags, flat_coordinates, _ = gmsh.model.mesh.getNodes()
         element_tags, flat_nodes = gmsh.model.mesh.getElementsByType(GMSH_TET10)
-        gmsh.model.remove()
-    finally:
-        if started_here:
-            gmsh.finalize()
 
     node_ids = np.asarray(node_tags, dtype=np.int64)
     order = np.argsort(node_ids)

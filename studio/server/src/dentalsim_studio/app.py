@@ -23,7 +23,7 @@ from starlette.websockets import WebSocketClose
 from dentalsim.config import Settings, ensure_data_folder, get_settings
 from dentalsim.conventions.loader import get_loaded_conventions
 from dentalsim.version import package_version
-from dentalsim_studio.api import auth, events, system
+from dentalsim_studio.api import auth, catalogue, events, library, runs, scenarios, system, verification
 from dentalsim_studio.api.deps import require_session
 from dentalsim_studio.api.errors import error_responses, install_error_handlers
 from dentalsim_studio.auth.sessions import SessionStore
@@ -32,6 +32,11 @@ PROTECTED_ROUTERS: tuple[APIRouter, ...] = (
     auth.router,
     events.router,
     system.router,
+    catalogue.router,
+    scenarios.router,
+    runs.router,
+    library.router,
+    verification.router,
 )
 PUBLIC_ROUTERS: tuple[APIRouter, ...] = (auth.public_router,)
 

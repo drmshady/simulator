@@ -36,7 +36,7 @@ class MemoryCapabilityRepo:
 
     def ready(self, *capability_ids: str) -> MemoryCapabilityRepo:
         for capability_id in capability_ids:
-            self.set(CapabilityStatus(capability_id=capability_id, status="ready", report_id="R1"))
+            self.set(CapabilityStatus(capability_id=capability_id, status="ready", report_id="R1", cases=CASE_IDS))
         return self
 
 
@@ -113,6 +113,9 @@ def _scenario(healing: str = "osseointegrated", *extra_blocks: dict[str, Any]) -
             ],
         }
     )
+
+
+CASE_IDS = ["textbook-cantilever", "textbook-patch", "screw_preload-case", "contact-case"]
 
 
 @pytest.fixture

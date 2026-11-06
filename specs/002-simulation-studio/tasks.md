@@ -449,7 +449,7 @@ this is gated by the bonded-elastic textbook benchmarks.
 
 ### Block framework and slice 1a blocks
 
-- [ ] T060 [US1] Implement `engine/src/dentalsim/blocks/base.py` and `engine/src/dentalsim/blocks/registry.py`.
+- [X] T060 [US1] Implement `engine/src/dentalsim/blocks/base.py` and `engine/src/dentalsim/blocks/registry.py`.
   - `BlockType` follows contracts/scenario-format.md:
     - identity: `type_id`, `version`, `slice`
     - a pydantic settings model whose fields carry `group` (one of 5) and `kind` (library with a `parameter_key`, or
@@ -460,7 +460,7 @@ this is gated by the bonded-elastic textbook benchmarks.
       `report_anchors(ctx)` and `settings_json_schema()`
   - `Parts` carry material tags, named support surfaces and refinement hints
   - the registry discovers block modules automatically
-- [ ] T061 [P] [US1] Implement `engine/src/dentalsim/blocks/jaw_segment.py`:
+- [X] T061 [P] [US1] Implement `engine/src/dentalsim/blocks/jaw_segment.py`:
   - **Settings**: mandible or maxilla; region given as FDI site codes; an arch curve for any region up to a full
     arch
   - **Bone shape**: the ridge cross-section (height, width) swept along the curve; a cortical shell, its thickness
@@ -468,7 +468,11 @@ this is gated by the bonded-elastic textbook benchmarks.
   - **Keep-out volumes**: the nerve canal (mandible), the sinus floor (maxilla), and neighbouring root envelopes
   - **Attach points and supports**: named sites; the mesial and distal cut faces are the supports
   - **Results**: result type `bone_strain`; report region `crestal_ring`
-- [ ] T062 [P] [US1] Implement `engine/src/dentalsim/blocks/implant.py`:
+  - Done 2026-11-06. Teeth are placed along a parabolic arch by mean mesiodistal crown widths per tooth type
+    (`TOOTH_WIDTHS_MM`, Wheeler's tables, block geometry for the owner to review with the template in T067). Crestal
+    bone loss lowers the bone uniformly over the segment. Mirrored quadrants are built as mirror-image arches, so no
+    reflection reaches the mesh.
+- [X] T062 [P] [US1] Implement `engine/src/dentalsim/blocks/implant.py`:
   - **Settings**: diameter, length, thread design (an axisymmetric V, buttress or square profile, smeared into a
     cylinder at the preview level), connection type, material from the library, and healing state
     (`immediately_loaded` adds `contact` to `needs_physics`)
@@ -476,25 +480,28 @@ this is gated by the bonded-elastic textbook benchmarks.
   - **Checks**: `exceeds_bone`, `in_nerve_canal`, `in_sinus`, `in_root`
   - **Result types**: `implant_stress`; `micromotion` (needs `contact`); `implant_fatigue_life` (needs `fatigue`)
   - **Report regions**: `implant_neck`, `implant`
-- [ ] T063 [P] [US1] Implement `engine/src/dentalsim/blocks/abutment.py`:
+  - Done 2026-11-06. Threads are never smeared by detail level: conventions 1.1.0 ("Detail levels") keeps geometry
+    identical at every level, so a plain cylinder is the design choice `thread: none` (the named threads-on-or-off
+    sensitivity case). Threaded previews take about 11 s (T070), which the owner accepted on 2026-11-06.
+- [X] T063 [P] [US1] Implement `engine/src/dentalsim/blocks/abutment.py`:
   - **Settings**: type (straight or angled), angle, height and collar; retention by screw or cement
   - **Parts**: a screw-access channel, and the retention screw as its own part tagged `screw`
   - **Attachment**: attaches to the implant `platform` and offers `crown_seat`
   - **Result types**: `abutment_stress`; `screw_stress` (needs `screw_preload`); `screw_fatigue_life` (needs
     `fatigue` and `screw_preload`)
-- [ ] T064 [P] [US1] Implement `engine/src/dentalsim/blocks/crown.py`:
+- [X] T064 [P] [US1] Implement `engine/src/dentalsim/blocks/crown.py`:
   - **Settings**: crown height, mesiodistal and buccolingual widths, material from the library
   - **Shape**: cusp geometry with the named occlusal points `buccal_cusp`, `lingual_cusp`, `central_fossa`,
     `mesial_marginal_ridge` and `distal_marginal_ridge`
   - **Attachment and results**: attaches to `crown_seat`; result type `crown_stress`; offers `connector` sockets for
     slice 1b
-- [ ] T065 [US1] Add the block unit tests `engine/tests/unit/blocks/test_jaw_segment.py`, `test_implant.py`,
+- [X] T065 [US1] Add the block unit tests `engine/tests/unit/blocks/test_jaw_segment.py`, `test_implant.py`,
   `test_abutment.py` and `test_crown.py`: volume, bounding box, attach positions, keep-out volumes, and every validity
   rule (scenario-format contract)
 
 ### Assembly, templates, geometry, mesh
 
-- [ ] T066 [US1] Implement the assembly:
+- [X] T066 [US1] Implement the assembly:
   - `engine/src/dentalsim/assembly/placement.py`: turns attach chains into transforms in the conventions frame
     (origin at the crest of the first site, +z along the reference implant axis) and applies the placement offsets
     and axis angles
@@ -505,23 +512,40 @@ this is gated by the bonded-elastic textbook benchmarks.
     - adds each block's `check()` results
     - returns a `ValidityResult` (FR-011)
     - has a fast mode (≤ 1 s) for checks while building
-- [ ] T067 [US1] Implement templates:
+  - Done 2026-11-06. Placement offsets are given in the frame of the socket a block attaches to (for blocks on
+    the jaw, the frame's own axes), so an abutment's rotation turns its tilt about the implant axis; the root is
+    not moved, and a tilted reference implant turns the whole assembly so that its axis is +z. The fast mode
+    (about 0.01 s) runs the design limits and the blocks' own checks; the full mode (about 1 s for slice 1a) adds
+    the OpenCASCADE keep-out and overlap checks. Overlaps settled by a chain of `displaces` (a screw inside the
+    implant inside the bone) are not collisions.
+- [X] T067 [US1] Implement templates:
   - `engine/src/dentalsim/templates/loader.py`: loads built-in YAML and owner templates; checks `fit_rules` against
     the jaw segment, returning `template_misfit` problems that say what must change; resolves each library
     `parameter_key` to its typical approved version
   - `engine/src/dentalsim/templates/single_crown_implant.yaml`: Claude proposes the design defaults, and the owner
     approves them
-- [ ] T068 [US1] Add `engine/tests/unit/test_assembly_validity.py` (Acceptance 3):
+  - Done 2026-11-06; the owner approved the proposed defaults the same day (`approval.status: approved`,
+    `approved_on: 2026-11-06`), so the builder no longer marks the template "defaults awaiting approval". Fit
+    rules: one-tooth region, a first or second molar site, a crown at most 0.5 mm wider than the site tooth's mean
+    width, and a 2 mm safety distance from the implant apex to the nerve canal (or the sinus floor or ridge base).
+    Two load cases: an axial bite on the central fossa and a 30° oblique bite on the buccal cusp, both
+    `load.bite_force.molar`.
+- [X] T068 [US1] Add `engine/tests/unit/test_assembly_validity.py` (Acceptance 3):
   - an implant moved into the nerve canal gives `in_nerve_canal` with its location
   - overlapping parts give `overlap`
   - an implant longer than the bone gives `exceeds_bone`
   - a template on an unsuitable segment gives `template_misfit`
   - the template as delivered is valid
-- [ ] T069 [US1] Implement `engine/src/dentalsim/geometry/assemble.py`:
+- [X] T069 [US1] Implement `engine/src/dentalsim/geometry/assemble.py`:
   - build every block's parts in gmsh OCC and apply the transforms
   - join them with `BooleanFragments`, so touching parts share nodes (bonded)
   - add physical groups per part and material, plus named support and occlusal-patch surfaces
-- [ ] T070 [US1] Implement meshing:
+  - Done 2026-11-06. Each displacing part cuts with its whole original solid, in an order where a part acts as a
+    tool before it is cut, so chains settle (screw in implant in bone); cutters act after that. Physical groups:
+    one volume group per part (`<instance>.<part>`) and one surface group per support; the occlusal patches are
+    chosen on the mesh (conventions), from the outer faces of the loaded block. The single crown joins in
+    about 2.5 s.
+- [X] T070 [US1] Implement meshing:
   - `engine/src/dentalsim/mesh/levels.py`: the detail levels `preview`, `standard`, `fine` and `extra_fine` as
     Distance and Threshold size fields, using the blocks' refinement hints at threads, the crest and connectors
   - `engine/src/dentalsim/mesh/build.py`:
@@ -535,10 +559,17 @@ this is gated by the bonded-elastic textbook benchmarks.
     - extraction of nodes, elements, element sets, support node sets and per-part outer-surface triangles
   - `engine/src/dentalsim/mesh/predict.py`: predicts the DOF from the size fields before meshing
   - the `preview` level targets about 15–25 k DOF (research R7: 48 k DOF already takes 8 s on 2 threads)
+  - Done 2026-11-06. Measured on the single-crown template (threaded implant): preview 59 k DOF, standard
+    209 k, fine 382 k; geometry plus mesh take 5.4 s at preview (R7 budget 4 s). The preview cannot reach
+    15–25 k DOF while the geometry is fixed across levels (threads, a 0.4 mm implant wall round the conical
+    connection). The owner accepted a preview of about 11 s on 2026-11-06 (SC-002 and FR-017 amended, research
+    R7). Edge nodes follow the curved geometry; elements whose
+    Jacobian would fall too low are made straight. Netgen optimisation keeps the minimum SICN at or above 0.027
+    (the floor is 0.01). The DOF prediction is a power law of ∫ 1/h³ dV fitted on the template (within 14%).
 
 ### Bonded-elastic benchmarks: the gate (FR-011a, research R15)
 
-- [ ] T071 [P] [US1] Implement verification cases and the case runner:
+- [X] T071 [P] [US1] Implement verification cases and the case runner:
   - `engine/src/dentalsim/verification/cases.py`: the VerificationCase YAML schema from data-model.md
   - `engine/src/dentalsim/verification/runner.py`:
     - solves each case at the standard and preview levels
@@ -552,7 +583,10 @@ this is gated by the bonded-elastic textbook benchmarks.
       file returns it to "awaiting benchmark" until a new report passes (extend `physics/registry.capability_state`
       to compare the report's case ids with the current required cases)
     - emits `capability.changed`
-- [ ] T072 [P] [US1] Implement `engine/src/dentalsim/verification/builders/textbook.py` with these cases:
+  - Done 2026-11-06. The required cases a passing report covered are stored with the capability status (studio
+    database schema version 2), and `summarise` keeps a capability ready only while they include every current
+    required case. The preview accuracy compares each case's preview values with its standard values.
+- [X] T072 [P] [US1] Implement `engine/src/dentalsim/verification/builders/textbook.py` with these cases:
   - cantilever beam: Timoshenko tip deflection
   - thick-walled cylinder under internal pressure: Lamé radial and hoop stress
   - NAFEMS LE10: σyy at point D = −5.38 MPa
@@ -561,52 +595,68 @@ this is gated by the bonded-elastic textbook benchmarks.
   - cylinder mesh-convergence series
 
   Also add pressure loads (`*DLOAD`) to `engine/src/dentalsim/solvers/calculix/inp_writer.py`.
-- [ ] T073 [P] [US1] Implement `engine/src/dentalsim/solvers/skfem/crosscheck.py`, which solves the textbook meshes
+  Done 2026-11-06. Textbook meshes are straight-sided 10-node tetrahedra, so CalculiX and scikit-fem solve the
+  same discrete problem; point values (LE10's σyy at D) are integration-point values extrapolated to the node and
+  averaged. Prescribed displacements (`*BOUNDARY` with a value) were added for the patch test.
+- [X] T073 [P] [US1] Implement `engine/src/dentalsim/solvers/skfem/crosscheck.py`, which solves the textbook meshes
   with scikit-fem (quadratic tetrahedra, linear elasticity) as an independent second solver and reports agreement
-- [ ] T074 [US1] **Claude drafts, owner approves**: write the textbook case files below, each with its quantity,
+  Done 2026-11-06. Stress and strain are recovered from scikit-fem's displacements at CalculiX's integration
+  points; a quantity agrees when the two differ by under a tenth of the case's tolerance band.
+- [X] T074 [US1] **Claude drafts, owner approves**: write the textbook case files below, each with its quantity,
   expected value and source, tolerance, and `capability: bonded_elastic` (read by the registry, T032). Each case's
   inputs are the ones its textbook source states, cited in the file (FR-035). Commit them in their own commit before
   any case is run.
+  Approved by the owner and committed on its own (c221312) on 2026-11-06, then run on the main PC with
+  `dentalsim verify --physics bonded_elastic` (report 01M6R0C94DNZFB3VQR896V59HH, 2 min 12 s): all six pass on
+  ccx 2.23 PaStiX and agree with scikit-fem, and `bonded_elastic` is ready. Standard level: cantilever 0.152115
+  mm (−0.36%), Lamé u_r −0.15%, hoop −0.21%, radial −0.45%, axial −0.12%, LE10 σyy at D −5.401 MPa (+0.40%),
+  bonded bars exact, patch test 1.2e-7, convergence 0.04% on the finest mesh with errors falling. Previews differ
+  from detailed results by up to 3% (LE10: −5.567 against −5.401 MPa). The bonded-bars case uses the same ν/E in
+  both bars (200 GPa with ν 0.30, 100 GPa with ν 0.15), so the field is exactly uniaxial.
   - `content/verification/cases/textbook-cantilever.yaml`
   - `textbook-lame-cylinder.yaml`
   - `textbook-nafems-le10.yaml`
   - `textbook-patch-test.yaml`
   - `textbook-bonded-bars.yaml`
   - `textbook-cylinder-convergence.yaml`
-- [ ] T075 [US1] Add `dentalsim verify [--case ID ...] [--physics ID]` in
+- [X] T075 [US1] Add `dentalsim verify [--case ID ...] [--physics ID]` in
   `engine/src/dentalsim/commands/verify.py`, and `engine/tests/benchmark/test_textbook_bonded_elastic.py`: every
   textbook case passes on CalculiX and agrees with the scikit-fem cross-check. Also add
   `engine/tests/benchmark/test_unsupported_models_refused.py`: a cube held only along one edge, and an assembly with
   a part that touches nothing, are refused by the convergence or connectivity checks and never reported
+  Done 2026-11-06; the textbook test passes since the case files were committed (T074), in 2 min on the main PC.
 
 ### Solve pipeline and results (research R4, R5)
 
-- [ ] T076 [P] [US1] Implement `engine/src/dentalsim/post/fields.py`: von Mises stress, maximum principal stress, von
+- [X] T076 [P] [US1] Implement `engine/src/dentalsim/post/fields.py`: von Mises stress, maximum principal stress, von
   Mises equivalent strain in µε, and principal strains at the integration points
-- [ ] T077 [P] [US1] Implement `engine/src/dentalsim/post/superpose.py`:
+- [X] T077 [P] [US1] Implement `engine/src/dentalsim/post/superpose.py`:
   - combines the unit cases (1 N along x, y and z per contact point) into each LoadCase: force × direction (angle and
     azimuth, with the conventions sign) × share
   - a `chewing_cycle` is combined instant by instant, and its key numbers are those of the worst instant, which is
     named (FR-008)
   - acts on the displacement, stress and strain tensors before invariants are computed
   - refuses if any capability in use is non-linear
-- [ ] T078 [P] [US1] Complete `engine/src/dentalsim/post/statistics.py` (the weighted mean and the conventions
+  - Done 2026-11-06. Runs solve 3 unit cases per contact point; previews solve one unit case per load-case
+    instant (1 N in its direction over its contact points), so a preview needs one solve per active instant. The
+    integration test checks that both give the same key numbers to 1e-4.
+- [X] T078 [P] [US1] Complete `engine/src/dentalsim/post/statistics.py` (the weighted mean and the conventions
   percentile method were written with conventions 1.1.0; add the crown and pontic exclusion within
   `crown_stats_exclude_radius_mm` of each contact point): the volume-weighted mean and 95th
   percentile over integration points (weight = det J × Gauss weight, from `post/integration.py`; conventions
   1.1.0). Nodal peaks are never reported.
-- [ ] T079 [US1] Implement `engine/src/dentalsim/post/key_numbers.py`:
+- [X] T079 [US1] Implement `engine/src/dentalsim/post/key_numbers.py`:
   - **Crestal strain** per implant on the worse side, with the sector named and its Frost window
   - **Component stress** as % of the strength reference, by the conventions rules (metals: von Mises against yield;
     brittle materials: maximum principal against flexural strength), as mean and p95, with the library entry and
     version
   - **Displacement** values
   - **Locked results**, for example the screw shown as "not reported: needs screw preload"
-- [ ] T080 [P] [US1] Implement `engine/src/dentalsim/post/gltf.py`, which writes one `.glb` per part and load case:
+- [X] T080 [P] [US1] Implement `engine/src/dentalsim/post/gltf.py`, which writes one `.glb` per part and load case:
   - the outer surface, with the vertex attributes `_STRAIN_UE`, `_STRESS_VM`, `_PCT_STRENGTH` and `_FROST_CLASS`
   - the displacement as a morph target
   - surface colours are for display only; key numbers come from integration points
-- [ ] T081 [US1] Implement `engine/src/dentalsim/pipeline.py`:
+- [X] T081 [US1] Implement `engine/src/dentalsim/pipeline.py`:
   - the stages: resolve, validate, gate, geometry, mesh, solver input (unit cases spread over the occlusal patch;
     previews use only the active contact points), solve, read, superpose, key numbers, glTF, and storage in the
     content-addressed store under the input hash
@@ -625,12 +675,12 @@ this is gated by the bonded-elastic textbook benchmarks.
       solver reports one
   - returns the convergence (force balance, energy balance and residual per case, solver messages), the actual DOF,
     time, memory and disk, `locked_results`, and every version
-- [ ] T082 [US1] Implement `engine/src/dentalsim/estimate/predict.py` (FR-009, FR-057):
+- [X] T082 [US1] Implement `engine/src/dentalsim/estimate/predict.py` (FR-009, FR-057):
   - from the predicted DOF and the coefficients, returns `{dof, time_s, memory_gb, disk_gb, fits, warnings}`
   - refuses when the memory needed is above 85% of the solving machine's physical memory, suggesting a lower
     detail level (and, when one is configured, the rented solver machine, FR-064)
   - warns when free disk is below twice the expected use
-- [ ] T083 [US1] Add `dentalsim validate|estimate|run|preview <scenario.json>` in
+- [X] T083 [US1] Add `dentalsim validate|estimate|run|preview <scenario.json>` in
   `engine/src/dentalsim/commands/scenario.py`, with `--detail`, `--out`, `--id` and `--json`; runs are stored through
   `RunRepo`. Add `engine/tests/integration/test_pipeline_single_crown.py` (marker `benchmark`): build from the template
   and solve a preview; key numbers are present with statistic labels, the screw is locked, and the force balance is
@@ -639,15 +689,15 @@ this is gated by the bonded-elastic textbook benchmarks.
 
 ### Studio API (US1 scope)
 
-- [ ] T084 [US1] Implement `studio/server/src/dentalsim_studio/db/repos/scenarios.py` (projects at their minimum,
+- [X] T084 [US1] Implement `studio/server/src/dentalsim_studio/db/repos/scenarios.py` (projects at their minimum,
   scenarios with `revision`, owner templates) and `studio/server/src/dentalsim_studio/db/repos/runs.py` (runs,
   previews)
-- [ ] T085 [US1] Implement `studio/server/src/dentalsim_studio/api/catalogue.py`:
+- [X] T085 [US1] Implement `studio/server/src/dentalsim_studio/api/catalogue.py`:
   - `GET /api/physics`
   - `GET /api/blocks`: the settings JSON schema with group, kind and limits; attach points; `needs_physics`; result
     types; ready or awaiting status
   - `GET` and `POST /api/templates`
-- [ ] T086 [US1] Implement `studio/server/src/dentalsim_studio/api/scenarios.py`:
+- [X] T086 [US1] Implement `studio/server/src/dentalsim_studio/api/scenarios.py`:
   - `GET` and `POST /api/projects` (minimum)
   - `POST /api/scenarios` from a template, returning `template_misfit` problems
   - `GET` and `PUT /api/scenarios/{id}`:
@@ -658,7 +708,7 @@ this is gated by the bonded-elastic textbook benchmarks.
   - `POST /api/scenarios/{id}/validate`, which emits `validity.changed`
   - new route `POST /api/scenarios/{id}/geometry`: a tessellated `.glb` of block surfaces and keep-out volumes for the
     builder. Add this route to `contracts/studio-api.md`.
-- [ ] T087 [US1] Implement `studio/server/src/dentalsim_studio/api/runs.py`:
+- [X] T087 [US1] Implement `studio/server/src/dentalsim_studio/api/runs.py`:
   - `POST /api/scenarios/{id}/preview`: the gate refuses with `run_refused`, naming the benchmark; cached by input
     hash; preview lane
   - `GET /api/previews/{id}`: `label: "preview"`, with the `accuracy_note` from the latest report's
@@ -669,37 +719,39 @@ this is gated by the bonded-elastic textbook benchmarks.
   - `GET /api/runs/{id}`: staleness flags are computed each time it is opened (FR-058)
   - `POST /api/runs/{id}/cancel`, `GET /api/runs/{id}/results`, `GET /api/runs/{id}/assets/{name}.glb`,
     `GET /api/queue`
-- [ ] T088 [US1] Implement `studio/server/src/dentalsim_studio/worker/handlers/run.py` and
+- [X] T088 [US1] Implement `studio/server/src/dentalsim_studio/worker/handlers/run.py` and
   `studio/server/src/dentalsim_studio/worker/handlers/preview.py`:
   - call `dentalsim.pipeline`
   - emit `run.progress {run_id, percent, stage, remaining_s}`, then `run.finished` or `preview.ready`
   - record failure reasons, honour cancel, and refit the estimates after each run
-- [ ] T089 [US1] Add `studio/server/tests/test_api_run_refusals.py`:
+- [X] T089 [US1] Add `studio/server/tests/test_api_run_refusals.py`:
   - a preview is refused while `bonded_elastic` is awaiting its benchmark, and the refusal names it
   - a run is refused for `in_nerve_canal`, with its location
   - an unapproved library version gives 422
   - an estimate that is too large gives 409 `estimate_too_large`
   - `screw_stress` appears in `locked_results`
+  Done 2026-11-06, with the catalogue, scenario and handler tests (`test_worker_solve_handlers.py`); the
+  studio tests seed a database from the approved library snapshot (`dentalsim.testing.seed_library`).
 
 ### Interface (US1 scope)
 
-- [ ] T090 [P] [US1] Implement the viewer:
+- [X] T090 [P] [US1] Implement the viewer:
   - `studio/ui/src/viewer/Scene.tsx` and `studio/ui/src/viewer/GlbModel.tsx`: custom attributes become vertex
     colours, and the morph-target weight is the magnification
   - `studio/ui/src/viewer/colourScale.ts`, built on `colourScales.generated.ts`
   - `studio/ui/src/viewer/Legend.tsx`: the Frost legend, with its source and the "teaching reference" label
-- [ ] T091 [P] [US1] Implement the settings forms:
+- [X] T091 [P] [US1] Implement the settings forms:
   - `studio/ui/src/components/SettingsForm.tsx`: renders a block's settings schema in its five groups, with design
     limits enforced
   - `studio/ui/src/components/LibraryValueField.tsx` (FR-015, FR-052):
     - shows the approved range, the typical value (preselected), and every source with its value
     - offers the choices typical, a source's value, or custom
     - shows the "outside published range" mark, which blocks publishing
-- [ ] T092 [P] [US1] Implement `studio/ui/src/components/LoadEditor.tsx` (FR-008):
+- [X] T092 [P] [US1] Implement `studio/ui/src/components/LoadEditor.tsx` (FR-008):
   - pattern: single bite, chewing cycle or clenching
   - force from the library, with angle and azimuth (the conventions sign shown)
   - contact points picked from the blocks' named occlusal points, with shares
-- [ ] T093 [US1] Implement `studio/ui/src/pages/Builder.tsx`:
+- [X] T093 [US1] Implement `studio/ui/src/pages/Builder.tsx`:
   - new scenario from a template, showing the misfit message when it does not fit
   - a block palette from `GET /api/blocks` with ready or awaiting badges, and a block tree
   - add, attach and remove blocks
@@ -707,13 +759,13 @@ this is gated by the bonded-elastic textbook benchmarks.
   - validate on every move: highlight collisions, and list the problems with location markers
   - save, with revision-conflict handling; save as an owner template; block-version upgrade prompt
   - no block-specific code (SC-012)
-- [ ] T094 [US1] Implement `studio/ui/src/components/PreviewPanel.tsx`:
+- [X] T094 [US1] Implement `studio/ui/src/components/PreviewPanel.tsx`:
   - automatic preview 600 ms after the last change
   - the "preview" label and the accuracy note
   - a refusal that names the missing benchmark
-- [ ] T095 [P] [US1] Implement `studio/ui/src/components/EstimateDialog.tsx` (detail level, expected time, memory and
+- [X] T095 [P] [US1] Implement `studio/ui/src/components/EstimateDialog.tsx` (detail level, expected time, memory and
   disk, warnings, refusal) and `studio/ui/src/pages/Queue.tsx` (both lanes, progress, time remaining, cancel)
-- [ ] T096 [US1] Implement `studio/ui/src/pages/Results.tsx`:
+- [X] T096 [US1] Implement `studio/ui/src/pages/Results.tsx`:
   - the Frost-coloured strain map, with legend and source
   - the crestal value per implant, naming the worse side
   - a component stress table: % of the strength reference, mean and p95, source, "teaching reference"
@@ -725,21 +777,52 @@ this is gated by the bonded-elastic textbook benchmarks.
   - the locked results, for example "not reported: needs screw preload"
   - the run record: versions, convergence and flags
   - the TeachingNotice on every panel
-- [ ] T097 [P] [US1] Implement `studio/ui/src/pages/Physics.tsx`: each capability with its status, required cases and a
+  Done 2026-11-06 for T090–T097, checked by type checks, lint, unit tests (`tests/slice1a.test.ts`) and the
+  production build, not yet in a browser against the running studio (T098). The builder saves each change as a
+  new revision (after 0.5 s) and validates it: the fast checks at once, the full ones after a 1.5 s pause; the
+  server fills in a new block's library values and takes the new entry's typical value when a design value
+  changes a parameter key (another material, say). Dragging moves the selected block along its socket's axes.
+  The result surfaces also carry |maximum principal strain| for the strain-gauge switch. Read routes for the
+  library entries (`GET /api/library/entries[/{id}]`, needed by the library-value field) and for verification
+  cases and reports were added ahead of T108 and T127.
+- [X] T097 [P] [US1] Implement `studio/ui/src/pages/Physics.tsx`: each capability with its status, required cases and a
   link to its report
 
 ### Slice 1a acceptance
 
-- [ ] T098 [US1] **Owner (main PC)**: check slice 1a and record the timings in `docs/setup/performance.md`.
+- [X] T098 [US1] **Owner (main PC)**: check slice 1a and record the timings in `docs/setup/performance.md`.
   1. Before verification, confirm that previews and runs are refused, naming `bonded_elastic` (Acceptance 7).
   2. Run `uv run dentalsim verify --physics bonded_elastic`, which must show it "ready".
   3. Work through quickstart row 1a:
      - the nerve-canal collision shows at once, and a run is refused with the location
-     - the preview updates within 10 s, with its accuracy note (SC-002)
+     - the preview updates within about 13 s, with its accuracy note (SC-002, amended 2026-11-06)
      - the estimate is shown before the run starts
      - a standard run finishes within 30 min (SC-003, provisional: `standard` counts as detailed until the mesh
        check in T136 confirms it, FR-018)
      - every result view is complete, with the screw shown as "not reported"
+  Accepted by the owner on 2026-11-06. Claude ran the checks from the command line (same engine functions as
+  the studio) on the main PC, in project "Slice 1a acceptance (T098)", and the owner then in the browser;
+  timings in `docs/setup/performance.md`:
+  1. passed: with the physics status removed (a copy of the database), preview and run are refused, naming
+     bonded elastic
+  2. passed (T074): report 01M6R0C94DNZFB3VQR896V59HH, bonded elastic ready
+  3. collision found by the fast checks in 0.15 s with its location, and the run refused naming it ("enters the
+     nerve canal from 9.2 to 10.0 mm below its platform"); the preview carries the accuracy note (up to 3%);
+     estimate shown first; standard run 01M6R1MGEDH7WDMZSF5NEC4RZ1 in 2 min 35 s, with every key number and the
+     screw "not reported: needs screw preload". The preview took 16–18 s: Windows power throttling put the
+     mesher on an efficiency core. Fixed (`dentalsim/qos.py`), it takes 11.8–13.3 s with the data folder on the
+     hard disk D: and 10.3–11.5 s on an SSD.
+  Found and fixed in the owner's browser test: two gmsh sessions at once in the server (scene and full validity
+  check) both failed, now serialised by a process-wide lock in `geometry/occ.py`; the builder hid a failed scene
+  (now shown with "Try again"); the builder view fitted the drag gizmo's invisible 100 m planes and showed no
+  model (now fitted to the parts only; the root block gets no gizmo); "Add a block" offered a socket that was
+  already occupied (a second implant on the one implant site): each socket now has a capacity (one), the
+  builder offers only sockets with room, and a block beyond it is named at once by the fast checks and left
+  unplaced; a finished run vanished from the queue: the Queue page now lists the 10 latest finished jobs with
+  their outcome and a link to the results. In the studio the owner's preview took 13.1 s and the standard run
+  1 min 37 s. The owner kept the data folder on the hard disk D: and accepted a preview of about 13 s (SC-002,
+  FR-017 and research R7 amended). The owner asked for more realistic crown and jaw-bone shapes in a later,
+  separate spec.
 
 **Checkpoint**: MVP. The owner can build, preview, run and inspect a single implant crown.
 
@@ -1422,7 +1505,7 @@ Task: "T166 docs/extending.md"
 
 1. Phase 1 Setup, then Phase 2 Foundational. **Stage gate**: conventions check, solver smoke test, seed library
    approved.
-2. Phase 3 (US1, slice 1a). **Stop and validate** with T098: benchmarks pass, preview ≤ 10 s, detailed run ≤ 30 min.
+2. Phase 3 (US1, slice 1a). **Stop and validate** with T098: benchmarks pass, preview ≤ about 13 s, detailed run ≤ 30 min.
 3. The owner can now build and study single implant crowns. That is the first usable studio.
 
 ### Incremental delivery (plan delivery stages)

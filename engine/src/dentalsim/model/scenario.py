@@ -29,7 +29,8 @@ class AxisAngles(_Model):
 
 
 class Placement(_Model):
-    """Offsets in the conventions frame, applied on top of where the attach point puts the block."""
+    """Offsets applied on top of where the attach point puts the block, in the frame of the socket it attaches to
+    (for a block on the jaw, the frame's own axes): see `dentalsim.assembly.placement`."""
 
     position_mm: tuple[float, float, float] = (0.0, 0.0, 0.0)
     axis_angles_deg: AxisAngles = AxisAngles()

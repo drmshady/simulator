@@ -109,10 +109,471 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/physics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Physics */
+        get: operations["physics_api_physics_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/blocks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Blocks */
+        get: operations["blocks_api_blocks_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Templates */
+        get: operations["templates_api_templates_get"];
+        put?: never;
+        /** Save Template */
+        post: operations["save_template_api_templates_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/projects": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Projects */
+        get: operations["list_projects_api_projects_get"];
+        put?: never;
+        /** Create Project */
+        post: operations["create_project_api_projects_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/projects/{project_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Project */
+        get: operations["get_project_api_projects__project_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete Project */
+        delete: operations["delete_project_api_projects__project_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Project */
+        patch: operations["update_project_api_projects__project_id__patch"];
+        trace?: never;
+    };
+    "/api/scenarios": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Scenario */
+        post: operations["create_scenario_api_scenarios_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/scenarios/{scenario_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Scenario */
+        get: operations["get_scenario_api_scenarios__scenario_id__get"];
+        /** Save Scenario */
+        put: operations["save_scenario_api_scenarios__scenario_id__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/scenarios/{scenario_id}/validate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Validate */
+        post: operations["validate_api_scenarios__scenario_id__validate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/scenarios/{scenario_id}/geometry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Geometry */
+        post: operations["geometry_api_scenarios__scenario_id__geometry_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/scenarios/{scenario_id}/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Preview Route */
+        post: operations["preview_route_api_scenarios__scenario_id__preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/previews/{preview_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Preview */
+        get: operations["get_preview_api_previews__preview_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/previews/{preview_id}/assets/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Preview Asset */
+        get: operations["preview_asset_api_previews__preview_id__assets__name__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/scenarios/{scenario_id}/estimate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Estimate */
+        post: operations["estimate_api_scenarios__scenario_id__estimate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/scenarios/{scenario_id}/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start Run */
+        post: operations["start_run_api_scenarios__scenario_id__runs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/runs/{run_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Run */
+        get: operations["get_run_api_runs__run_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/runs/{run_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel Run */
+        post: operations["cancel_run_api_runs__run_id__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/runs/{run_id}/results": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Results */
+        get: operations["results_api_runs__run_id__results_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/runs/{run_id}/assets/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Run Asset */
+        get: operations["run_asset_api_runs__run_id__assets__name__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/queue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Queue View */
+        get: operations["queue_view_api_queue_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/library/entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Entries */
+        get: operations["list_entries_api_library_entries_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/library/entries/{entry_ref}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Entry
+         * @description The entry with every version and source; `entry_ref` is an entry id or a parameter key.
+         */
+        get: operations["get_entry_api_library_entries__entry_ref__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/verification/cases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Cases */
+        get: operations["cases_api_verification_cases_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/verification/reports/{report_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Report */
+        get: operations["report_api_verification_reports__report_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** Actual */
+        Actual: {
+            /** Dof */
+            dof: number;
+            /** Time S */
+            time_s: number;
+            /** Peak Memory Gb */
+            peak_memory_gb: number;
+            /** Disk Gb */
+            disk_gb: number;
+        };
+        /**
+         * Analysis
+         * @description The assumptions under which unit-load superposition is valid.
+         */
+        Analysis: {
+            /**
+             * Type
+             * @constant
+             */
+            type: "linear_static";
+            /**
+             * Interfaces
+             * @constant
+             */
+            interfaces: "tied";
+            /**
+             * Contact
+             * @constant
+             */
+            contact: "none";
+            /**
+             * Screw Preload
+             * @constant
+             */
+            screw_preload: "none";
+            /**
+             * Superposition
+             * @constant
+             */
+            superposition: "unit_load_cases";
+        };
+        /** AssetLink */
+        AssetLink: {
+            /** Name */
+            name: string;
+            /** Part */
+            part: string;
+            /** Load Case */
+            load_case: string;
+            /** Store Key */
+            store_key: string;
+            /** Url */
+            url: string;
+        };
+        /** AttachTo */
+        AttachTo: {
+            /** Instance Id */
+            instance_id: string;
+            /** Attach Point */
+            attach_point: string;
+        };
         /** Axes */
         Axes: {
             x: components["schemas"]["Axis"];
@@ -129,6 +590,88 @@ export interface components {
                 number,
                 number
             ];
+        };
+        /** AxisAngles */
+        AxisAngles: {
+            /**
+             * Mesiodistal
+             * @default 0
+             */
+            mesiodistal: number;
+            /**
+             * Buccolingual
+             * @default 0
+             */
+            buccolingual: number;
+        };
+        /** BlockInstance */
+        BlockInstance: {
+            /** Instance Id */
+            instance_id: string;
+            /** Type Id */
+            type_id: string;
+            /** Type Version */
+            type_version: string;
+            attach_to?: components["schemas"]["AttachTo"] | null;
+            /**
+             * @default {
+             *       "position_mm": [
+             *         0,
+             *         0,
+             *         0
+             *       ],
+             *       "axis_angles_deg": {
+             *         "buccolingual": 0,
+             *         "mesiodistal": 0
+             *       },
+             *       "rotation_deg": 0
+             *     }
+             */
+            placement: components["schemas"]["Placement"];
+            /**
+             * Settings
+             * @default {}
+             */
+            settings: {
+                [key: string]: components["schemas"]["DesignValue"] | components["schemas"]["LibraryValue"];
+            };
+        };
+        /**
+         * BrandComparison
+         * @description Present only for a neutral comparison of commercial designs (FR-049).
+         */
+        BrandComparison: {
+            /** Products */
+            products: components["schemas"]["BrandProduct"][];
+            /** Disclosures */
+            disclosures: string;
+        };
+        /** BrandProduct */
+        BrandProduct: {
+            /** Name */
+            name: string;
+            /** Geometry Source */
+            geometry_source: string;
+        };
+        /** CaseResidual */
+        CaseResidual: {
+            /** Load Case */
+            load_case: string;
+            /** Relative Residual */
+            relative_residual: number | null;
+        };
+        /**
+         * ChewingInstant
+         * @description One instant of a chewing cycle: where and how the force acts, and its share of the cycle's force.
+         */
+        ChewingInstant: {
+            /** Id */
+            id: string;
+            /** Contact Points */
+            contact_points: components["schemas"]["ContactPoint"][];
+            direction: components["schemas"]["Direction"];
+            /** Force Share */
+            force_share: number;
         };
         /** ComponentBandRegion */
         ComponentBandRegion: {
@@ -161,6 +704,24 @@ export interface components {
             /** Component */
             component: string;
         };
+        /**
+         * ContactPoint
+         * @description A named occlusal point of a block, or a position on its surface, and its share of the force.
+         */
+        ContactPoint: {
+            /** Block */
+            block: string;
+            /** Point */
+            point?: string | null;
+            /** Position Mm */
+            position_mm?: [
+                number,
+                number,
+                number
+            ] | null;
+            /** Share */
+            share: number;
+        };
         /** ContinuousScale */
         ContinuousScale: {
             /** Name */
@@ -181,8 +742,9 @@ export interface components {
             units: components["schemas"]["Units"];
             frame: components["schemas"]["Frame"];
             load_angle: components["schemas"]["LoadAngle"];
-            /** Load Patch Radius Mm */
-            load_patch_radius_mm: number;
+            load_patch: components["schemas"]["LoadPatch"];
+            analysis: components["schemas"]["Analysis"];
+            detail_levels: components["schemas"]["DetailLevels"];
             statistics: components["schemas"]["Statistics"];
             /** Regions */
             regions: {
@@ -197,10 +759,15 @@ export interface components {
             };
             /** Strength Rules */
             strength_rules: components["schemas"]["StrengthRule"][];
-            /** Mesh Check Limit */
-            mesh_check_limit: number;
+            mesh_check: components["schemas"]["MeshCheck"];
             /** Equilibrium Tolerance */
             equilibrium_tolerance: number;
+            /** Moment Tolerance */
+            moment_tolerance: number;
+            /** Energy Tolerance */
+            energy_tolerance: number;
+            /** Residual Tolerance */
+            residual_tolerance: number;
             /** Max Committed Asset Bytes */
             max_committed_asset_bytes: number;
             /** Teaching Notice */
@@ -209,6 +776,60 @@ export interface components {
             library_units: components["schemas"]["LibraryUnit"][];
             /** Content Hash */
             content_hash: string;
+        };
+        /** Convergence */
+        Convergence: {
+            /** Force Balance */
+            force_balance: components["schemas"]["ForceBalance"][];
+            /**
+             * Energy Balance
+             * @default []
+             */
+            energy_balance: components["schemas"]["EnergyBalance"][];
+            /**
+             * Residuals
+             * @default []
+             */
+            residuals: components["schemas"]["CaseResidual"][];
+            /** Solver Relative Residual */
+            solver_relative_residual?: number | null;
+            /**
+             * Solver Messages
+             * @default []
+             */
+            solver_messages: string[];
+        };
+        /** CreateScenario */
+        CreateScenario: {
+            /** Project Id */
+            project_id: string;
+            /** Name */
+            name?: string | null;
+            /** From */
+            from: components["schemas"]["FromTemplate"] | components["schemas"]["FromScenario"];
+        };
+        /** Created */
+        Created: {
+            scenario: components["schemas"]["ScenarioView"];
+            /** Misfits */
+            misfits: components["schemas"]["Problem"][];
+        };
+        /**
+         * CrestPlane
+         * @description The crest plane: at right angles to the implant (or tooth) axis, through the point where that axis meets the
+         *     bone crest surface.
+         */
+        CrestPlane: {
+            /**
+             * Normal
+             * @constant
+             */
+            normal: "implant_axis";
+            /**
+             * Through
+             * @constant
+             */
+            through: "axis_crest_intersection";
         };
         /** CrestalRingRegion */
         CrestalRingRegion: {
@@ -230,10 +851,69 @@ export interface components {
              * @constant
              */
             worse_side: "highest_mean";
+            /**
+             * Implant Surface
+             * @constant
+             */
+            implant_surface: "core_radius";
+            crest_plane: components["schemas"]["CrestPlane"];
+            /**
+             * Sector Boundary
+             * @constant
+             */
+            sector_boundary: "first_included";
+            /**
+             * Sector Direction
+             * @constant
+             */
+            sector_direction: "projected_to_occlusal_plane";
             /** Sectors */
             sectors: {
                 [key: string]: components["schemas"]["Sector"];
             };
+        };
+        /** DerivedFrom */
+        DerivedFrom: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "template" | "scenario";
+            /** Id */
+            id: string;
+        };
+        /** DesignValue */
+        DesignValue: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "design";
+            /** Value */
+            value: boolean | number | string | (number)[] | string[];
+        };
+        /** DetailLevels */
+        DetailLevels: {
+            /**
+             * Vary
+             * @constant
+             */
+            vary: "mesh_density_only";
+            /**
+             * Geometry
+             * @constant
+             */
+            geometry: "fixed";
+        };
+        /**
+         * Direction
+         * @description Angle from the axial bite and the azimuth the load comes from, with the conventions sign.
+         */
+        Direction: {
+            /** Angle Deg */
+            angle_deg: number;
+            /** Azimuth Deg */
+            azimuth_deg: number;
         };
         /** DiskInfo */
         DiskInfo: {
@@ -243,6 +923,30 @@ export interface components {
             total_gb: number;
             /** Free Gb */
             free_gb: number;
+        };
+        /**
+         * EnergyBalance
+         * @description The work of the applied load against twice the strain energy for one unit load case (FR-023).
+         *
+         *     They are equal for a correct linear solution; a model that is not fully supported breaks it.
+         */
+        EnergyBalance: {
+            /** Load Case */
+            load_case: string;
+            /** External Work */
+            external_work: number;
+            /** Twice Strain Energy */
+            twice_strain_energy: number;
+            /** Relative Error */
+            relative_error: number;
+        };
+        /** EntryDetail */
+        EntryDetail: {
+            entry: components["schemas"]["LiteratureEntry"];
+            /** Versions */
+            versions: components["schemas"]["LiteratureEntryVersion"][];
+            /** Sources */
+            sources: components["schemas"]["Source"][];
         };
         /**
          * ErrorBody
@@ -284,7 +988,44 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
-        /** Frame */
+        /** Estimate */
+        Estimate: {
+            /** Dof */
+            dof: number;
+            /** Time S */
+            time_s: number;
+            /** Memory Gb */
+            memory_gb: number;
+            /** Disk Gb */
+            disk_gb: number;
+        };
+        /**
+         * ForceBalance
+         * @description The applied load and the sum of the support reactions for one unit load case (FR-023).
+         */
+        ForceBalance: {
+            /** Load Case */
+            load_case: string;
+            /** Applied N */
+            applied_n: [
+                number,
+                number,
+                number
+            ];
+            /** Reaction N */
+            reaction_n: [
+                number,
+                number,
+                number
+            ];
+            /** Relative Error */
+            relative_error: number;
+        };
+        /**
+         * Frame
+         * @description An abstract right-handed frame. Anatomically it is a site in `anatomical_quadrants` (mesial × buccal =
+         *     occlusal there); sites in the other quadrants are mirrored into it (`other_quadrants`).
+         */
         Frame: {
             /** Origin */
             origin: string;
@@ -293,7 +1034,28 @@ export interface components {
              * @constant
              */
             handedness: "right";
+            /** Anatomical Quadrants */
+            anatomical_quadrants: ("maxillary_right" | "maxillary_left" | "mandibular_left" | "mandibular_right")[];
+            /**
+             * Other Quadrants
+             * @constant
+             */
+            other_quadrants: "mirrored";
             axes: components["schemas"]["Axes"];
+        };
+        /** FromScenario */
+        FromScenario: {
+            /** Scenario Id */
+            scenario_id: string;
+        };
+        /** FromTemplate */
+        FromTemplate: {
+            /** Template Id */
+            template_id: string;
+            /** Jaw Settings */
+            jaw_settings?: {
+                [key: string]: components["schemas"]["DesignValue"] | components["schemas"]["LibraryValue"];
+            } | null;
         };
         /** FrostCategory */
         FrostCategory: {
@@ -304,19 +1066,65 @@ export interface components {
             /** Colour */
             colour: string;
         };
-        /** FrostScale */
+        /**
+         * FrostScale
+         * @description Coloured by the measure `strain_measure.frost`.
+         */
         FrostScale: {
             /** Label */
             label: string;
-            /**
-             * Measure
-             * @constant
-             */
-            measure: "von_mises_equivalent";
             /** Categories */
             categories: components["schemas"]["FrostCategory"][];
             /** Edges */
             edges: string[];
+        };
+        /** KeyNumber */
+        KeyNumber: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /** Load Case */
+            load_case: string;
+            /** Block */
+            block: string | null;
+            /** Region */
+            region: string;
+            /** Side */
+            side?: ("mesial" | "distal" | "buccal" | "lingual") | null;
+            /**
+             * Statistic
+             * @enum {string}
+             */
+            statistic: "mean" | "p95";
+            /** Value */
+            value: number;
+            /** Unit */
+            unit: string;
+            reference?: components["schemas"]["Reference"] | null;
+            /** Percent Of Reference */
+            percent_of_reference?: number | null;
+            /** Frost Category */
+            frost_category?: string | null;
+            /** Instant */
+            instant?: string | null;
+        };
+        /**
+         * KeyResult
+         * @description A result the mesh check compares between two detail levels (FR-037).
+         */
+        KeyResult: {
+            /** Region */
+            region: string;
+            /**
+             * Quantity
+             * @enum {string}
+             */
+            quantity: "equivalent_strain" | "percent_of_strength";
+            /** Statistics */
+            statistics: ("mean" | "p95")[];
+            /** Per */
+            per: string;
         };
         /** LaneCounts */
         LaneCounts: {
@@ -331,6 +1139,15 @@ export interface components {
              */
             running: number;
         };
+        /** LevelBody */
+        LevelBody: {
+            /**
+             * Detail Level
+             * @default standard
+             * @enum {string}
+             */
+            detail_level: "preview" | "standard" | "fine" | "extra_fine";
+        };
         /** LibraryUnit */
         LibraryUnit: {
             /**
@@ -344,6 +1161,143 @@ export interface components {
             quantity: string;
             /** Units */
             units: string;
+        };
+        /**
+         * LibraryValue
+         * @description `choice` is `typical`, `source:<source id>` or `custom`. `value` is the resolved number.
+         *
+         *     `outside_range` is true when the value lies outside the entry's published range; such a run cannot be
+         *     published (FR-052).
+         */
+        LibraryValue: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "library";
+            /** Entry Id */
+            entry_id: string;
+            /** Entry Version */
+            entry_version: number;
+            /** Choice */
+            choice: string;
+            /** Value */
+            value: number;
+            /**
+             * Outside Range
+             * @default false
+             */
+            outside_range: boolean;
+        };
+        /**
+         * LibraryValueView
+         * @description One library value of the scenario, as the editor shows it (FR-015, FR-052).
+         */
+        LibraryValueView: {
+            /** Path */
+            path: string;
+            /** Entry Id */
+            entry_id: string;
+            /** Entry Version */
+            entry_version: number;
+            /** Parameter Key */
+            parameter_key?: string | null;
+            /** Choice */
+            choice: string;
+            /** Value */
+            value: number;
+            /** Units */
+            units?: string | null;
+            /** Typical */
+            typical?: number | null;
+            /** Range Min */
+            range_min?: number | null;
+            /** Range Max */
+            range_max?: number | null;
+            /**
+             * Outside Range
+             * @default false
+             */
+            outside_range: boolean;
+            /** Error */
+            error?: string | null;
+        };
+        /** LibraryVersionRef */
+        LibraryVersionRef: {
+            /** Entry Id */
+            entry_id: string;
+            /** Parameter Key */
+            parameter_key: string;
+            /** Version */
+            version: number;
+            /** Content Hash */
+            content_hash: string;
+        };
+        /** LiteratureEntry */
+        LiteratureEntry: {
+            /** Id */
+            id: string;
+            /** Parameter Key */
+            parameter_key: string;
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "material" | "bone" | "load" | "strength" | "frost_window";
+            /** Label */
+            label: string;
+            /** Current Version */
+            current_version?: number | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** LiteratureEntryVersion */
+        LiteratureEntryVersion: {
+            /** Entry Id */
+            entry_id: string;
+            /** Version */
+            version: number;
+            /** Units */
+            units: string;
+            /** Typical */
+            typical: number;
+            /** Range Min */
+            range_min: number;
+            /** Range Max */
+            range_max: number;
+            /** Values By Source */
+            values_by_source: components["schemas"]["ValueBySource"][];
+            /** Notes */
+            notes?: string | null;
+            /**
+             * Status
+             * @default proposed
+             * @enum {string}
+             */
+            status: "proposed" | "approved" | "rejected" | "superseded";
+            /**
+             * Origin
+             * @enum {string}
+             */
+            origin: "claude_proposal" | "owner";
+            /**
+             * Proposed At
+             * Format: date-time
+             */
+            proposed_at: string;
+            /** Approved At */
+            approved_at?: string | null;
+            /** Rejected At */
+            rejected_at?: string | null;
+            /** Rejected Reason */
+            rejected_reason?: string | null;
+            /** Superseded At */
+            superseded_at?: string | null;
+            /** Content Hash */
+            content_hash: string;
         };
         /**
          * LoadAngle
@@ -372,6 +1326,76 @@ export interface components {
             positive_tilt: "away_from_azimuth";
             /** Default Azimuth Deg */
             default_azimuth_deg: number;
+            /** Angle Range Deg */
+            angle_range_deg: [
+                number,
+                number
+            ];
+        };
+        /**
+         * LoadCase
+         * @description A load pattern (FR-008). Force magnitude and cycle count are library values; the rest are design values.
+         *
+         *     - `single_bite` and `clenching` (which also covers bruxism) have one direction and contact points.
+         *     - `chewing_cycle` has a list of instants and a cycle count; its key numbers are those of the worst instant.
+         */
+        LoadCase: {
+            /** Id */
+            id: string;
+            /** Name */
+            name?: string | null;
+            /**
+             * Pattern
+             * @enum {string}
+             */
+            pattern: "single_bite" | "chewing_cycle" | "clenching";
+            force: components["schemas"]["LibraryValue"];
+            direction?: components["schemas"]["Direction"] | null;
+            /**
+             * Contact Points
+             * @default []
+             */
+            contact_points: components["schemas"]["ContactPoint"][];
+            /**
+             * Instants
+             * @default []
+             */
+            instants: components["schemas"]["ChewingInstant"][];
+            cycles?: components["schemas"]["LibraryValue"] | null;
+        };
+        /**
+         * LoadPatch
+         * @description A uniform traction (in the load direction) over the surface faces whose centroids lie within `radius_mm`.
+         */
+        LoadPatch: {
+            /** Radius Mm */
+            radius_mm: number;
+            /**
+             * Selection
+             * @constant
+             */
+            selection: "face_centroid_within_radius";
+            /**
+             * Application
+             * @constant
+             */
+            application: "uniform_traction";
+            /** Crown Stats Exclude Radius Mm */
+            crown_stats_exclude_radius_mm: number;
+        };
+        /**
+         * LockedResult
+         * @description A result type that is not reported because a capability it needs is not ready (FR-011a, FR-059).
+         */
+        LockedResult: {
+            /** Result Type */
+            result_type: string;
+            /** Block */
+            block: string | null;
+            /** Missing Capability */
+            missing_capability: string;
+            /** Message */
+            message: string;
         };
         /** LoginRequest */
         LoginRequest: {
@@ -396,10 +1420,537 @@ export interface components {
             /** Used Percent */
             used_percent: number;
         };
+        /** MeshCheck */
+        MeshCheck: {
+            /** Limit */
+            limit: number;
+            /** Key Results */
+            key_results: components["schemas"]["KeyResult"][];
+        };
+        /**
+         * NamedPoint
+         * @description A named occlusal point of a placed block, where a load can act.
+         */
+        NamedPoint: {
+            /** Block */
+            block: string;
+            /** Point */
+            point: string;
+            /** Label */
+            label: string;
+            /** Position Mm */
+            position_mm: [
+                number,
+                number,
+                number
+            ];
+        };
+        /** PhysicsItem */
+        PhysicsItem: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /** Linear */
+            linear: boolean;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "awaiting_benchmark" | "ready";
+            /** Required Cases */
+            required_cases: string[];
+            /** Report Id */
+            report_id?: string | null;
+            /** Message */
+            message?: string | null;
+            /** Report Url */
+            report_url?: string | null;
+        };
+        /**
+         * Placement
+         * @description Offsets applied on top of where the attach point puts the block, in the frame of the socket it attaches to
+         *     (for a block on the jaw, the frame's own axes): see `dentalsim.assembly.placement`.
+         */
+        Placement: {
+            /**
+             * Position Mm
+             * @default [
+             *       0,
+             *       0,
+             *       0
+             *     ]
+             */
+            position_mm: [
+                number,
+                number,
+                number
+            ];
+            /**
+             * @default {
+             *       "mesiodistal": 0,
+             *       "buccolingual": 0
+             *     }
+             */
+            axis_angles_deg: components["schemas"]["AxisAngles"];
+            /**
+             * Rotation Deg
+             * @default 0
+             */
+            rotation_deg: number;
+        };
+        /** PreviewBody */
+        PreviewBody: {
+            /** Load Ids */
+            load_ids?: string[] | null;
+        };
+        /** PreviewQueued */
+        PreviewQueued: {
+            /** Preview Id */
+            preview_id: string;
+            /** Status */
+            status: string;
+            /** Cached */
+            cached: boolean;
+        };
+        /** PreviewView */
+        PreviewView: {
+            /** Id */
+            id: string;
+            /**
+             * Label
+             * @default preview
+             */
+            label: string;
+            /** Status */
+            status: string;
+            /** Failure Reason */
+            failure_reason: string | null;
+            /** Accuracy Note */
+            accuracy_note: string | null;
+            /** Scenario Id */
+            scenario_id: string | null;
+            /** Scenario Revision */
+            scenario_revision: number | null;
+            /**
+             * Key Numbers
+             * @default []
+             */
+            key_numbers: components["schemas"]["KeyNumber"][];
+            /**
+             * Locked Results
+             * @default []
+             */
+            locked_results: components["schemas"]["LockedResult"][];
+            /**
+             * Assets
+             * @default []
+             */
+            assets: components["schemas"]["AssetLink"][];
+            /** Dof */
+            dof?: number | null;
+            /** Time S */
+            time_s?: number | null;
+        };
+        /**
+         * Problem
+         * @description One problem with a plain-language message and, where it has one, its location in the conventions frame.
+         */
+        Problem: {
+            /**
+             * Code
+             * @enum {string}
+             */
+            code: "overlap" | "unsupported_pontic" | "in_nerve_canal" | "in_sinus" | "in_root" | "exceeds_bone" | "template_misfit" | "design_limit";
+            /** Message */
+            message: string;
+            /** Block */
+            block?: string | null;
+            /** Location Mm */
+            location_mm?: [
+                number,
+                number,
+                number
+            ] | null;
+            /**
+             * Severity
+             * @default error
+             * @enum {string}
+             */
+            severity: "error" | "warning";
+        };
+        /** ProjectBody */
+        ProjectBody: {
+            /** Name */
+            name: string;
+            /**
+             * Notes
+             * @default
+             */
+            notes: string;
+            /**
+             * Tags
+             * @default []
+             */
+            tags: string[];
+        };
+        /** ProjectPatch */
+        ProjectPatch: {
+            /** Name */
+            name?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Tags */
+            tags?: string[] | null;
+        };
+        /** ProjectRecord */
+        ProjectRecord: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /**
+             * Notes
+             * @default
+             */
+            notes: string;
+            /**
+             * Tags
+             * @default []
+             */
+            tags: string[];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** ProjectView */
+        ProjectView: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /**
+             * Notes
+             * @default
+             */
+            notes: string;
+            /**
+             * Tags
+             * @default []
+             */
+            tags: string[];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /**
+             * Scenarios
+             * @default []
+             */
+            scenarios: components["schemas"]["ScenarioSummary"][];
+        };
         /** QueueSummary */
         QueueSummary: {
             heavy: components["schemas"]["LaneCounts"];
             preview: components["schemas"]["LaneCounts"];
+        };
+        /**
+         * Reference
+         * @description The library value a key number is compared with, and which entry version it came from.
+         */
+        Reference: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "strength" | "frost_window";
+            /** Parameter Key */
+            parameter_key: string;
+            /** Entry Id */
+            entry_id: string;
+            /** Entry Version */
+            entry_version: number;
+            /** Value */
+            value: number;
+            /** Units */
+            units: string;
+        };
+        /** ResultsView */
+        ResultsView: {
+            /** Run Id */
+            run_id: string;
+            /** Key Numbers */
+            key_numbers: components["schemas"]["KeyNumber"][];
+            /** Locked Results */
+            locked_results: components["schemas"]["LockedResult"][];
+            /** Assets */
+            assets: components["schemas"]["AssetLink"][];
+            /** Combined Cases */
+            combined_cases: string[];
+            convergence: components["schemas"]["Convergence"];
+            /** Teaching Notice */
+            teaching_notice: string;
+        };
+        /** Run */
+        Run: {
+            /** Id */
+            id: string;
+            /** Scenario Id */
+            scenario_id: string | null;
+            /** Scenario Revision */
+            scenario_revision: number | null;
+            snapshot: components["schemas"]["Scenario"];
+            /**
+             * Detail Level
+             * @enum {string}
+             */
+            detail_level: "preview" | "standard" | "fine" | "extra_fine";
+            /** Input Hash */
+            input_hash: string;
+            /** Library Versions */
+            library_versions: components["schemas"]["LibraryVersionRef"][];
+            /** Engine Version */
+            engine_version: string;
+            /** Engine Source Hash */
+            engine_source_hash: string;
+            /** Conventions Version */
+            conventions_version: string;
+            /** Solver Build Id */
+            solver_build_id: string;
+            /** Gmsh Version */
+            gmsh_version: string;
+            /** Solver Host */
+            solver_host?: string | null;
+            estimate?: components["schemas"]["Estimate"] | null;
+            actual?: components["schemas"]["Actual"] | null;
+            /**
+             * Status
+             * @default queued
+             * @enum {string}
+             */
+            status: "queued" | "running" | "succeeded" | "failed" | "cancelled" | "interrupted";
+            /** Failure Reason */
+            failure_reason?: string | null;
+            convergence?: components["schemas"]["Convergence"] | null;
+            /** Result Ref */
+            result_ref?: string | null;
+            /**
+             * Locked Results
+             * @default []
+             */
+            locked_results: components["schemas"]["LockedResult"][];
+            /**
+             * Flags
+             * @default []
+             */
+            flags: ("out_of_date" | "uses_rejected_entry" | "outside_published_range" | "dev_build" | "needs_reverification")[];
+            /** Study Id */
+            study_id?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Started At */
+            started_at?: string | null;
+            /** Finished At */
+            finished_at?: string | null;
+        };
+        /** RunEstimate */
+        RunEstimate: {
+            /**
+             * Detail Level
+             * @enum {string}
+             */
+            detail_level: "preview" | "standard" | "fine" | "extra_fine";
+            /** Dof */
+            dof: number;
+            /** Unit Cases */
+            unit_cases: number;
+            /** Time S */
+            time_s: number;
+            /** Memory Gb */
+            memory_gb: number;
+            /** Disk Gb */
+            disk_gb: number;
+            /** Fits */
+            fits: boolean;
+            /** Warnings */
+            warnings: string[];
+            /** Memory Limit Gb */
+            memory_limit_gb: number;
+            /** Solver Build Id */
+            solver_build_id: string;
+        };
+        /** RunQueued */
+        RunQueued: {
+            /** Run Id */
+            run_id: string;
+            /** Status */
+            status: string;
+            /** Flags */
+            flags: string[];
+            /** Locked Results */
+            locked_results: components["schemas"]["LockedResult"][];
+            estimate: components["schemas"]["Estimate"] | null;
+        };
+        /** RunView */
+        RunView: {
+            run: components["schemas"]["Run"];
+            /** Flags */
+            flags: string[];
+            /** Stale Reasons */
+            stale_reasons: string[];
+        };
+        /** SaveScenario */
+        SaveScenario: {
+            /** Revision */
+            revision: number;
+            scenario: components["schemas"]["Scenario"];
+            /** Name */
+            name?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Tags */
+            tags?: string[] | null;
+        };
+        /** SaveTemplate */
+        SaveTemplate: {
+            /** Scenario Id */
+            scenario_id: string;
+            /** Name */
+            name: string;
+            /** Template Id */
+            template_id: string;
+            /**
+             * Branch
+             * @enum {string}
+             */
+            branch: "implant" | "tooth" | "removable";
+            /**
+             * Prosthesis Type
+             * @default custom
+             * @enum {string}
+             */
+            prosthesis_type: "single_crown_implant" | "single_crown_tooth" | "splinted_crowns" | "bridge_implant" | "bridge_tooth" | "bridge_mixed" | "cantilever_bridge" | "full_arch_fixed" | "implant_overdenture" | "rpd" | "complete_denture" | "custom";
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+        };
+        /** Scenario */
+        Scenario: {
+            /**
+             * Format
+             * @default dentalsim.scenario/1
+             * @constant
+             */
+            format: "dentalsim.scenario/1";
+            /** Name */
+            name: string;
+            /** Conventions Version */
+            conventions_version: string;
+            /**
+             * Detail Level
+             * @default standard
+             * @enum {string}
+             */
+            detail_level: "preview" | "standard" | "fine" | "extra_fine";
+            /** Blocks */
+            blocks: components["schemas"]["BlockInstance"][];
+            /**
+             * Loads
+             * @default []
+             */
+            loads: components["schemas"]["LoadCase"][];
+            brand_comparison?: components["schemas"]["BrandComparison"] | null;
+        };
+        /** ScenarioSummary */
+        ScenarioSummary: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Revision */
+            revision: number;
+            /** Valid */
+            valid: boolean | null;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** ScenarioView */
+        ScenarioView: {
+            /** Id */
+            id: string;
+            /** Project Id */
+            project_id: string;
+            /** Name */
+            name: string;
+            /**
+             * Notes
+             * @default
+             */
+            notes: string;
+            /**
+             * Tags
+             * @default []
+             */
+            tags: string[];
+            derived_from?: components["schemas"]["DerivedFrom"] | null;
+            /**
+             * Revision
+             * @default 1
+             */
+            revision: number;
+            scenario: components["schemas"]["Scenario"];
+            validity?: components["schemas"]["ValidityResult"] | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /**
+             * Library
+             * @default []
+             */
+            library: components["schemas"]["LibraryValueView"][];
+            /**
+             * Misfits
+             * @default []
+             */
+            misfits: components["schemas"]["Problem"][];
+            /**
+             * Upgrades
+             * @default []
+             */
+            upgrades: components["schemas"]["Upgrade"][];
+            /**
+             * Occlusal Points
+             * @default []
+             */
+            occlusal_points: components["schemas"]["NamedPoint"][];
         };
         /** Sector */
         Sector: {
@@ -423,17 +1974,94 @@ export interface components {
              */
             expires_at: string;
         };
+        /** Source */
+        Source: {
+            /** Id */
+            id: string;
+            /** Authors */
+            authors: string[];
+            /** Year */
+            year: number;
+            /** Title */
+            title: string;
+            /** Journal */
+            journal?: string | null;
+            /** Doi */
+            doi?: string | null;
+            /** Pmid */
+            pmid?: string | null;
+            /**
+             * Study Type
+             * @enum {string}
+             */
+            study_type: "experimental" | "clinical" | "fea" | "review" | "standard" | "textbook";
+            /**
+             * @default {
+             *       "status": "not_checked"
+             *     }
+             */
+            check: components["schemas"]["SourceCheck"];
+        };
+        /** SourceCheck */
+        SourceCheck: {
+            /**
+             * Status
+             * @default not_checked
+             * @enum {string}
+             */
+            status: "not_checked" | "resolved_match" | "resolved_mismatch" | "unresolved";
+            /** Checked At */
+            checked_at?: string | null;
+            /** Resolver */
+            resolver?: ("crossref" | "ncbi") | null;
+            matched?: components["schemas"]["SourceMatch"] | null;
+            /** Detail */
+            detail?: string | null;
+        };
+        /**
+         * SourceMatch
+         * @description What the resolver returned, and how it compared with the source as cited.
+         */
+        SourceMatch: {
+            /** First Author */
+            first_author: boolean;
+            /** Year */
+            year: boolean;
+            /** Title Similarity */
+            title_similarity: number;
+            /** Resolved First Author */
+            resolved_first_author?: string | null;
+            /** Resolved Year */
+            resolved_year?: number | null;
+            /** Resolved Title */
+            resolved_title?: string | null;
+        };
         /** Statistics */
         Statistics: {
+            /**
+             * Source
+             * @constant
+             */
+            source: "integration_points";
             /**
              * Weighting
              * @constant
              */
             weighting: "integration_point_volume";
+            /**
+             * Ip Volume
+             * @constant
+             */
+            ip_volume: "jacobian_times_gauss_weight";
             /** Reported */
             reported: ("mean" | "p95")[];
             /** Percentile */
             percentile: number;
+            /**
+             * Percentile Method
+             * @constant
+             */
+            percentile_method: "smallest_value_with_cumulative_volume_fraction_at_least_p";
         };
         /** StrainMeasure */
         StrainMeasure: {
@@ -443,7 +2071,9 @@ export interface components {
              */
             frost: "von_mises_equivalent";
             /** Effective Poisson Ratio */
-            effective_poisson_ratio: number;
+            effective_poisson_ratio: "material_nu" | number;
+            /** Formula */
+            formula: string;
             /** Stored */
             stored: ("von_mises_equivalent" | "max_principal" | "min_principal")[];
             /**
@@ -492,6 +2122,32 @@ export interface components {
             disk: components["schemas"]["DiskInfo"];
             queue: components["schemas"]["QueueSummary"];
         };
+        /** TemplateSummary */
+        TemplateSummary: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Prosthesis Type */
+            prosthesis_type: string;
+            /** Branch */
+            branch: string;
+            /** Description */
+            description: string;
+            /**
+             * Origin
+             * @enum {string}
+             */
+            origin: "builtin" | "owner";
+            /** Approval */
+            approval: string | null;
+            /** Fit Rules */
+            fit_rules: {
+                [key: string]: unknown;
+            }[];
+            /** Blocks */
+            blocks: string[];
+        };
         /** Units */
         Units: {
             /**
@@ -524,6 +2180,40 @@ export interface components {
              * @constant
              */
             strain: "microstrain";
+        };
+        /** Upgrade */
+        Upgrade: {
+            /** Instance Id */
+            instance_id: string;
+            /** Type Id */
+            type_id: string;
+            /** From Version */
+            from_version: string;
+            /** To Version */
+            to_version: string;
+        };
+        /** ValidityResult */
+        ValidityResult: {
+            /** Ok */
+            ok: boolean;
+            /** Problems */
+            problems: components["schemas"]["Problem"][];
+            /**
+             * Checked At
+             * Format: date-time
+             */
+            checked_at: string;
+            /** Scenario Revision */
+            scenario_revision?: number | null;
+        };
+        /** ValueBySource */
+        ValueBySource: {
+            /** Source Id */
+            source_id: string;
+            /** Value */
+            value: number;
+            /** Note */
+            note?: string | null;
         };
     };
     responses: never;
@@ -801,6 +2491,1406 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ConventionsInfo"];
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    physics_api_physics_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhysicsItem"][];
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    blocks_api_blocks_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    }[];
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    templates_api_templates_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateSummary"][];
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    save_template_api_templates_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveTemplate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateSummary"];
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    list_projects_api_projects_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectRecord"][];
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    create_project_api_projects_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProjectBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectRecord"];
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    get_project_api_projects__project_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectView"];
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    delete_project_api_projects__project_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    update_project_api_projects__project_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProjectPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectRecord"];
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    create_scenario_api_scenarios_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateScenario"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Created"];
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    get_scenario_api_scenarios__scenario_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scenario_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScenarioView"];
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    save_scenario_api_scenarios__scenario_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scenario_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveScenario"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScenarioView"];
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    validate_api_scenarios__scenario_id__validate_post: {
+        parameters: {
+            query?: {
+                mode?: "fast" | "full";
+            };
+            header?: never;
+            path: {
+                scenario_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidityResult"];
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    geometry_api_scenarios__scenario_id__geometry_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scenario_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    preview_route_api_scenarios__scenario_id__preview_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scenario_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PreviewBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PreviewQueued"];
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    get_preview_api_previews__preview_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                preview_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PreviewView"];
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    preview_asset_api_previews__preview_id__assets__name__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                preview_id: string;
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    estimate_api_scenarios__scenario_id__estimate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scenario_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LevelBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunEstimate"];
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    start_run_api_scenarios__scenario_id__runs_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scenario_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LevelBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunQueued"];
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    get_run_api_runs__run_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunView"];
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    cancel_run_api_runs__run_id__cancel_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Run"];
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    results_api_runs__run_id__results_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResultsView"];
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    run_asset_api_runs__run_id__assets__name__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    queue_view_api_queue_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: {
+                            [key: string]: unknown;
+                        }[];
+                    };
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    list_entries_api_library_entries_get: {
+        parameters: {
+            query?: {
+                status?: ("proposed" | "approved" | "rejected" | "superseded") | null;
+                category?: string | null;
+                q?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LiteratureEntry"][];
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    get_entry_api_library_entries__entry_ref__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entry_ref: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntryDetail"];
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    cases_api_verification_cases_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    }[];
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    report_api_verification_reports__report_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                report_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Error */

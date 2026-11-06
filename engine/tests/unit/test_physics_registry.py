@@ -54,8 +54,10 @@ def _case(folder: Path, file_name: str, text: str) -> None:
     (folder / file_name).write_text(text, encoding="utf-8")
 
 
-def _ready(repo: MemoryCapabilityRepo, capability_id: str, report_id: str = "R1") -> None:
-    repo.set(CapabilityStatus(capability_id=capability_id, status="ready", report_id=report_id))
+def _ready(
+    repo: MemoryCapabilityRepo, capability_id: str, report_id: str = "R1", cases: tuple[str, ...] = ("a",)
+) -> None:
+    repo.set(CapabilityStatus(capability_id=capability_id, status="ready", report_id=report_id, cases=list(cases)))
 
 
 def test_the_five_capabilities_are_registered() -> None:

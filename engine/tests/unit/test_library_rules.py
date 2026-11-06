@@ -503,7 +503,7 @@ def test_reject_a_proposed_version(service: LibraryService, tmp_path: Path, fixe
     assert result.version.rejected_reason == "The cited study measured D2 bone."
     assert result.version.rejected_at == fixed_time.now
     assert not result.was_current
-    assert (result.run_flagging, result.note) == ("not_available", "run flagging not available yet")
+    assert (result.run_flagging, result.note, result.flagged_runs) == ("done", None, [])
     with pytest.raises(Refused):
         service.approve(entry_id, 1)
     with pytest.raises(Refused, match="only a proposed or approved version"):
@@ -647,7 +647,7 @@ def test_cli_import_check_approve_reject_export(
     out = capsys.readouterr().out
     assert "rejected bone.cancellous.E.D4 v1: Wrong density class." in out
     assert "has no approved version now" in out
-    assert "note: run flagging not available yet" in out
+    assert "run flagging not available" not in out
 
 
 def test_cli_check_shows_a_mismatch_and_json(

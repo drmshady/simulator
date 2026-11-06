@@ -38,6 +38,9 @@ class CapabilityStatus(_Record):
     status: CapabilityState = "awaiting_benchmark"
     report_id: str | None = None
     """The verification report that made it ready, when it is ready."""
+    cases: list[str] = []
+    """The required case ids that report covered; a capability stays ready only while they include every current
+    required case (FR-062)."""
     updated_at: AwareDatetime | None = None
 
 
@@ -70,6 +73,15 @@ class EventRecord(_Record):
 class DerivedFrom(_Record):
     kind: Literal["template", "scenario"]
     id: str
+
+
+class ProjectRecord(_Record):
+    id: str
+    name: str
+    notes: str = ""
+    tags: list[str] = []
+    created_at: AwareDatetime
+    updated_at: AwareDatetime
 
 
 class ScenarioRecord(_Record):
@@ -155,7 +167,7 @@ class LibraryRepo(Protocol):
 
 
 class ScenarioRepo(Protocol):
-    """Extended with projects, owner templates and search in tasks T084 and T114."""
+    """Projects and scenarios (task T084); search arrives in task T114."""
 
     def get(self, scenario_id: str) -> ScenarioRecord | None: ...
 
@@ -164,6 +176,16 @@ class ScenarioRepo(Protocol):
     def save(self, record: ScenarioRecord, *, expected_revision: int) -> ScenarioRecord:
         """Stores the record with revision + 1; raises `Conflict` when the stored revision is not the expected one."""
         ...
+
+    def set_validity(self, scenario_id: str, validity: ValidityResult) -> None: ...
+
+    def list_for_project(self, project_id: str) -> list[ScenarioRecord]: ...
+
+    def add_project(self, name: str, *, notes: str = "", tags: Sequence[str] = ()) -> ProjectRecord: ...
+
+    def get_project(self, project_id: str) -> ProjectRecord | None: ...
+
+    def list_projects(self) -> list[ProjectRecord]: ...
 
 
 class RunRepo(Protocol):
@@ -197,6 +219,10 @@ class JobRepo(Protocol):
 
     def list_jobs(self, *, lane: JobLane | None = None, statuses: Sequence[JobStatus] | None = None) -> list[JobRecord]:
         """Jobs in queue order (by lane, then position)."""
+        ...
+
+    def recent_finished(self, *, limit: int, exclude_kinds: Sequence[JobKind] = ()) -> list[JobRecord]:
+        """The latest finished jobs (succeeded, failed or cancelled), newest first."""
         ...
 
     def claim(self, lane: JobLane) -> JobRecord | None:

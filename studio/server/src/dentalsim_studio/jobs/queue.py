@@ -69,6 +69,14 @@ def active_jobs(repos: Repos, lane: JobLane | None = None) -> list[JobRecord]:
     return repos.jobs.list_jobs(lane=lane, statuses=ACTIVE_STATUSES)
 
 
+RECENT_JOBS = 10
+
+
+def recent_jobs(repos: Repos, limit: int = RECENT_JOBS) -> list[JobRecord]:
+    """The latest finished jobs other than previews, newest first, so a finished run stays findable in the queue."""
+    return repos.jobs.recent_finished(limit=limit, exclude_kinds=("preview",))
+
+
 def has_work(repos: Repos) -> bool:
     return bool(active_jobs(repos))
 

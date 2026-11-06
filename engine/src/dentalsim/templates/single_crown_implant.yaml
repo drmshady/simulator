@@ -1,0 +1,120 @@
+# Built-in template: a single implant crown (slice 1a). Library settings name parameter keys; opening the template
+# takes the current approved version of each entry (its typical value unless a choice is given).
+format: dentalsim.template/1
+id: single_crown_implant
+name: Single crown (implant)
+prosthesis_type: single_crown_implant
+branch: implant
+description: >-
+  One implant in a mandibular first molar site with both neighbours present, a straight titanium abutment and a
+  cemented zirconia crown, under an axial bite on the central fossa and a 30° oblique bite on the buccal cusp.
+origin: builtin
+approval:
+  status: approved
+  proposed_by: Claude
+  proposed_on: 2026-11-06
+  approved_on: 2026-11-06
+  note: >-
+    Design defaults proposed by Claude and approved by the owner (task T067): the site and bone shape, the implant,
+    abutment and crown sizes, the two load cases, and the fit rules (a 2 mm safety distance to the nerve canal; a
+    crown at most 0.5 mm wider than the mean width of the site's tooth).
+detail_level: standard
+
+fit_rules:
+  - {rule: region_teeth, min: 1, max: 1}
+  - {rule: site_positions, positions: [6, 7], label: a first or second molar}
+  - {rule: site_space, block: crown-1, setting: mesiodistal_mm, max_excess_mm: 0.5}
+  - {rule: bone_height, implant: implant-1, margin_mm: 2.0}
+
+blocks:
+  - instance_id: jaw
+    type_id: jaw_segment
+    type_version: 1.0.0
+    attach_to: null
+    settings:
+      jaw: {kind: design, value: mandible}
+      region: {kind: design, value: ["36"]}
+      site: {kind: design, value: "36"}
+      neighbours: {kind: design, value: ["35", "37"]}
+      density_class: {kind: design, value: D2}
+      ridge_height_mm: {kind: design, value: 24.0}
+      ridge_width_mm: {kind: design, value: 9.0}
+      basal_width_mm: {kind: design, value: 11.0}
+      crestal_bone_loss_mm: {kind: design, value: 0.0}
+      nerve_canal_depth_mm: {kind: design, value: 15.0}
+      nerve_canal_diameter_mm: {kind: design, value: 3.0}
+      arch_width_mm: {kind: design, value: 45.0}
+      segment_extension_mm: {kind: design, value: 9.0}
+      cortical_thickness: {kind: library, parameter_key: bone.cortical.thickness.D2}
+      cortical_E: {kind: library, parameter_key: bone.cortical.E}
+      cortical_nu: {kind: library, parameter_key: bone.cortical.nu}
+      cancellous_E: {kind: library, parameter_key: bone.cancellous.E.D2}
+      cancellous_nu: {kind: library, parameter_key: bone.cancellous.nu}
+
+  - instance_id: implant-1
+    type_id: implant
+    type_version: 1.0.0
+    attach_to: {instance_id: jaw, attach_point: site}
+    settings:
+      diameter_mm: {kind: design, value: 4.1}
+      length_mm: {kind: design, value: 10.0}
+      collar_mm: {kind: design, value: 0.5}
+      thread: {kind: design, value: v_thread}
+      thread_pitch_mm: {kind: design, value: 0.8}
+      thread_depth_mm: {kind: design, value: 0.35}
+      connection: {kind: design, value: internal_conical}
+      material: {kind: design, value: titanium_g4}
+      healing_state: {kind: design, value: osseointegrated}
+      E: {kind: library, parameter_key: material.titanium_g4.E}
+      nu: {kind: library, parameter_key: material.titanium_g4.nu}
+      strength: {kind: library, parameter_key: material.titanium_g4.yield_strength}
+
+  - instance_id: abutment-1
+    type_id: abutment
+    type_version: 1.0.0
+    attach_to: {instance_id: implant-1, attach_point: platform}
+    settings:
+      abutment_type: {kind: design, value: straight}
+      angle_deg: {kind: design, value: 0.0}
+      collar_mm: {kind: design, value: 2.0}
+      height_mm: {kind: design, value: 4.0}
+      margin_diameter_mm: {kind: design, value: 5.5}
+      retention: {kind: design, value: cement}
+      material: {kind: design, value: titanium_g5}
+      screw_material: {kind: design, value: titanium_g5}
+      E: {kind: library, parameter_key: material.titanium_g5.E}
+      nu: {kind: library, parameter_key: material.titanium_g5.nu}
+      strength: {kind: library, parameter_key: material.titanium_g5.yield_strength}
+      screw_E: {kind: library, parameter_key: material.titanium_g5.E}
+      screw_nu: {kind: library, parameter_key: material.titanium_g5.nu}
+      screw_strength: {kind: library, parameter_key: material.titanium_g5.yield_strength}
+
+  - instance_id: crown-1
+    type_id: crown
+    type_version: 1.0.0
+    attach_to: {instance_id: abutment-1, attach_point: crown_seat}
+    settings:
+      height_mm: {kind: design, value: 7.5}
+      mesiodistal_mm: {kind: design, value: 10.5}
+      buccolingual_mm: {kind: design, value: 10.0}
+      cusp_height_mm: {kind: design, value: 2.0}
+      material: {kind: design, value: zirconia}
+      E: {kind: library, parameter_key: material.zirconia.E}
+      nu: {kind: library, parameter_key: material.zirconia.nu}
+      strength: {kind: library, parameter_key: material.zirconia.flexural_strength}
+
+loads:
+  - id: axial
+    name: Axial bite on the central fossa
+    pattern: single_bite
+    force: {kind: library, parameter_key: load.bite_force.molar}
+    direction: {angle_deg: 0, azimuth_deg: 90}
+    contact_points:
+      - {block: crown-1, point: central_fossa, share: 1.0}
+  - id: oblique
+    name: Oblique bite on the buccal cusp, 30° toward lingual
+    pattern: single_bite
+    force: {kind: library, parameter_key: load.bite_force.molar}
+    direction: {angle_deg: 30, azimuth_deg: 90}
+    contact_points:
+      - {block: crown-1, point: buccal_cusp, share: 1.0}

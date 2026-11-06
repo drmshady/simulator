@@ -54,3 +54,15 @@ def region_percentile(values: ArrayLike, weights: ArrayLike, conventions: Conven
     if stats.percentile_method != SUPPORTED_PERCENTILE_METHOD:
         raise ConventionsMissing(f"this engine cannot compute the percentile method {stats.percentile_method!r}")
     return weighted_percentile(values, weights, stats.percentile)
+
+
+def away_from(positions: ArrayLike, contacts: ArrayLike, radius_mm: float) -> NDArray[np.bool_]:
+    """The points farther than `radius_mm` from every contact point (conventions
+    `load_patch.crown_stats_exclude_radius_mm`): the statistics of a load-bearing component leave out the points
+    nearer a contact point, where the stress is set by the patch radius rather than by the design."""
+    p = np.asarray(positions, dtype=np.float64).reshape(-1, 3)
+    c = np.asarray(contacts, dtype=np.float64).reshape(-1, 3)
+    if not c.size or radius_mm <= 0:
+        return np.ones(p.shape[0], dtype=np.bool_)
+    distance = np.linalg.norm(p[:, None, :] - c[None, :, :], axis=2).min(axis=1)
+    return np.asarray(distance > radius_mm, dtype=np.bool_)

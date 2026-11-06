@@ -272,7 +272,13 @@ class KeyResult(_Model):
     region: str
     quantity: Literal["equivalent_strain", "percent_of_strength"]
     statistics: tuple[Literal["mean", "p95"], ...] = Field(min_length=1)
-    per: Literal["site", "implant", "component"]
+    per: str
+    """`site`, `component`, or the component a region of these conventions is measured on (for example the one of
+    the implant-neck band, for one value per implant). It is checked against the regions, not listed here, so that
+    generic code names no block type (SC-012)."""
+
+
+KEY_RESULT_GROUPINGS = ("site", "component")
 
 
 class MeshCheck(_Model):
@@ -338,6 +344,11 @@ class Conventions(_Model):
         unknown = sorted({k.region for k in self.mesh_check.key_results} - set(self.regions))
         if unknown:
             raise ValueError(f"mesh_check.key_results name regions that are not defined: {', '.join(unknown)}")
+        components = {r.component for r in self.regions.values() if not isinstance(r, CrestalRingRegion)}
+        groupings = sorted({k.per for k in self.mesh_check.key_results} - set(KEY_RESULT_GROUPINGS) - components)
+        if groupings:
+            allowed = ", ".join([*KEY_RESULT_GROUPINGS, *sorted(components)])
+            raise ValueError(f"mesh_check.key_results group by unknown 'per' values {groupings}; use one of {allowed}")
         return self
 
     @property

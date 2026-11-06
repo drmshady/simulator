@@ -78,3 +78,111 @@ export interface StudioEventDataMap {
   'validity.changed': GenericEventData;
   'capability.changed': GenericEventData;
 }
+
+// Slice 1a (tasks T090-T097).
+
+export type PhysicsItem = Schemas['PhysicsItem'];
+export type TemplateSummary = Schemas['TemplateSummary'];
+export type ProjectRecord = Schemas['ProjectRecord'];
+export type ProjectView = Schemas['ProjectView'];
+export type ScenarioView = Schemas['ScenarioView'];
+export type ScenarioCreated = Schemas['Created'];
+export type Scenario = Schemas['Scenario'];
+export type BlockInstance = Schemas['BlockInstance'];
+export type Placement = Schemas['Placement'];
+export type LoadCase = Schemas['LoadCase'];
+export type ContactPoint = Schemas['ContactPoint'];
+export type DesignValue = Schemas['DesignValue'];
+export type LibraryValue = Schemas['LibraryValue'];
+export type LibraryValueView = Schemas['LibraryValueView'];
+export type ValidityResult = Schemas['ValidityResult'];
+export type ValidityProblem = Schemas['Problem'];
+export type PreviewQueued = Schemas['PreviewQueued'];
+export type PreviewView = Schemas['PreviewView'];
+export type KeyNumber = Schemas['KeyNumber'];
+export type LockedResult = Schemas['LockedResult'];
+export type AssetLink = Schemas['AssetLink'];
+export type RunEstimate = Schemas['RunEstimate'];
+export type RunQueued = Schemas['RunQueued'];
+export type RunView = Schemas['RunView'];
+export type Run = Schemas['Run'];
+export type ResultsView = Schemas['ResultsView'];
+export type EntryDetail = Schemas['EntryDetail'];
+export type DetailLevel = 'preview' | 'standard' | 'fine' | 'extra_fine';
+export type SettingValue = DesignValue | LibraryValue;
+
+/** One setting in a block's settings schema (GET /api/blocks): JSON Schema plus `group`, `kind` and units. */
+export interface SettingSchema {
+  title: string;
+  group: string;
+  kind: 'design' | 'library';
+  type: 'number' | 'integer' | 'boolean' | 'string' | 'array';
+  items?: { type: 'string' | 'number' };
+  minItems?: number;
+  maxItems?: number;
+  unit?: string;
+  default?: unknown;
+  minimum?: number;
+  maximum?: number;
+  exclusiveMinimum?: number;
+  exclusiveMaximum?: number;
+  enum?: string[];
+  parameter_key?: string;
+  description?: string;
+}
+
+export interface BlockTypeEntry {
+  type_id: string;
+  version: string;
+  slice: string;
+  label: string;
+  description: string;
+  settings_schema: {
+    title: string;
+    properties: Record<string, SettingSchema>;
+    required: string[];
+    groups: { id: string; label: string }[];
+  };
+  /** `capacity`: how many blocks the socket holds (one for every socket so far). */
+  attach_points: { name: string; label: string; description: string; capacity?: number }[];
+  attaches_to: string[];
+  needs_physics: string[];
+  result_types: {
+    id: string;
+    label: string;
+    regions: string[];
+    needs_physics: string[];
+    status: 'ready' | 'awaiting_benchmark';
+    locked_message: string | null;
+  }[];
+  report_regions: string[];
+  status: 'ready' | 'awaiting_benchmark';
+  awaiting: string[];
+}
+
+export interface QueueItem {
+  id: string;
+  lane: 'heavy' | 'preview';
+  kind: string;
+  target_id: string | null;
+  position: number;
+  status: string;
+  created_at: string;
+  started_at: string | null;
+  finished_at?: string | null;
+  failure_reason?: string | null;
+  run?: {
+    scenario_id: string | null;
+    detail_level: string;
+    estimate: { dof: number; time_s: number; memory_gb: number; disk_gb: number } | null;
+    name: string;
+  };
+}
+
+export interface QueueView {
+  heavy: QueueItem[];
+  preview: QueueItem[];
+  /** The latest finished jobs other than previews, newest first. */
+  recent: QueueItem[];
+}
+export type NamedPoint = Schemas['NamedPoint'];
