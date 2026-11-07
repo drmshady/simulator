@@ -131,5 +131,7 @@ describe('formatting', () => {
     expect(quantity(690, 'MPa')).toBe('690 MPa');
     expect(cleanDoi('doi: 10.1/x')).toBe('10.1/x');
     expect(splitAuthors('A AB\nB CD; ')).toEqual(['A AB', 'B CD']);
+    expect(splitAuthors('Rho JY, Ashman RB, Turner CH')).toEqual(['Rho JY', 'Ashman RB', 'Turner CH']);
+    expect(splitAuthors('Smith, A. B.')).toEqual(['Smith, A. B.']);
   });
 });

@@ -72,10 +72,13 @@ def _is_initials(token: str) -> bool:
 
 
 def surname(author: str) -> str:
-    """The surname in "Surname AB", "Surname, A. B.", "A. B. Surname" or plain "Surname"."""
+    """The surname in "Surname AB", "Surname, A. B.", "A. B. Surname" or plain "Surname".
+
+    A whole author list typed as one author ("Rho JY, Ashman RB, Turner CH") gives the first author's surname.
+    """
     text = author.strip()
     if "," in text:
-        return text.split(",", 1)[0].strip()
+        text = text.split(",", 1)[0].strip()
     tokens = text.split()
     while len(tokens) > 1 and _is_initials(tokens[-1]):
         tokens.pop()

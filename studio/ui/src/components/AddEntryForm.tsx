@@ -60,7 +60,7 @@ function SourceFields({
         </Group>
         <TextInput
           label="Authors"
-          description="First author first, as 'Surname AB'; separate authors with ';'"
+          description="First author first, as 'Surname AB'; separate authors with ';' (or ',' as in 'Rho JY, Ashman RB')"
           value={source.authors}
           onChange={(e) => set('authors', e.currentTarget.value)}
           required

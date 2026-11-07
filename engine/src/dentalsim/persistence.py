@@ -20,13 +20,17 @@ from pydantic import AwareDatetime, BaseModel, ConfigDict
 
 from dentalsim.library.models import EntryStatus, LiteratureEntry, LiteratureEntryVersion, Source, SourceCheck
 from dentalsim.model.run import Run, RunFlag
-from dentalsim.model.scenario import Scenario
+from dentalsim.model.scenario import DetailLevel, Scenario
 from dentalsim.model.validity import ValidityResult
 
 CapabilityState = Literal["awaiting_benchmark", "ready"]
 JobLane = Literal["heavy", "preview"]
-JobKind = Literal["run", "preview", "mesh_check", "verification", "export", "promo", "interactive_data"]
+JobKind = Literal[
+    "run", "preview", "mesh_check", "verification", "export", "promo", "interactive_data", "backup", "restore"
+]
 JobStatus = Literal["queued", "running", "succeeded", "failed", "cancelled", "interrupted"]
+StudyKind = Literal["sweep", "sensitivity"]
+StudyStatus = Literal["queued", "running", "finished", "finished_with_failures", "cancelled"]
 
 
 class _Record(BaseModel):
@@ -98,6 +102,50 @@ class ScenarioRecord(_Record):
     updated_at: AwareDatetime
 
 
+class StudyAxis(_Record):
+    """A setting a study varies and its values: listed by the owner for a sweep; the minimum, typical and maximum of
+    the approved range for a sensitivity study."""
+
+    path: str
+    values: list[Any]
+
+
+class StudyPoint(_Record):
+    """One run of a study, in queue order, and the axis values that made it."""
+
+    run_id: str
+    label: str
+    values: dict[str, Any]
+    """Axis path → value."""
+    reuse_of: str | None = None
+    """The run whose unit load cases this run reuses: it differs from that run only in its load forces or bite
+    angles (research R4)."""
+
+
+class StudyRecord(_Record):
+    """A sweep or sensitivity study (data-model.md "Study"; FR-020, FR-021). Its runs are queued together."""
+
+    id: str
+    project_id: str
+    base_scenario_id: str
+    name: str = ""
+    kind: StudyKind
+    detail_level: DetailLevel = "standard"
+    axes: list[StudyAxis]
+    points: list[StudyPoint] = []
+    status: StudyStatus = "queued"
+    summary: dict[str, Any] | None = None
+    """The spread of each key number per axis (`dentalsim.study.SpreadSummary`)."""
+    estimate: dict[str, Any] | None = None
+    """The whole study's expected time, memory and disk when it was queued (`dentalsim.study.StudyEstimate`)."""
+    created_at: AwareDatetime
+    updated_at: AwareDatetime
+
+    @property
+    def run_ids(self) -> list[str]:
+        return [point.run_id for point in self.points]
+
+
 class EventSink(Protocol):
     def emit(self, type: str, payload: Mapping[str, Any]) -> int:
         """Append an event and return its id."""
@@ -167,7 +215,7 @@ class LibraryRepo(Protocol):
 
 
 class ScenarioRepo(Protocol):
-    """Projects and scenarios (task T084); search arrives in task T114."""
+    """Projects and scenarios (task T084); the studio searches them itself (`dentalsim_studio.db.search`)."""
 
     def get(self, scenario_id: str) -> ScenarioRecord | None: ...
 
@@ -202,6 +250,18 @@ class RunRepo(Protocol):
         ...
 
     def add_flag(self, run_ids: Sequence[str], flag: RunFlag) -> None: ...
+
+
+class StudyRepo(Protocol):
+    def add(self, study: StudyRecord) -> None: ...
+
+    def get(self, study_id: str) -> StudyRecord | None: ...
+
+    def update(self, study: StudyRecord) -> None:
+        """Stores the status, points, summary and estimate (`updated_at` becomes now)."""
+        ...
+
+    def list_for_project(self, project_id: str) -> list[StudyRecord]: ...
 
 
 class JobRepo(Protocol):
@@ -274,6 +334,9 @@ class Repos(Protocol):
     def runs(self) -> RunRepo: ...
 
     @property
+    def studies(self) -> StudyRepo: ...
+
+    @property
     def jobs(self) -> JobRepo: ...
 
     @property
@@ -290,6 +353,17 @@ class Repos(Protocol):
 
     def transaction(self) -> AbstractContextManager[None]:
         """Everything inside commits together or not at all. Nested use joins the outer transaction."""
+        ...
+
+    def snapshot_database(self, target: Path, *, finished_job_id: str | None = None) -> None:
+        """Write a consistent copy of the database to `target`, while it stays in use (FR-034). The job making the
+        backup, if given, is marked succeeded in the copy."""
+        ...
+
+    def restore_database(self, source: Path, *, keep_job_id: str | None = None) -> None:
+        """Replace the database's content with the copy at `source`, which is checked first (refused, with nothing
+        changed, when it is damaged or from a newer studio). Work in progress at backup time is cancelled; the job
+        `keep_job_id` keeps its row."""
         ...
 
     def close(self) -> None: ...

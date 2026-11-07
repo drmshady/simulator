@@ -303,6 +303,9 @@ def test_check_source_creates_and_closes_its_own_client(monkeypatch: pytest.Monk
         ("Al-Sukhun J", "Al Sukhun", True),
         ("Smith AB", "Smith AB", True),
         ("LEE AB", "Lee", True),
+        ("Rho JY, Ashman RB, Turner CH", "Rho", True),
+        ("van der Berg J, Smith AB", "Berg", True),
+        ("Rho JY, Ashman RB", "Ashman", False),
         ("Smith AB", "Smyth", False),
         ("Jones", "Smith", False),
     ],
@@ -316,6 +319,8 @@ def test_surname_extraction() -> None:
     assert surname("Smith, A.B.") == "Smith"
     assert surname("J.-P. Dupont") == "Dupont"
     assert surname("Smith") == "Smith"
+    assert surname("Rho JY, Ashman RB, Turner CH") == "Rho"
+    assert surname("van der Berg, J.") == "van der Berg"
 
 
 def test_title_normalisation() -> None:

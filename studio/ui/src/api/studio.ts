@@ -1,19 +1,22 @@
-// Query hooks and calls for slice 1a: catalogue, projects, scenarios, previews, estimates, runs and the queue, and
-// for Story 2: the literature library (contracts/studio-api.md). Pages use these; none of them knows a block type.
+// Query hooks and calls for slice 1a: catalogue, projects, scenarios, previews, estimates, runs and the queue; for
+// Story 2: the literature library; for Story 3: notes and tags, search, duplicates, diffs, comparisons and backups;
+// for Story 4: studies (contracts/studio-api.md). Pages use these; none of them knows a block type.
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { apiGet, apiPost, apiPut, withQuery } from './client';
+import { apiGet, apiPatch, apiPost, apiPut, withQuery } from './client';
 import { useStudioEvents } from './events';
 import type {
   ApprovalResult,
   BlockTypeEntry,
+  CompareView,
   DetailLevel,
   EntryChanges,
   EntryDetail,
   EntryStatus,
   ImportedVersion,
   ImportResult,
+  JobQueued,
   LibraryCategory,
   LiteratureEntry,
   LiteratureEntryVersion,
@@ -31,10 +34,14 @@ import type {
   RunView,
   Scenario,
   ScenarioCreated,
+  ScenarioDiff,
   ScenarioView,
+  SearchResults,
   SettingValue,
   SnapshotWritten,
   SourceCheckView,
+  StudyDefinition,
+  StudyView,
   TemplateSummary,
   ValidityResult,
 } from './types';
@@ -52,6 +59,10 @@ export const keys = {
   queue: ['queue'] as const,
   entry: (ref: string) => ['library-entry', ref] as const,
   entries: ['library-entries'] as const,
+  diff: (id: string, other: string, revision: number) => ['diff', id, other, revision] as const,
+  search: (query: SearchQuery) => ['search', query] as const,
+  compare: (runIds: readonly string[], fields: readonly string[] | null) => ['compare', runIds, fields] as const,
+  study: (id: string) => ['study', id] as const,
 };
 
 export function useBlocks() {
@@ -259,5 +270,109 @@ export function useQueue() {
     queryKey: keys.queue,
     queryFn: ({ signal }) => apiGet<QueueView>('/api/queue', { signal }),
     refetchInterval: 5_000,
+  });
+}
+
+// --- Story 3: organising and comparing runs --------------------------------------------------------------------------
+
+export interface Notes {
+  name?: string;
+  notes?: string;
+  tags?: string[];
+}
+
+export function updateProject(id: string, changes: Notes): Promise<ProjectRecord> {
+  return apiPatch<ProjectRecord>(`/api/projects/${id}`, changes);
+}
+
+export function annotateScenario(id: string, changes: Notes): Promise<ScenarioView> {
+  return apiPatch<ScenarioView>(`/api/scenarios/${id}`, changes);
+}
+
+export function annotateRun(id: string, changes: Omit<Notes, 'name'>): Promise<RunView> {
+  return apiPatch<RunView>(`/api/runs/${id}`, changes);
+}
+
+/** "Duplicate and change" (FR-032): a copy in the same project that keeps a link to the original. */
+export function duplicateScenario(projectId: string, scenarioId: string, name?: string): Promise<ScenarioCreated> {
+  return apiPost<ScenarioCreated>('/api/scenarios', { project_id: projectId, name, from: { scenario_id: scenarioId } });
+}
+
+/** The settings that differ from `id` to `other`; `revision` (of `other`) keys the cache so an edit refetches it. */
+export function useScenarioDiff(id: string | null, other: string, revision: number) {
+  return useQuery({
+    queryKey: keys.diff(id ?? '', other, revision),
+    queryFn: ({ signal }) => apiGet<ScenarioDiff>(`/api/scenarios/${id}/diff/${other}`, { signal }),
+    enabled: id !== null,
+  });
+}
+
+export interface SearchQuery {
+  q?: string;
+  tag?: string;
+  setting?: string;
+}
+
+export function useSearch(query: SearchQuery) {
+  const active = Boolean(query.q?.trim() || query.tag?.trim() || query.setting?.trim());
+  return useQuery({
+    queryKey: keys.search(query),
+    queryFn: ({ signal }) =>
+      apiGet<SearchResults>(
+        withQuery('/api/search', { q: query.q?.trim() || null, tag: query.tag?.trim() || null, setting: query.setting?.trim() || null }),
+        { signal },
+      ),
+    enabled: active,
+    retry: false,
+  });
+}
+
+/** A side-by-side comparison of finished runs, from their stored results (FR-027). */
+export function useComparison(runIds: readonly string[], fields: readonly string[] | null = null) {
+  return useQuery({
+    queryKey: keys.compare(runIds, fields),
+    queryFn: () => apiPost<CompareView>('/api/compare', { run_ids: runIds, fields }),
+    enabled: runIds.length >= 2,
+    retry: false,
+    staleTime: 60_000,
+  });
+}
+
+export function startBackup(to: string | null): Promise<JobQueued> {
+  return apiPost<JobQueued>('/api/system/backup', { to });
+}
+
+export function startRestore(archive: string): Promise<JobQueued> {
+  return apiPost<JobQueued>('/api/system/restore', { archive });
+}
+
+// --- Story 4: studies -------------------------------------------------------------------------------------------------
+
+/** Queue a sweep or sensitivity study: every run is checked and the whole study estimated before anything is queued. */
+export function createStudy(definition: Omit<StudyDefinition, 'format'>): Promise<StudyView> {
+  return apiPost<StudyView>('/api/studies', { format: 'dentalsim.study/1', ...definition });
+}
+
+export function cancelStudy(id: string): Promise<StudyView> {
+  return apiPost<StudyView>(`/api/studies/${id}/cancel`);
+}
+
+/** A study with its runs and spread summary, refreshed whenever one of its runs starts, ends or reports progress. */
+export function useStudy(id: string | null) {
+  const queryClient = useQueryClient();
+  const refresh = () => void queryClient.invalidateQueries({ queryKey: keys.study(id ?? '') });
+  useStudioEvents({
+    'study.progress': (data) => {
+      if (data.study_id === id) {
+        refresh();
+        if (data.status !== 'queued') void queryClient.invalidateQueries({ queryKey: ['project'] });
+      }
+    },
+  });
+  return useQuery({
+    queryKey: keys.study(id ?? ''),
+    queryFn: ({ signal }) => apiGet<StudyView>(`/api/studies/${id}`, { signal }),
+    enabled: id !== null,
+    refetchInterval: (query) => (['queued', 'running'].includes(query.state.data?.status ?? '') ? 30_000 : false),
   });
 }

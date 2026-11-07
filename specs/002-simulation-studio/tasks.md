@@ -981,39 +981,39 @@ reopen without re-running; backup and restore.
 **Independent Test**: create a project, duplicate a scenario changing one setting, run both, compare them, and find
 them again by tag and by note text (quickstart row 3).
 
-- [ ] T114 [US3] Extend `studio/server/src/dentalsim_studio/db/repos/scenarios.py` and add
+- [X] T114 [US3] Extend `studio/server/src/dentalsim_studio/db/repos/scenarios.py` and add
   `studio/server/src/dentalsim_studio/db/search.py`:
   - notes and tags on projects, scenarios and runs
   - FTS5 index triggers over names, notes and tags
   - setting-value search with `json_each` over the scenario JSON, written `path:op:value` with the operators =, <,
     >, <= and >=
-- [ ] T115 [P] [US3] Implement `engine/src/dentalsim/model/diff.py`: a generic settings diff between two scenarios
+- [X] T115 [P] [US3] Implement `engine/src/dentalsim/model/diff.py`: a generic settings diff between two scenarios
   (blocks matched by `instance_id`, setting paths, loads, detail level), with no block-specific code
-- [ ] T116 [P] [US3] Implement `engine/src/dentalsim/post/compare.py` for two or more result sets:
+- [X] T116 [P] [US3] Implement `engine/src/dentalsim/post/compare.py` for two or more result sets:
   - one shared colour scale per field: the union of the ranges, with the Frost windows fixed
   - one shared deformation scale
   - key-number differences, absolute and relative, matched by id
-- [ ] T117 [US3] Implement `studio/server/src/dentalsim_studio/api/projects.py`, `api/search.py` and `api/compare.py`,
+- [X] T117 [US3] Implement `studio/server/src/dentalsim_studio/api/projects.py`, `api/search.py` and `api/compare.py`,
   and extend `api/scenarios.py`:
   - `GET`, `PATCH` and `DELETE /api/projects/{id}`
   - `POST /api/scenarios` with `{scenario_id}`: duplicate, with `derived_from`
   - `GET /api/scenarios/{id}/diff/{other_id}` and `GET /api/search`
   - `POST /api/compare`: stored results only, under 1 minute (SC-008)
-- [ ] T118 [P] [US3] Implement `studio/ui/src/pages/Projects.tsx`: the project list and detail (scenarios, runs,
+- [X] T118 [P] [US3] Implement `studio/ui/src/pages/Projects.tsx`: the project list and detail (scenarios, runs,
   studies, notes and tag editing), and a search box (text, tag, setting value) with results grouped by kind
-- [ ] T119 [P] [US3] Add duplicate-and-change to `studio/ui/src/pages/Builder.tsx`: the link to the original is shown,
+- [X] T119 [P] [US3] Add duplicate-and-change to `studio/ui/src/pages/Builder.tsx`: the link to the original is shown,
   and the changed settings are highlighted using the diff endpoint
-- [ ] T120 [US3] Implement `studio/ui/src/pages/Compare.tsx`:
+- [X] T120 [US3] Implement `studio/ui/src/pages/Compare.tsx`:
   - side-by-side viewers that share the camera, colour scale and deformation scale
   - the differing settings, and a table of key-number differences
   - the TeachingNotice
-- [ ] T121 [US3] Implement backup and restore (FR-034):
+- [X] T121 [US3] Implement backup and restore (FR-034):
   - `engine/src/dentalsim/backup.py`: one archive with a SHA-256 manifest, holding a SQLite online-backup snapshot,
     the store, published media and a library export; restore checks every hash before replacing anything
   - `dentalsim backup [--to]` and `restore` in `engine/src/dentalsim/commands/backup.py`
   - `POST /api/system/backup` and `/restore` jobs in `studio/server/src/dentalsim_studio/api/system.py`
   - `engine/tests/integration/test_backup_restore.py`
-- [ ] T122 [US3] Add `studio/server/tests/test_api_compare_search.py`:
+- [X] T122 [US3] Add `studio/server/tests/test_api_compare_search.py`:
   - a duplicate keeps its link, and the diff lists the one changed setting
   - compare returns shared scales and the differences
   - search by tag, by note text and by `implant-1.length:=:8` finds the scenario
@@ -1032,24 +1032,24 @@ restarts, and end with a summary of the spread.
 PC midway, and confirm the next day that everything finished or the failures are explained, and that the summary
 appears (quickstart row 4).
 
-- [ ] T123 [P] [US4] Implement `engine/src/dentalsim/study.py`:
+- [X] T123 [P] [US4] Implement `engine/src/dentalsim/study.py`:
   - **Format**: `dentalsim.study/1`, with a base scenario and either `kind: sweep` (axes as `{setting path, values}`)
     or `kind: sensitivity` (a library setting path)
   - **Sweep**: expands into the Cartesian product of resolved snapshots
   - **Sensitivity**: makes the minimum, typical and maximum of the approved range
   - **Load-only axes** (bite angle, force) reuse one solve by superposition (research R4)
   - **Summary**: the spread (min, max, range, % change) of each key number per axis
-- [ ] T124 [US4] Implement `studio/server/src/dentalsim_studio/db/repos/studies.py` and
+- [X] T124 [US4] Implement `studio/server/src/dentalsim_studio/db/repos/studies.py` and
   `studio/server/src/dentalsim_studio/api/studies.py`:
   - `POST /api/studies` (sweep or sensitivity), `GET /api/studies/{id}`, and `POST /api/studies/{id}/cancel`
   - before queuing, a memory and disk check for the whole study (FR-057)
   - statuses `finished` and `finished_with_failures`, and `study.progress` events
-- [ ] T125 [US4] Add `dentalsim study <study.yaml>` in `engine/src/dentalsim/commands/study.py`
-- [ ] T126 [P] [US4] Implement the study interface:
+- [X] T125 [US4] Add `dentalsim study <study.yaml>` in `engine/src/dentalsim/commands/study.py`
+- [X] T126 [P] [US4] Implement the study interface:
   - `studio/ui/src/components/StudyDialog.tsx`: choose the settings and values to vary
   - a sensitivity button on each library setting in `studio/ui/src/components/LibraryValueField.tsx`
   - `studio/ui/src/pages/Study.tsx`: progress, per-run status with failure reasons, and the spread summary table
-- [ ] T127 [US4] Add `studio/server/tests/test_studies.py`:
+- [X] T127 [US4] Add `studio/server/tests/test_studies.py`:
   - a 6-run sweep queues in order, one heavy run at a time
   - a failing run records its reason, and the rest continue
   - a worker restart mid-study requeues the interrupted run at the front
@@ -1592,9 +1592,11 @@ Each step ends with the owner's acceptance task for that story.
 
 - **New top-level modules**: `pipeline.py`, `persistence.py`, `study.py`, `backup.py`, `config.py`, `version.py` and
   `commands/` extend plan.md's source tree. They hold orchestration and wiring, not science.
-- **Contract change**: T086 adds `POST /api/scenarios/{id}/geometry` to `contracts/studio-api.md`. No other change to
-  a contract is planned. (contracts/cli.md already lists `dentalsim check --quick` and the "incomplete" result, from
-  the 2026-11-05 analysis.)
+- **Contract change**: T086 adds `POST /api/scenarios/{id}/geometry` to `contracts/studio-api.md`. T117 adds
+  `PATCH /api/scenarios/{id}` and `PATCH /api/runs/{id}` (name, notes and tags, without a new scenario revision), and
+  T121 the `{to?}` body of `POST /api/system/backup`, the last backup and restore in `GET /api/system`, and the
+  `backup.finished` and `restore.finished` events. No other change to a contract is planned. (contracts/cli.md
+  already lists `dentalsim check --quick` and the "incomplete" result, from the 2026-11-05 analysis.)
 - **Values in the code**: no value from the old `fea-implant-teaching/` project is copied. Its verified numbers may be
   used only as extra benchmark cases (constitution, Scope).
 - **Owner approval comes first**: every number comes from approved library entries or committed case files, and is

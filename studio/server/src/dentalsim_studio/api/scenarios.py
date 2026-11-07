@@ -1,24 +1,26 @@
-"""Projects and scenarios (task T086; contracts/studio-api.md "Projects and scenarios"; FR-010, FR-011, FR-014,
-FR-032, FR-052).
+"""Scenarios (tasks T086, T117; contracts/studio-api.md "Projects and scenarios"; FR-010, FR-011, FR-014,
+FR-031, FR-032, FR-052). Projects have their own router (`dentalsim_studio.api.projects`).
 
-- Projects at their minimum: list, create, read (with their scenarios), rename and delete.
 - `POST /api/scenarios` makes a scenario from a template (with the owner's jaw segment settings, if given) or
-  duplicates one; a template that does not fit answers its `template_misfit` problems with the new scenario.
+  duplicates one ("duplicate and change"): the copy records `derived_from` the original and takes its notes and
+  tags. A template that does not fit answers its `template_misfit` problems with the new scenario.
 - `GET /api/scenarios/{id}` adds what the editor shows beside the definition: each library value with its entry,
   version, range and whether it lies outside it, the template misfits, and the block-version upgrades on offer.
 - `PUT /api/scenarios/{id}` saves when the body carries the current revision (otherwise 409 `conflict`); every
   library value must point to an approved version (otherwise 422), and its `outside_range` is recomputed.
 - `POST /api/scenarios/{id}/validate` runs the validity checks (the fast ones unless `mode=full`), stores the result
   and emits `validity.changed`.
+- `PATCH /api/scenarios/{id}` changes the name, notes or tags without a new revision (nothing solved changes).
+- `GET /api/scenarios/{id}/diff/{other_id}` lists the settings that differ from the first to the second (FR-032).
 - `POST /api/scenarios/{id}/geometry` answers the builder's scene: block surfaces and keep-out volumes as glTF.
 """
 
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Literal
 
 from fastapi import APIRouter, Query, Response
-from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from dentalsim.assembly.placement import place
 from dentalsim.assembly.site_defaults import with_site_defaults
@@ -28,10 +30,12 @@ from dentalsim.clock import new_ulid, utc_now
 from dentalsim.errors import NotFound, Refused
 from dentalsim.geometry.surfaces import builder_glb
 from dentalsim.library.service import LibraryService
-from dentalsim.model.scenario import BlockInstance, LoadCase, Scenario
+from dentalsim.model.diff import ScenarioDiff, diff_scenarios
+from dentalsim.model.scenario import Scenario
 from dentalsim.model.settings import LibraryValue, SettingValue
 from dentalsim.model.validity import Problem, ValidityResult
-from dentalsim.persistence import DerivedFrom, ProjectRecord, ScenarioRecord
+from dentalsim.persistence import DerivedFrom, ScenarioRecord
+from dentalsim.resolve import checked_scenario
 from dentalsim.templates.fit import fit_problems
 from dentalsim.templates.loader import open_template
 from dentalsim_studio.api.catalogue import find_template
@@ -44,73 +48,6 @@ router = APIRouter(prefix="/api", tags=["scenarios"])
 
 class _Body(BaseModel):
     model_config = ConfigDict(extra="forbid")
-
-
-# --- projects ----------------------------------------------------------------------------------------------------
-
-
-class ProjectBody(_Body):
-    name: str = Field(min_length=1, max_length=200)
-    notes: str = ""
-    tags: list[str] = []
-
-
-class ProjectPatch(_Body):
-    name: str | None = Field(default=None, min_length=1, max_length=200)
-    notes: str | None = None
-    tags: list[str] | None = None
-
-
-class ScenarioSummary(BaseModel):
-    id: str
-    name: str
-    revision: int
-    valid: bool | None
-    updated_at: AwareDatetime
-
-
-class ProjectView(ProjectRecord):
-    scenarios: list[ScenarioSummary] = []
-
-
-def _summary(record: ScenarioRecord) -> ScenarioSummary:
-    return ScenarioSummary(
-        id=record.id,
-        name=record.name,
-        revision=record.revision,
-        valid=None if record.validity is None else record.validity.ok,
-        updated_at=record.updated_at,
-    )
-
-
-@router.get("/projects", response_model=list[ProjectRecord])
-def list_projects(repos: ReposDep) -> list[ProjectRecord]:
-    return repos.scenarios.list_projects()
-
-
-@router.post("/projects", response_model=ProjectRecord, status_code=201)
-def create_project(body: ProjectBody, repos: ReposDep) -> ProjectRecord:
-    return repos.scenarios.add_project(body.name, notes=body.notes, tags=body.tags)
-
-
-@router.get("/projects/{project_id}", response_model=ProjectView)
-def get_project(project_id: str, repos: ReposDep) -> ProjectView:
-    project = repos.scenarios.get_project(project_id)
-    if project is None:
-        raise NotFound(f"there is no project {project_id}")
-    scenarios = [_summary(r) for r in repos.scenarios.list_for_project(project_id)]
-    return ProjectView(**project.model_dump(), scenarios=scenarios)
-
-
-@router.patch("/projects/{project_id}", response_model=ProjectRecord)
-def update_project(project_id: str, body: ProjectPatch, repos: ReposDep) -> ProjectRecord:
-    return repos.scenarios.update_project(project_id, name=body.name, notes=body.notes, tags=body.tags)
-
-
-@router.delete("/projects/{project_id}", status_code=204)
-def delete_project(project_id: str, repos: ReposDep) -> Response:
-    repos.scenarios.delete_project(project_id)
-    return Response(status_code=204)
 
 
 # --- scenarios ---------------------------------------------------------------------------------------------------
@@ -132,6 +69,12 @@ class CreateScenario(_Body):
     project_id: str
     name: str | None = Field(default=None, min_length=1, max_length=200)
     from_: FromTemplate | FromScenario = Field(alias="from")
+
+
+class ScenarioPatch(_Body):
+    name: str | None = Field(default=None, min_length=1, max_length=200)
+    notes: str | None = None
+    tags: list[str] | None = None
 
 
 class SaveScenario(_Body):
@@ -262,42 +205,6 @@ def view(repos: SqliteRepos, record: ScenarioRecord) -> ScenarioView:
     )
 
 
-def checked_scenario(scenario: Scenario, library: LibraryService) -> Scenario:
-    """The scenario with each library value checked against an approved version (422 otherwise) and its
-    `outside_range` recomputed; its blocks must be readable (unknown types, wrong setting kinds: 422). A block's
-    missing library values, and those whose parameter key its design values have changed, are filled with the
-    typical value of the current approved version."""
-
-    def checked(value: LibraryValue) -> LibraryValue:
-        return value.model_copy(update={"outside_range": library.resolve_value(value).outside_range})
-
-    found = catalogue()
-    blocks: list[BlockInstance] = []
-    for block in scenario.blocks:
-        block_type = found.for_instance(block)
-        keys = block_type.parameter_keys(block_type.design_values(block.settings))
-        settings: dict[str, SettingValue] = {}
-        for setting_id, value in block.settings.items():
-            settings[setting_id] = checked(value) if isinstance(value, LibraryValue) else value
-        for setting_id, key in keys.items():
-            # A library setting that is missing, or whose entry no longer matches the design values (another
-            # material, say), takes the typical value of the entry the design values now name.
-            current = settings.get(setting_id)
-            entry = library.get_entry(current.entry_id) if isinstance(current, LibraryValue) else None
-            if entry is None or entry.parameter_key != key:
-                settings[setting_id] = library.resolve(key).library_value()
-        blocks.append(block.model_copy(update={"settings": settings}))
-    loads: list[LoadCase] = []
-    for load in scenario.loads:
-        update: dict[str, Any] = {"force": checked(load.force)}
-        if load.cycles is not None:
-            update["cycles"] = checked(load.cycles)
-        loads.append(load.model_copy(update=update))
-    result = scenario.model_copy(update={"blocks": blocks, "loads": loads})
-    place(result)
-    return result
-
-
 def _validate(repos: SqliteRepos, record: ScenarioRecord, mode: Literal["fast", "full"]) -> ValidityResult:
     result = check_validity(
         record.scenario, mode=mode, scenario_revision=record.revision, extra=misfits_of(repos, record)
@@ -326,14 +233,16 @@ def create_scenario(body: CreateScenario, repos: ReposDep) -> Created:
         template = find_template(repos, source.template_id)
         opened = open_template(template, library, jaw_settings=source.jaw_settings, name=body.name)
         scenario, derived = opened.scenario, DerivedFrom(kind="template", id=template.id)
+        notes, tags = "", []
     else:
         original = repos.scenarios.require(source.scenario_id)
         scenario = original.scenario.model_copy(update={"name": body.name or f"{original.name} (copy)"})
         derived = DerivedFrom(kind="scenario", id=original.id)
+        notes, tags = original.notes, original.tags
     now = utc_now()
     record = ScenarioRecord(
         id=new_ulid(), project_id=body.project_id, name=body.name or scenario.name, derived_from=derived,
-        scenario=checked_scenario(scenario, library), created_at=now, updated_at=now,
+        notes=notes, tags=tags, scenario=checked_scenario(scenario, library), created_at=now, updated_at=now,
     )  # fmt: skip
     repos.scenarios.add(record)
     _validate(repos, record, "fast")
@@ -363,6 +272,16 @@ def save_scenario(scenario_id: str, body: SaveScenario, repos: ReposDep) -> Scen
     )
     saved = repos.scenarios.save(changed, expected_revision=body.revision)
     return view(repos, saved)
+
+
+@router.patch("/scenarios/{scenario_id}", response_model=ScenarioView)
+def annotate_scenario(scenario_id: str, body: ScenarioPatch, repos: ReposDep) -> ScenarioView:
+    return view(repos, repos.scenarios.annotate(scenario_id, name=body.name, notes=body.notes, tags=body.tags))
+
+
+@router.get("/scenarios/{scenario_id}/diff/{other_id}", response_model=ScenarioDiff)
+def scenario_diff(scenario_id: str, other_id: str, repos: ReposDep) -> ScenarioDiff:
+    return diff_scenarios(repos.scenarios.require(scenario_id).scenario, repos.scenarios.require(other_id).scenario)
 
 
 @router.post("/scenarios/{scenario_id}/validate", response_model=ValidityResult)

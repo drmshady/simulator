@@ -83,7 +83,7 @@ describe('StudioEventStream', () => {
     latest().open();
     expect(stream.getState()).toBe('open');
     expect(STUDIO_EVENT_TYPES).toContain('run.progress');
-    expect(STUDIO_EVENT_TYPES).toHaveLength(7);
+    expect(STUDIO_EVENT_TYPES).toHaveLength(9);
     stream.stop();
   });
 

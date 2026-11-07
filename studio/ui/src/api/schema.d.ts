@@ -92,6 +92,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/system/backup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Backup */
+        post: operations["backup_api_system_backup_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Restore */
+        post: operations["restore_api_system_restore_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/conventions": {
         parameters: {
             query?: never;
@@ -226,6 +260,24 @@ export interface paths {
         get: operations["get_scenario_api_scenarios__scenario_id__get"];
         /** Save Scenario */
         put: operations["save_scenario_api_scenarios__scenario_id__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Annotate Scenario */
+        patch: operations["annotate_scenario_api_scenarios__scenario_id__patch"];
+        trace?: never;
+    };
+    "/api/scenarios/{scenario_id}/diff/{other_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Scenario Diff */
+        get: operations["scenario_diff_api_scenarios__scenario_id__diff__other_id__get"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -366,7 +418,8 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /** Annotate Run */
+        patch: operations["annotate_run_api_runs__run_id__patch"];
         trace?: never;
     };
     "/api/runs/{run_id}/cancel": {
@@ -434,6 +487,91 @@ export interface paths {
         get: operations["queue_view_api_queue_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search Route */
+        get: operations["search_route_api_search_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/compare": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Compare Runs */
+        post: operations["compare_runs_api_compare_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/studies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Study */
+        post: operations["create_study_api_studies_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/studies/{study_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Study */
+        get: operations["get_study_api_studies__study_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/studies/{study_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel */
+        post: operations["cancel_api_studies__study_id__cancel_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -737,6 +875,36 @@ export interface components {
              */
             buccolingual: number;
         };
+        /** AxisSpread */
+        AxisSpread: {
+            /** Path */
+            path: string;
+            /** Values */
+            values: unknown[];
+            /** Reference Value */
+            reference_value: unknown;
+            /** Key Numbers */
+            key_numbers: components["schemas"]["Spread"][];
+        };
+        /** BackupBody */
+        BackupBody: {
+            /** To */
+            to?: string | null;
+        };
+        /** BackupResult */
+        BackupResult: {
+            /** Archive */
+            archive: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Files */
+            files: number;
+            /** Size Bytes */
+            size_bytes: number;
+        };
         /** BlockInstance */
         BlockInstance: {
             /** Instance Id */
@@ -815,6 +983,66 @@ export interface components {
             direction: components["schemas"]["Direction"];
             /** Force Share */
             force_share: number;
+        };
+        /** CompareBody */
+        CompareBody: {
+            /** Run Ids */
+            run_ids: string[];
+            /** Fields */
+            fields?: string[] | null;
+        };
+        /** CompareView */
+        CompareView: {
+            /** Run Ids */
+            run_ids: string[];
+            /** Load Cases */
+            load_cases: string[];
+            /** Scales */
+            scales: {
+                [key: string]: {
+                    [key: string]: components["schemas"]["FieldScale"];
+                };
+            };
+            frost: components["schemas"]["FrostWindows"] | null;
+            deformation: components["schemas"]["DeformationScale"];
+            /** Bounds Mm */
+            bounds_mm: [
+                [
+                    number,
+                    number,
+                    number
+                ],
+                [
+                    number,
+                    number,
+                    number
+                ]
+            ];
+            /** Key Numbers */
+            key_numbers: components["schemas"]["KeyNumberRow"][];
+            /** Warnings */
+            warnings: string[];
+            /** Runs */
+            runs: components["schemas"]["ComparedRunView"][];
+            /** Settings */
+            settings: components["schemas"]["SettingsDifference"][];
+            /** Teaching Notice */
+            teaching_notice: string;
+        };
+        /** ComparedRunView */
+        ComparedRunView: {
+            /** Run Id */
+            run_id: string;
+            /** Name */
+            name: string;
+            /** Scenario Id */
+            scenario_id: string | null;
+            /** Detail Level */
+            detail_level: string;
+            /** Flags */
+            flags: string[];
+            /** Assets */
+            assets: components["schemas"]["AssetLink"][];
         };
         /** ComponentBandRegion */
         ComponentBandRegion: {
@@ -1015,6 +1243,24 @@ export interface components {
                 [key: string]: components["schemas"]["Sector"];
             };
         };
+        /** DeformationScale */
+        DeformationScale: {
+            /** Max Displacement Mm */
+            max_displacement_mm: number;
+            /** Model Size Mm */
+            model_size_mm: number;
+            /** Magnification */
+            magnification: number;
+        };
+        /** Delta */
+        Delta: {
+            /** Run Id */
+            run_id: string;
+            /** Absolute */
+            absolute: number;
+            /** Relative */
+            relative: number | null;
+        };
         /** DerivedFrom */
         DerivedFrom: {
             /**
@@ -1047,6 +1293,29 @@ export interface components {
              * @constant
              */
             geometry: "fixed";
+        };
+        /** Difference */
+        Difference: {
+            /** Path */
+            path: string;
+            /**
+             * Change
+             * @enum {string}
+             */
+            change: "changed" | "added" | "removed";
+            /** Before */
+            before?: unknown;
+            /** After */
+            after?: unknown;
+            /** Block */
+            block?: string | null;
+            /** Load */
+            load?: string | null;
+            /**
+             * Group
+             * @enum {string}
+             */
+            group: "block" | "setting" | "placement" | "load" | "scenario";
         };
         /**
          * Direction
@@ -1169,6 +1438,21 @@ export interface components {
             /** Disk Gb */
             disk_gb: number;
         };
+        /** FieldScale */
+        FieldScale: {
+            /** Field */
+            field: string;
+            /** Unit */
+            unit: string;
+            /** Categorical */
+            categorical: boolean;
+            /** Min */
+            min: number;
+            /** Max */
+            max: number;
+            /** By Run */
+            by_run: components["schemas"]["RunRange"][];
+        };
         /**
          * ForceBalance
          * @description The applied load and the sum of the support reactions for one unit load case (FR-023).
@@ -1236,6 +1520,15 @@ export interface components {
             /** Colour */
             colour: string;
         };
+        /** FrostEdge */
+        FrostEdge: {
+            /** Parameter Key */
+            parameter_key: string;
+            /** Entry Version */
+            entry_version: number;
+            /** Value */
+            value: number;
+        };
         /**
          * FrostScale
          * @description Coloured by the measure `strain_measure.frost`.
@@ -1247,6 +1540,13 @@ export interface components {
             categories: components["schemas"]["FrostCategory"][];
             /** Edges */
             edges: string[];
+        };
+        /** FrostWindows */
+        FrostWindows: {
+            /** Edges */
+            edges: components["schemas"]["FrostEdge"][];
+            /** Consistent */
+            consistent: boolean;
         };
         /** ImportResult */
         ImportResult: {
@@ -1290,6 +1590,13 @@ export interface components {
             /** Content Hash */
             content_hash: string;
         };
+        /** JobQueued */
+        JobQueued: {
+            /** Job Id */
+            job_id: string;
+            /** Status */
+            status: string;
+        };
         /** KeyNumber */
         KeyNumber: {
             /** Id */
@@ -1320,6 +1627,29 @@ export interface components {
             frost_category?: string | null;
             /** Instant */
             instant?: string | null;
+        };
+        /** KeyNumberRow */
+        KeyNumberRow: {
+            /** Id */
+            id: string;
+            /** Load Case */
+            load_case: string;
+            /** Label */
+            label: string;
+            /** Unit */
+            unit: string;
+            /** Statistic */
+            statistic: string;
+            /** Block */
+            block: string | null;
+            /** Region */
+            region: string;
+            /** Values */
+            values: (number | null)[];
+            /** Percent Of Reference */
+            percent_of_reference: (number | null)[];
+            /** Differences */
+            differences: (components["schemas"]["Delta"] | null)[];
         };
         /**
          * KeyResult
@@ -1910,6 +2240,16 @@ export interface components {
              * @default []
              */
             scenarios: components["schemas"]["ScenarioSummary"][];
+            /**
+             * Runs
+             * @default []
+             */
+            runs: components["schemas"]["RunSummary"][];
+            /**
+             * Studies
+             * @default []
+             */
+            studies: components["schemas"]["StudySummary"][];
         };
         /** ProposalEntry */
         ProposalEntry: {
@@ -2018,6 +2358,34 @@ export interface components {
              */
             flagged_runs: string[];
         };
+        /** RestoreBody */
+        RestoreBody: {
+            /** Archive */
+            archive: string;
+        };
+        /** RestoreResult */
+        RestoreResult: {
+            /** Archive */
+            archive: string;
+            /**
+             * Backup Created At
+             * Format: date-time
+             */
+            backup_created_at: string;
+            /**
+             * Restored At
+             * Format: date-time
+             */
+            restored_at: string;
+            /** Files */
+            files: number;
+            /** Replaced Files */
+            replaced_files: number;
+            /** Unchanged Files */
+            unchanged_files: number;
+            /** Previous Database */
+            previous_database: string;
+        };
         /** ResultsView */
         ResultsView: {
             /** Run Id */
@@ -2125,6 +2493,13 @@ export interface components {
             /** Solver Build Id */
             solver_build_id: string;
         };
+        /** RunPatch */
+        RunPatch: {
+            /** Notes */
+            notes?: string | null;
+            /** Tags */
+            tags?: string[] | null;
+        };
         /** RunQueued */
         RunQueued: {
             /** Run Id */
@@ -2137,6 +2512,53 @@ export interface components {
             locked_results: components["schemas"]["LockedResult"][];
             estimate: components["schemas"]["Estimate"] | null;
         };
+        /** RunRange */
+        RunRange: {
+            /** Run Id */
+            run_id: string;
+            /** Min */
+            min: number;
+            /** Max */
+            max: number;
+        };
+        /**
+         * RunSummary
+         * @description A run as a project lists it.
+         */
+        RunSummary: {
+            /**
+             * Notes
+             * @default
+             */
+            notes: string;
+            /**
+             * Tags
+             * @default []
+             */
+            tags: string[];
+            /** Id */
+            id: string;
+            /** Scenario Id */
+            scenario_id: string;
+            /** Name */
+            name: string;
+            /** Detail Level */
+            detail_level: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "queued" | "running" | "succeeded" | "failed" | "cancelled" | "interrupted";
+            /** Flags */
+            flags: string[];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Finished At */
+            finished_at: string | null;
+        };
         /** RunView */
         RunView: {
             run: components["schemas"]["Run"];
@@ -2146,6 +2568,16 @@ export interface components {
             stale_reasons: string[];
             /** Library */
             library: components["schemas"]["LibraryUse"][];
+            /**
+             * Notes
+             * @default
+             */
+            notes: string;
+            /**
+             * Tags
+             * @default []
+             */
+            tags: string[];
         };
         /** SaveScenario */
         SaveScenario: {
@@ -2211,6 +2643,20 @@ export interface components {
             loads: components["schemas"]["LoadCase"][];
             brand_comparison?: components["schemas"]["BrandComparison"] | null;
         };
+        /** ScenarioDiff */
+        ScenarioDiff: {
+            /** Differences */
+            differences: components["schemas"]["Difference"][];
+        };
+        /** ScenarioPatch */
+        ScenarioPatch: {
+            /** Name */
+            name?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Tags */
+            tags?: string[] | null;
+        };
         /** ScenarioSummary */
         ScenarioSummary: {
             /** Id */
@@ -2221,6 +2667,17 @@ export interface components {
             revision: number;
             /** Valid */
             valid: boolean | null;
+            /**
+             * Notes
+             * @default
+             */
+            notes: string;
+            /**
+             * Tags
+             * @default []
+             */
+            tags: string[];
+            derived_from?: components["schemas"]["DerivedFrom"] | null;
             /**
              * Updated At
              * Format: date-time
@@ -2284,6 +2741,61 @@ export interface components {
              */
             occlusal_points: components["schemas"]["NamedPoint"][];
         };
+        /** SearchHit */
+        SearchHit: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "project" | "scenario" | "run";
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Project Id */
+            project_id: string | null;
+            /** Scenario Id */
+            scenario_id?: string | null;
+            /**
+             * Notes
+             * @default
+             */
+            notes: string;
+            /**
+             * Tags
+             * @default []
+             */
+            tags: string[];
+            /** Snippet */
+            snippet?: string | null;
+            /** Status */
+            status?: string | null;
+            /** Detail Level */
+            detail_level?: string | null;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** SearchResults */
+        SearchResults: {
+            /**
+             * Projects
+             * @default []
+             */
+            projects: components["schemas"]["SearchHit"][];
+            /**
+             * Scenarios
+             * @default []
+             */
+            scenarios: components["schemas"]["SearchHit"][];
+            /**
+             * Runs
+             * @default []
+             */
+            runs: components["schemas"]["SearchHit"][];
+        };
         /** Sector */
         Sector: {
             /** Centre Deg */
@@ -2305,6 +2817,13 @@ export interface components {
              * @description When the session ends unless another request comes first (UTC)
              */
             expires_at: string;
+        };
+        /** SettingsDifference */
+        SettingsDifference: {
+            /** Run Id */
+            run_id: string;
+            /** Differences */
+            differences: components["schemas"]["Difference"][];
         };
         /** SnapshotWritten */
         SnapshotWritten: {
@@ -2399,6 +2918,51 @@ export interface components {
             /** Chosen */
             chosen: boolean;
         };
+        /**
+         * Spread
+         * @description One key number's spread over one axis.
+         */
+        Spread: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /** Load Case */
+            load_case: string;
+            /** Block */
+            block: string | null;
+            /** Region */
+            region: string;
+            /** Statistic */
+            statistic: string;
+            /** Unit */
+            unit: string;
+            /** By Value */
+            by_value: components["schemas"]["ValueMean"][];
+            /** Min */
+            min: number;
+            /** Max */
+            max: number;
+            /** Range */
+            range: number;
+            /** Reference */
+            reference: number | null;
+            /** Percent Change */
+            percent_change: number | null;
+        };
+        /** SpreadSummary */
+        SpreadSummary: {
+            /** Runs Total */
+            runs_total: number;
+            /** Runs Succeeded */
+            runs_succeeded: number;
+            /** Runs Failed */
+            runs_failed: number;
+            /** Runs Pending */
+            runs_pending: number;
+            /** Axes */
+            axes: components["schemas"]["AxisSpread"][];
+        };
         /** Statistics */
         Statistics: {
             /**
@@ -2463,6 +3027,192 @@ export interface components {
              */
             reference: "yield_strength" | "flexural_strength" | "none";
         };
+        /**
+         * StudyAxis
+         * @description A setting a study varies and its values: listed by the owner for a sweep; the minimum, typical and maximum of
+         *     the approved range for a sensitivity study.
+         */
+        StudyAxis: {
+            /** Path */
+            path: string;
+            /** Values */
+            values: unknown[];
+        };
+        /**
+         * StudyDefinition
+         * @description A study as the owner asks for it: the body of `POST /api/studies`, or a `study.yaml` file.
+         */
+        StudyDefinition: {
+            /**
+             * Format
+             * @default dentalsim.study/1
+             * @constant
+             */
+            format: "dentalsim.study/1";
+            /**
+             * Name
+             * @default
+             */
+            name: string;
+            /** Project Id */
+            project_id?: string | null;
+            /** Base Scenario Id */
+            base_scenario_id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "sweep" | "sensitivity";
+            /**
+             * Detail Level
+             * @default standard
+             * @enum {string}
+             */
+            detail_level: "preview" | "standard" | "fine" | "extra_fine";
+            /**
+             * Axes
+             * @default []
+             */
+            axes: components["schemas"]["StudyAxis"][];
+            /** Parameter */
+            parameter?: string | null;
+        };
+        /** StudyEstimate */
+        StudyEstimate: {
+            /** Runs */
+            runs: number;
+            /** Solves */
+            solves: number;
+            /** Time S */
+            time_s: number | null;
+            /** Memory Gb */
+            memory_gb: number | null;
+            /** Disk Gb */
+            disk_gb: number | null;
+            /** Memory Limit Gb */
+            memory_limit_gb: number | null;
+            /** Fits */
+            fits: boolean;
+            /** Warnings */
+            warnings: string[];
+        };
+        /** StudyProgress */
+        StudyProgress: {
+            /** Total */
+            total: number;
+            /** Done */
+            done: number;
+            /** Failed */
+            failed: number;
+            /** Running */
+            running: number;
+        };
+        /** StudyRun */
+        StudyRun: {
+            /** Run Id */
+            run_id: string;
+            /** Label */
+            label: string;
+            /** Values */
+            values: {
+                [key: string]: unknown;
+            };
+            /** Reuse Of */
+            reuse_of: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "queued" | "running" | "succeeded" | "failed" | "cancelled" | "interrupted";
+            /** Failure Reason */
+            failure_reason: string | null;
+            /** Flags */
+            flags: string[];
+            estimate: components["schemas"]["Estimate"] | null;
+            /** Started At */
+            started_at: string | null;
+            /** Finished At */
+            finished_at: string | null;
+        };
+        /**
+         * StudySummary
+         * @description A study as a project lists it (Story 4).
+         */
+        StudySummary: {
+            /** Id */
+            id: string;
+            /**
+             * Name
+             * @default
+             */
+            name: string;
+            /** Base Scenario Id */
+            base_scenario_id: string;
+            /** Kind */
+            kind: string;
+            /**
+             * Detail Level
+             * @default standard
+             */
+            detail_level: string;
+            /** Status */
+            status: string;
+            /**
+             * Runs
+             * @default 0
+             */
+            runs: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** StudyView */
+        StudyView: {
+            /** Id */
+            id: string;
+            /** Project Id */
+            project_id: string;
+            /** Base Scenario Id */
+            base_scenario_id: string;
+            /** Base Scenario Name */
+            base_scenario_name: string | null;
+            /** Name */
+            name: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "sweep" | "sensitivity";
+            /**
+             * Detail Level
+             * @enum {string}
+             */
+            detail_level: "preview" | "standard" | "fine" | "extra_fine";
+            /** Axes */
+            axes: components["schemas"]["StudyAxis"][];
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "queued" | "running" | "finished" | "finished_with_failures" | "cancelled";
+            /** Runs */
+            runs: components["schemas"]["StudyRun"][];
+            progress: components["schemas"]["StudyProgress"];
+            summary: components["schemas"]["SpreadSummary"] | null;
+            estimate: components["schemas"]["StudyEstimate"] | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
         /** SystemInfo */
         SystemInfo: {
             /** Engine Version */
@@ -2484,6 +3234,8 @@ export interface components {
             memory: components["schemas"]["MemoryInfo"];
             disk: components["schemas"]["DiskInfo"];
             queue: components["schemas"]["QueueSummary"];
+            last_backup?: components["schemas"]["BackupResult"] | null;
+            last_restore?: components["schemas"]["RestoreResult"] | null;
         };
         /** TemplateSummary */
         TemplateSummary: {
@@ -2577,6 +3329,15 @@ export interface components {
             value: number;
             /** Note */
             note?: string | null;
+        };
+        /** ValueMean */
+        ValueMean: {
+            /** Value */
+            value: unknown;
+            /** Mean */
+            mean: number;
+            /** Runs */
+            runs: number;
         };
         /**
          * VersionState
@@ -2821,6 +3582,108 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SystemInfo"];
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    backup_api_system_backup_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BackupBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobQueued"];
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    restore_api_system_restore_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RestoreBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobQueued"];
                 };
             };
             /** @description Error */
@@ -3493,6 +4356,109 @@ export interface operations {
             };
         };
     };
+    annotate_scenario_api_scenarios__scenario_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scenario_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScenarioPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScenarioView"];
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    scenario_diff_api_scenarios__scenario_id__diff__other_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scenario_id: string;
+                other_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScenarioDiff"];
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
     validate_api_scenarios__scenario_id__validate_post: {
         parameters: {
             query?: {
@@ -3900,6 +4866,59 @@ export interface operations {
             };
         };
     };
+    annotate_run_api_runs__run_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RunPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunView"];
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
     cancel_run_api_runs__run_id__cancel_post: {
         parameters: {
             query?: never;
@@ -4068,6 +5087,257 @@ export interface operations {
                             [key: string]: unknown;
                         }[];
                     };
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    search_route_api_search_get: {
+        parameters: {
+            query?: {
+                q?: string | null;
+                tag?: string[] | null;
+                setting?: string[] | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchResults"];
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    compare_runs_api_compare_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompareBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompareView"];
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    create_study_api_studies_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StudyDefinition"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudyView"];
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    get_study_api_studies__study_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                study_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudyView"];
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    cancel_api_studies__study_id__cancel_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                study_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudyView"];
                 };
             };
             /** @description Error */

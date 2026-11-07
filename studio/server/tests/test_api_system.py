@@ -85,6 +85,8 @@ def test_system_has_exactly_the_contract_shape(client: TestClient, data_dir: Pat
         "memory",
         "disk",
         "queue",
+        "last_backup",
+        "last_restore",
     }
     loaded = get_loaded_conventions()
     assert body["engine_version"] == "0.1.0+gabc1234"

@@ -91,10 +91,17 @@ export function emptyDraft(): EntryDraft {
 
 /** "Surname AB; Other CD" or one author per line → ["Surname AB", "Other CD"]. */
 export function splitAuthors(text: string): string[] {
-  return text
+  const authors = text
     .split(/[;\n]/)
     .map((a) => a.trim())
     .filter(Boolean);
+  // "Rho JY, Ashman RB, Turner CH": commas separate authors when every part ends in initials
+  // (a single "Smith, A. B." has a part with no surname, so it is left whole).
+  if (authors.length === 1) {
+    const parts = (authors[0] ?? '').split(',').map((a) => a.trim());
+    if (parts.length > 1 && parts.every((p) => /^\S.*\s[A-Z]{1,4}$/.test(p))) return parts;
+  }
+  return authors;
 }
 
 /** "10.1000/x" from a DOI typed as a link or with a "doi:" prefix. */

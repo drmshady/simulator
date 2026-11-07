@@ -8,7 +8,8 @@ FR-011a, FR-017, FR-022, FR-057, FR-058).
 - `POST /api/scenarios/{id}/estimate`: expected DOF, time, memory and disk, whether it fits, and warnings.
 - `POST /api/scenarios/{id}/runs`: refused for validity, the physics gate or a run too large for memory
   (`estimate_too_large`); a run records `outside_published_range` and `dev_build` when they apply.
-- `GET /api/runs/{id}`: the run record, its out-of-date flags computed now (FR-058).
+- `GET /api/runs/{id}`: the run record, its out-of-date flags computed now (FR-058), and the owner's notes and tags;
+  `PATCH /api/runs/{id}` changes the notes and tags (FR-031).
 - `POST /api/runs/{id}/cancel`, `GET /api/runs/{id}/results`, `GET /api/runs/{id}/assets/{name}.glb`,
   `GET /api/queue`.
 """
@@ -195,6 +196,13 @@ class RunView(BaseModel):
     stale_reasons: list[str]
     library: list[LibraryUse]
     """The library versions the run used, with their values and sources (FR-016)."""
+    notes: str = ""
+    tags: list[str] = []
+
+
+class RunPatch(_Body):
+    notes: str | None = None
+    tags: list[str] | None = None
 
 
 class ResultsView(BaseModel):
@@ -302,10 +310,23 @@ def start_run(scenario_id: str, body: LevelBody, repos: ReposDep) -> RunQueued:
 @router.get("/runs/{run_id}", response_model=RunView)
 def get_run(run_id: str, repos: ReposDep) -> RunView:
     run = repos.runs.require(run_id)
+    return run_view(run, repos)
+
+
+def run_view(run: Run, repos: SqliteRepos) -> RunView:
     flags, reasons = staleness_of(run, repos)
+    notes = repos.runs.notes_of(run.id)
     return RunView(
-        run=run, flags=sorted(set(run.flags) | flags), stale_reasons=reasons, library=library_uses(run, repos)
-    )
+        run=run, flags=sorted(set(run.flags) | flags), stale_reasons=reasons, library=library_uses(run, repos),
+        notes=notes.notes, tags=notes.tags,
+    )  # fmt: skip
+
+
+@router.patch("/runs/{run_id}", response_model=RunView)
+def annotate_run(run_id: str, body: RunPatch, repos: ReposDep) -> RunView:
+    run = repos.runs.require(run_id)
+    repos.runs.annotate(run_id, notes=body.notes, tags=body.tags)
+    return run_view(run, repos)
 
 
 @router.post("/runs/{run_id}/cancel", response_model=Run)

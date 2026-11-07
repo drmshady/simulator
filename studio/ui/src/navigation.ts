@@ -13,6 +13,7 @@ export const PAGES: readonly PageEntry[] = [
   { path: 'results', label: 'Results', load: () => import('./pages/Results') },
   { path: 'compare', label: 'Compare', load: () => import('./pages/Compare') },
   { path: 'projects', label: 'Projects', load: () => import('./pages/Projects') },
+  { path: 'studies', label: 'Studies', load: () => import('./pages/Study') },
   { path: 'queue', label: 'Queue', load: () => import('./pages/Queue') },
   { path: 'library', label: 'Library', load: () => import('./pages/Library') },
   { path: 'verification', label: 'Verification', load: () => import('./pages/Verification') },

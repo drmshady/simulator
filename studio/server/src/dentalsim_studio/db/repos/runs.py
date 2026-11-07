@@ -1,7 +1,8 @@
 """The `runs`, `run_library_versions` and `previews` tables (task T084; data-model.md "Run", "Preview").
 
 A run's library versions are also stored row by row, so rejecting a library version can flag every run that used it
-(FR-055).
+(FR-055). A run also carries the owner's notes and tags (task T114, FR-031), kept outside the `Run` record: they
+organise runs but play no part in solving, so `update` never touches them.
 """
 
 from __future__ import annotations
@@ -17,6 +18,7 @@ from dentalsim.errors import NotFound
 from dentalsim.model.run import Actual, Convergence, Estimate, Run, RunFlag, RunStatus
 from dentalsim.model.scenario import Scenario
 from dentalsim_studio.db.connection import Database, from_json, from_time, to_json, to_time
+from dentalsim_studio.db.search import clean_tags
 
 _COLUMNS = (
     "id", "scenario_id", "scenario_revision", "snapshot", "detail_level", "input_hash", "library_versions",
@@ -94,6 +96,26 @@ def _run(row: sqlite3.Row) -> Run:
     )
 
 
+class RunNotes(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    notes: str = ""
+    tags: list[str] = []
+
+
+class RunSummary(RunNotes):
+    """A run as a project lists it."""
+
+    id: str
+    scenario_id: str
+    name: str
+    detail_level: str
+    status: RunStatus
+    flags: list[str]
+    created_at: AwareDatetime
+    finished_at: AwareDatetime | None
+
+
 class SqliteRunRepo:
     def __init__(self, db: Database) -> None:
         self.db = db
@@ -160,6 +182,48 @@ class SqliteRunRepo:
                     self.db.execute(
                         "UPDATE runs SET flags = ? WHERE id = ?", (to_json(sorted({*run.flags, flag})), run_id)
                     )
+
+    def annotate(self, run_id: str, *, notes: str | None = None, tags: Sequence[str] | None = None) -> RunNotes:
+        current = self.notes_of(run_id)
+        changed = RunNotes(
+            notes=current.notes if notes is None else notes,
+            tags=current.tags if tags is None else clean_tags(tags),
+        )
+        self.db.execute(
+            "UPDATE runs SET notes = ?, tags = ? WHERE id = ?", (changed.notes, to_json(changed.tags), run_id)
+        )
+        return changed
+
+    def notes_of(self, run_id: str) -> RunNotes:
+        row = self.db.one("SELECT notes, tags FROM runs WHERE id = ?", (run_id,))
+        if row is None:
+            raise NotFound(f"there is no run {run_id}")
+        return RunNotes(notes=row["notes"], tags=from_json(row["tags"]))
+
+    def summaries_for_project(self, project_id: str) -> list[RunSummary]:
+        """Every run of the project's scenarios, newest first, without their snapshots."""
+        rows = self.db.all(
+            """SELECT r.id, r.scenario_id, json_extract(r.snapshot, '$.name') AS name, r.detail_level, r.status,
+                      r.flags, r.notes, r.tags, r.created_at, r.finished_at
+               FROM runs r JOIN scenarios s ON s.id = r.scenario_id
+               WHERE s.project_id = ? ORDER BY r.created_at DESC, r.id DESC""",
+            (project_id,),
+        )
+        return [
+            RunSummary(
+                id=r["id"],
+                scenario_id=r["scenario_id"],
+                name=r["name"],
+                detail_level=r["detail_level"],
+                status=r["status"],
+                flags=from_json(r["flags"]),
+                notes=r["notes"],
+                tags=from_json(r["tags"]),
+                created_at=from_time(r["created_at"]),
+                finished_at=from_time(r["finished_at"]),
+            )
+            for r in rows
+        ]
 
     def find_succeeded(self, input_hash: str) -> Run | None:
         row = self.db.one(

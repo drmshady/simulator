@@ -161,6 +161,6 @@ def test_cancel_an_ended_job_changes_nothing(repos: SqliteRepos) -> None:
 
 def test_the_schema_refuses_unknown_kinds_and_lanes(repos: SqliteRepos) -> None:
     with pytest.raises(sqlite3.IntegrityError):
-        repos.jobs.enqueue("backup", "heavy", {})  # type: ignore[arg-type]
+        repos.jobs.enqueue("fatigue_sweep", "heavy", {})  # type: ignore[arg-type]
     with pytest.raises(sqlite3.IntegrityError):
         repos.jobs.enqueue("run", "fast", {})  # type: ignore[arg-type]

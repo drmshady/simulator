@@ -39,13 +39,13 @@ network (research R10).
 |---|---|
 | `POST /api/auth/login` `{password}` | Starts a session: HttpOnly, Secure, SameSite=Strict cookie. Attempts are rate-limited. |
 | `POST /api/auth/logout` | Ends the session |
-| `GET /api/system` | Engine version, `dev_build`, solver build id, conventions version, memory and free disk on the main PC, queue summary |
-| `POST /api/system/backup` → job | Full backup (FR-034) |
-| `POST /api/system/restore` `{archive}` → job | Restore, with hash check |
+| `GET /api/system` | Engine version, `dev_build`, solver build id, conventions version, memory and free disk on the main PC, queue summary, and the last backup and restore |
+| `POST /api/system/backup` `{to?}` → job | Full backup (FR-034) to a folder on the main PC (default: the data folder's `backups`); a `backup` job in the heavy lane |
+| `POST /api/system/restore` `{archive}` → job | Restore, with hash check; a `restore` job in the heavy lane, refused (`restore_refused`) with nothing changed when any file does not match the manifest |
 | `GET /api/events` (Server-Sent Events) | Live updates, listed below |
 
 Event types: `preview.ready`, `run.progress {run_id, percent, stage, remaining_s}`, `run.finished`, `study.progress`,
-`job.failed`, `validity.changed`, `capability.changed`.
+`job.failed`, `validity.changed`, `capability.changed`, `backup.finished`, `restore.finished`.
 
 ## Catalogue
 
@@ -60,13 +60,14 @@ Event types: `preview.ready`, `run.progress {run_id, percent, stage, remaining_s
 
 | Method and path | Purpose |
 |---|---|
-| `GET/POST /api/projects`, `GET/PATCH/DELETE /api/projects/{id}` | Projects with notes and tags |
+| `GET/POST /api/projects`, `GET/PATCH/DELETE /api/projects/{id}` | Projects with notes and tags. `GET /api/projects/{id}` also lists the project's scenarios (with notes, tags and `derived_from`), runs and studies. |
 | `POST /api/scenarios` `{project_id, name?, from: {template_id, jaw_settings?} or {scenario_id}}` | Create a scenario from a template, or duplicate one (FR-032). Returns `template_misfit` problems when the template does not fit the jaw segment. |
 | `GET /api/scenarios/{id}` / `PUT /api/scenarios/{id}` `{revision, scenario}` | Read or save. The save body must carry the current `revision`. |
+| `PATCH /api/scenarios/{id}` `{name?, notes?, tags?}` | Name, notes and tags only; no new revision, since nothing solved changes (task T117) |
 | `POST /api/scenarios/{id}/validate?mode=fast\|full` | Runs the validity checks and returns a ValidityResult. Also triggered automatically on every block move (FR-011): the fast checks (design limits and block rules, about 0.01 s) on every move, the full ones (adding the OpenCASCADE keep-out and overlap checks, about 1 s) after a pause and before every preview or run. |
 | `POST /api/scenarios/{id}/geometry` | The builder's 3D scene as binary glTF: each placed block's surfaces and every keep-out volume, one mesh each, with extras naming the block, the part or keep-out, and its component or problem code (task T086). |
-| `GET /api/scenarios/{id}/diff/{other_id}` | Lists the settings that differ (FR-032, FR-027) |
-| `GET /api/search?q=&tag=&setting=path:op:value` | Search across projects, scenarios and runs (FR-031) |
+| `GET /api/scenarios/{id}/diff/{other_id}` | Lists the settings that differ (FR-032, FR-027): blocks matched by instance id, loads by id; paths `<block>.<setting>`, `<block>.placement.<field>`, `load:<id>.<field>` or a top-level field |
+| `GET /api/search?q=&tag=&setting=path:op:value` | Search across projects, scenarios and runs (FR-031), grouped by kind. `q`: words matched as prefixes against names, notes and tags; `tag` (repeatable): an exact tag, ignoring case; `setting` (repeatable): `path:op:value` with op `=`, `<`, `>`, `<=` or `>=`, the path a block instance id or type with a setting (its unit suffix may be left out), `load:<id>.<field>`, or a top-level field |
 
 ## Preview, estimate, run
 
@@ -77,7 +78,8 @@ Event types: `preview.ready`, `run.progress {run_id, percent, stage, remaining_s
 | `GET /api/previews/{id}/assets/{name}.glb` | A preview's binary glTF, as for runs |
 | `POST /api/scenarios/{id}/estimate` `{detail_level}` | `{dof, time_s, memory_gb, disk_gb, fits: bool, warnings[]}` (FR-009, FR-057) |
 | `POST /api/scenarios/{id}/runs` `{detail_level}` → `{run_id}` | Queued in the heavy lane |
-| `GET /api/runs/{id}` | Run record: status, flags, versions, convergence, `locked_results` |
+| `GET /api/runs/{id}` | Run record: status, flags, versions, convergence, `locked_results`, notes and tags |
+| `PATCH /api/runs/{id}` `{notes?, tags?}` | The run's notes and tags (FR-031; task T117) |
 | `POST /api/runs/{id}/cancel` | |
 | `GET /api/runs/{id}/results` | Key numbers (with statistic, region, side, reference, % of reference) and visuals |
 | `GET /api/runs/{id}/assets/{name}.glb` | Binary glTF: surface mesh, result attributes, displacement morph target |
@@ -87,10 +89,10 @@ Event types: `preview.ready`, `run.progress {run_id, percent, stage, remaining_s
 
 | Method and path | Purpose |
 |---|---|
-| `POST /api/compare` `{run_ids[], fields[]}` | One shared colour scale and one shared deformation scale per field, settings that differ, and differences in key numbers (FR-027). Ready in under 1 minute (SC-008). |
-| `POST /api/studies` `{project_id, base_scenario_id, kind: "sweep", axes}` | Parameter sweep (FR-020) |
-| `POST /api/studies` `{..., kind: "sensitivity", parameter: "<library setting path>"}` | Minimum, typical and maximum runs (FR-021) |
-| `GET /api/studies/{id}` / `POST /api/studies/{id}/cancel` | Study status and summary of the spread |
+| `POST /api/compare` `{run_ids[], fields[]?}` | 2 to 6 finished runs, the first the base, from stored results only (`not_finished` otherwise). One shared colour scale per field and load case (the union of each run's display range; Frost windows at fixed edges), one shared deformation scale, the box around every run for one camera framing, settings that differ from the base, and differences in key numbers (FR-027). Ready in under 1 minute (SC-008). |
+| `POST /api/studies` `{project_id?, base_scenario_id, name?, detail_level?, kind: "sweep", axes: [{path, values}]}` | Parameter sweep (FR-020): the Cartesian product of the axes, first axis slowest. Paths as in the diff (`implant-1.length_mm`, `load:oblique.force`); runs that differ only in a load's force or direction reuse one solve (research R4). Every run gets the fast validity checks and the physics gate, and the whole study one estimate (FR-057), before anything is queued: `run_refused`, `estimate_too_large` or `validation_failed` otherwise, with nothing queued. 202 with the study (task T124). |
+| `POST /api/studies` `{..., kind: "sensitivity", parameter: "<library setting path>"}` | Minimum, typical and maximum runs of the approved range (FR-021) |
+| `GET /api/studies/{id}` / `POST /api/studies/{id}/cancel` | Status (`queued`, `running`, `finished`, `finished_with_failures`, `cancelled`), each run with its status and failure reason, progress, the estimate, and the summary of the spread: per axis and key number, the mean at each value, minimum, maximum, range and % change against the reference (typical value, or the first value of a sweep). `study.progress {study_id, status, total, done, failed}` follows each run. |
 
 ## Literature library
 

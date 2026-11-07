@@ -1,4 +1,4 @@
-import { Badge, Group, NumberInput, Select, Stack, Text, Tooltip } from '@mantine/core';
+import { Badge, Button, Group, NumberInput, Select, Stack, Text, Tooltip } from '@mantine/core';
 
 import { useLibraryEntry } from '../api/studio';
 import type { LibraryValue, LibraryValueView, SettingSchema } from '../api/types';
@@ -9,12 +9,14 @@ export interface LibraryValueFieldProps {
   /** The server's view of the value: its parameter key, range and whether it lies outside it. */
   view: LibraryValueView | undefined;
   onChange: (value: LibraryValue) => void;
+  /** The sensitivity button (FR-021): queue the minimum, typical and maximum runs of this setting. */
+  onSensitivity?: () => void;
 }
 
 /** A library setting (FR-015, FR-052): the approved range, the typical value (preselected), every source with its
  * value, and the choice of typical, a source's value or a custom value. A value outside the published range is
  * marked: it blocks publishing. */
-export function LibraryValueField({ setting, value, view, onChange }: LibraryValueFieldProps) {
+export function LibraryValueField({ setting, value, view, onChange, onSensitivity }: LibraryValueFieldProps) {
   const entry = useLibraryEntry(value?.entry_id ?? null);
   const version = entry.data?.versions.find((v) => v.version === value?.entry_version);
   const sources = (version?.values_by_source ?? []).map((item) => {
@@ -41,13 +43,22 @@ export function LibraryValueField({ setting, value, view, onChange }: LibraryVal
         <Text size="sm" fw={500}>
           {setting.title}
         </Text>
-        {outside && (
-          <Tooltip label="Outside the published range of the approved entry. A run with it cannot be published.">
-            <Badge color="red" size="sm" variant="filled">
-              outside published range
-            </Badge>
-          </Tooltip>
-        )}
+        <Group gap={4} wrap="nowrap">
+          {outside && (
+            <Tooltip label="Outside the published range of the approved entry. A run with it cannot be published.">
+              <Badge color="red" size="sm" variant="filled">
+                outside published range
+              </Badge>
+            </Tooltip>
+          )}
+          {onSensitivity && (
+            <Tooltip label="Queue three runs at the minimum, typical and maximum of the range, and see the spread.">
+              <Button size="compact-xs" variant="light" onClick={onSensitivity}>
+                Sensitivity
+              </Button>
+            </Tooltip>
+          )}
+        </Group>
       </Group>
       <Select
         size="xs"

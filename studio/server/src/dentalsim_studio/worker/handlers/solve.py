@@ -10,16 +10,22 @@ Both call the engine pipeline (`dentalsim.pipeline`) with the job's lane threads
 
 A solver stopped by the memory watchdog fails with the worker's out-of-memory reason. A run whose worker restarted is
 recorded as interrupted, then queued again at the front (FR-056).
+
+A study's run (task T124) may name, as `reuse_of` in its payload, an earlier run of the study whose unit load cases it
+reuses (a load-only change; research R4); the pipeline solves them itself when that run has no usable result. When a
+study's run starts or ends, the study's status and spread summary are recomputed and `study.progress` is emitted.
 """
 
 from __future__ import annotations
 
 from collections.abc import Callable
+from pathlib import Path
 
 from dentalsim.config import ensure_data_folder
 from dentalsim.errors import DentalsimError, Refused
 from dentalsim.estimate.model import EstimateSample, refit
 from dentalsim.library.service import LibraryService
+from dentalsim.model.run import Run
 from dentalsim.model.scenario import Scenario
 from dentalsim.persistence import JobRecord, Repos
 from dentalsim.pipeline import PipelineFailed, PipelineProgress, PipelineResult, run_pipeline
@@ -27,6 +33,7 @@ from dentalsim.runs import failed_run, inputs_for_run, library_inputs, succeeded
 from dentalsim.solvers.calculix.build import solver_build
 from dentalsim.solvers.calculix.runner import ResourceSample, SolverCancelled
 from dentalsim.store.cas import ContentStore
+from dentalsim.study import refresh_study
 from dentalsim_studio.db import SqliteRepos
 from dentalsim_studio.events import bus
 from dentalsim_studio.worker.handlers import OUT_OF_MEMORY_REASON, JobContext, on_requeued, register
@@ -64,6 +71,25 @@ def _repos(ctx: JobContext) -> SqliteRepos:
     return repos
 
 
+def _unit_source(ctx: JobContext, repos: SqliteRepos) -> str | None:
+    """The stored result of the run this study run may reuse the unit load cases of, if it succeeded."""
+    reuse_of = ctx.payload.get("reuse_of")
+    source = repos.runs.get(reuse_of) if isinstance(reuse_of, str) else None
+    if source is None or source.status != "succeeded":
+        return None
+    return source.result_ref
+
+
+def _study_progress(ctx: JobContext, repos: SqliteRepos, study_id: str | None, store: ContentStore) -> None:
+    """Recompute the run's study; a failure here is logged and never fails the run."""
+    if study_id is None:
+        return
+    try:
+        refresh_study(repos, study_id, store)
+    except Exception:
+        ctx.logger.exception("study %s: progress could not be recorded", study_id)
+
+
 @register("run")
 def run_job(ctx: JobContext) -> None:
     repos = _repos(ctx)
@@ -73,13 +99,23 @@ def run_job(ctx: JobContext) -> None:
         return
     run = repos.runs.set_status(run.id, "running", started=True)
     data_dir = ensure_data_folder()
+    store = ContentStore(data_dir / "store")
+    _study_progress(ctx, repos, run.study_id, store)
+    try:
+        _solve_run(ctx, repos, run, store, data_dir)
+    finally:
+        if not ctx.shutting_down:
+            _study_progress(ctx, repos, run.study_id, store)
+
+
+def _solve_run(ctx: JobContext, repos: SqliteRepos, run: Run, store: ContentStore, data_dir: Path) -> None:
     build = solver_build()
     try:
         inputs = inputs_for_run(run, LibraryService(repos))
         result: PipelineResult = run_pipeline(
             inputs.request(run.snapshot, run.detail_level, "run"),
             capabilities=repos.capabilities,
-            store=ContentStore(data_dir / "store"),
+            store=store,
             work_root=data_dir / "work",
             solver_build_id=build.build_id,
             ccx=build.path,
@@ -87,6 +123,7 @@ def run_job(ctx: JobContext) -> None:
             progress=_progress(ctx),
             cancel=ctx.should_stop,
             watchdog=_watchdog(ctx),
+            unit_source=_unit_source(ctx, repos),
         )
     except SolverCancelled:
         if ctx.shutting_down:
@@ -105,7 +142,7 @@ def run_job(ctx: JobContext) -> None:
         raise
     repos.runs.update(succeeded_run(run, result))
     bus.emit(repos, "run.finished", {"run_id": run.id, "status": "succeeded"})
-    if not result.cached:
+    if not result.cached and result.unit_source is None:
         refit(
             EstimateSample(
                 dof=result.actual.dof,

@@ -57,7 +57,9 @@ export type StudioEventType =
   | 'study.progress'
   | 'job.failed'
   | 'validity.changed'
-  | 'capability.changed';
+  | 'capability.changed'
+  | 'backup.finished'
+  | 'restore.finished';
 
 export interface RunProgressEvent {
   run_id: string;
@@ -73,10 +75,12 @@ export interface StudioEventDataMap {
   'preview.ready': GenericEventData;
   'run.progress': RunProgressEvent;
   'run.finished': GenericEventData;
-  'study.progress': GenericEventData;
+  'study.progress': StudyProgressEvent;
   'job.failed': GenericEventData;
   'validity.changed': GenericEventData;
   'capability.changed': GenericEventData;
+  'backup.finished': GenericEventData;
+  'restore.finished': GenericEventData;
 }
 
 // Slice 1a (tasks T090-T097).
@@ -131,6 +135,44 @@ export type RejectResult = Schemas['RejectResult'];
 export type EntryChanges = Schemas['EntryChanges'];
 export type SnapshotWritten = Schemas['SnapshotWritten'];
 export type LibraryUse = Schemas['LibraryUse'];
+
+// Story 3 (tasks T118-T121): projects, search, duplicate and change, comparison, backup.
+
+export type ScenarioSummary = Schemas['ScenarioSummary'];
+export type RunSummary = Schemas['RunSummary'];
+export type StudySummary = Schemas['StudySummary'];
+export type SearchResults = Schemas['SearchResults'];
+export type SearchHit = Schemas['SearchHit'];
+export type ScenarioDiff = Schemas['ScenarioDiff'];
+export type Difference = Schemas['Difference'];
+export type CompareView = Schemas['CompareView'];
+export type ComparedRunView = Schemas['ComparedRunView'];
+export type FieldScale = Schemas['FieldScale'];
+export type KeyNumberRow = Schemas['KeyNumberRow'];
+export type Delta = Schemas['Delta'];
+export type JobQueued = Schemas['JobQueued'];
+export type BackupResult = Schemas['BackupResult'];
+export type RestoreResult = Schemas['RestoreResult'];
+
+// Story 4 (task T126): studies.
+
+export type StudyAxis = Schemas['StudyAxis'];
+export type StudyDefinition = Schemas['StudyDefinition'];
+export type StudyView = Schemas['StudyView'];
+export type StudyRun = Schemas['StudyRun'];
+export type StudyEstimate = Schemas['StudyEstimate'];
+export type SpreadSummary = Schemas['SpreadSummary'];
+export type AxisSpread = Schemas['AxisSpread'];
+export type Spread = Schemas['Spread'];
+
+/** `study.progress`: emitted when a study is queued and whenever one of its runs starts or ends. */
+export interface StudyProgressEvent {
+  study_id: string;
+  status: StudyView['status'];
+  total: number;
+  done: number;
+  failed: number;
+}
 
 /** One setting in a block's settings schema (GET /api/blocks): JSON Schema plus `group`, `kind` and units. */
 export interface SettingSchema {

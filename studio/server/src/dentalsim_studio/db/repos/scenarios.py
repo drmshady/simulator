@@ -1,13 +1,18 @@
-"""The `projects`, `scenarios` and `owner_templates` tables (task T084).
+"""The `projects`, `scenarios` and `owner_templates` tables (tasks T084, T114).
 
-Projects are kept at their minimum here (name, notes, tags); Story 3 extends them. A scenario carries a revision:
-a save names the revision it was edited from, and is refused with `Conflict` when the stored one has moved on.
+- Projects and scenarios carry notes and tags (FR-031); tags are trimmed and kept once each (`clean_tags`), and the
+  search index follows them through triggers (`dentalsim_studio.db.search`).
+- A scenario carries a revision: a save names the revision it was edited from, and is refused with `Conflict` when
+  the stored one has moved on. Its name, notes and tags change with `annotate`, which leaves the revision alone,
+  since they do not change what is solved.
 """
 
 from __future__ import annotations
 
 import sqlite3
 from collections.abc import Sequence
+
+from pydantic import AwareDatetime, BaseModel, ConfigDict
 
 from dentalsim.clock import new_ulid, utc_now
 from dentalsim.errors import Conflict, NotFound
@@ -16,6 +21,22 @@ from dentalsim.model.validity import ValidityResult
 from dentalsim.persistence import DerivedFrom, ProjectRecord, ScenarioRecord
 from dentalsim.templates.model import ProsthesisTemplate
 from dentalsim_studio.db.connection import Database, from_json, from_time, to_json, to_time
+from dentalsim_studio.db.search import clean_tags
+
+
+class StudySummary(BaseModel):
+    """A study as a project lists it (Story 4)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    name: str = ""
+    base_scenario_id: str
+    kind: str
+    detail_level: str = "standard"
+    status: str
+    runs: int = 0
+    created_at: AwareDatetime
 
 
 def _project(row: sqlite3.Row) -> ProjectRecord:
@@ -55,7 +76,9 @@ class SqliteScenarioRepo:
 
     def add_project(self, name: str, *, notes: str = "", tags: Sequence[str] = ()) -> ProjectRecord:
         now = utc_now()
-        record = ProjectRecord(id=new_ulid(), name=name, notes=notes, tags=list(tags), created_at=now, updated_at=now)
+        record = ProjectRecord(
+            id=new_ulid(), name=name, notes=notes, tags=clean_tags(tags), created_at=now, updated_at=now
+        )
         self.db.execute(
             "INSERT INTO projects (id, name, notes, tags, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
             (record.id, record.name, record.notes, to_json(record.tags), to_time(now), to_time(now)),
@@ -79,7 +102,7 @@ class SqliteScenarioRepo:
             update={
                 "name": project.name if name is None else name,
                 "notes": project.notes if notes is None else notes,
-                "tags": project.tags if tags is None else list(tags),
+                "tags": project.tags if tags is None else clean_tags(tags),
                 "updated_at": utc_now(),
             }
         )
@@ -100,6 +123,7 @@ class SqliteScenarioRepo:
     def add(self, record: ScenarioRecord) -> None:
         if self.get_project(record.project_id) is None:
             raise NotFound(f"there is no project {record.project_id}")
+        record = record.model_copy(update={"tags": clean_tags(record.tags)})
         self.db.execute(
             """INSERT INTO scenarios (id, project_id, name, notes, tags, derived_from, definition, revision, validity,
                                       created_at, updated_at)
@@ -137,7 +161,14 @@ class SqliteScenarioRepo:
 
     def save(self, record: ScenarioRecord, *, expected_revision: int) -> ScenarioRecord:
         """Store the record as revision `expected_revision + 1`; `Conflict` when the stored revision differs."""
-        saved = record.model_copy(update={"revision": expected_revision + 1, "updated_at": utc_now(), "validity": None})
+        saved = record.model_copy(
+            update={
+                "revision": expected_revision + 1,
+                "updated_at": utc_now(),
+                "validity": None,
+                "tags": clean_tags(record.tags),
+            }
+        )
         with self.db.transaction():
             cursor = self.db.execute(
                 """UPDATE scenarios SET name = ?, notes = ?, tags = ?, definition = ?, revision = ?, validity = NULL,
@@ -163,6 +194,45 @@ class SqliteScenarioRepo:
                     f"started from {expected_revision}); reload it and apply the change again"
                 )
         return saved
+
+    def annotate(
+        self, scenario_id: str, *, name: str | None = None, notes: str | None = None, tags: Sequence[str] | None = None
+    ) -> ScenarioRecord:
+        """Change the name, notes or tags; the revision stays, since they do not change what is solved."""
+        current = self.require(scenario_id)
+        changed = current.model_copy(
+            update={
+                "name": current.name if name is None else name,
+                "notes": current.notes if notes is None else notes,
+                "tags": current.tags if tags is None else clean_tags(tags),
+                "updated_at": utc_now(),
+            }
+        )
+        self.db.execute(
+            "UPDATE scenarios SET name = ?, notes = ?, tags = ?, updated_at = ? WHERE id = ?",
+            (changed.name, changed.notes, to_json(changed.tags), to_time(changed.updated_at), scenario_id),
+        )
+        return changed
+
+    def list_studies(self, project_id: str) -> list[StudySummary]:
+        rows = self.db.all(
+            "SELECT id, name, base_scenario_id, kind, detail_level, status, json_array_length(points) AS runs, "
+            "created_at FROM studies WHERE project_id = ? ORDER BY created_at DESC, id DESC",
+            (project_id,),
+        )
+        return [
+            StudySummary(
+                id=r["id"],
+                name=r["name"],
+                base_scenario_id=r["base_scenario_id"],
+                kind=r["kind"],
+                detail_level=r["detail_level"],
+                status=r["status"],
+                runs=r["runs"],
+                created_at=from_time(r["created_at"]),
+            )  # fmt: skip
+            for r in rows
+        ]
 
     def set_validity(self, scenario_id: str, validity: ValidityResult) -> None:
         self.db.execute(

@@ -1,8 +1,12 @@
-"""`GET /api/system` and `GET /api/conventions` (contracts/studio-api.md "Auth and system" and "Catalogue").
+"""`GET /api/system`, backup and restore, and `GET /api/conventions` (contracts/studio-api.md "Auth and system" and
+"Catalogue").
 
 `/api/system` feeds the interface's system bar: engine version and development-build flag (research R14), solver
-build id, conventions version, memory and free disk on the main PC, and the queue summary. A missing solver never
-fails it: `solver_build_id` is then null and `solver_error` says why.
+build id, conventions version, memory and free disk on the main PC, the queue summary, and the last backup and
+restore. A missing solver never fails it: `solver_build_id` is then null and `solver_error` says why.
+
+`POST /api/system/backup {to?}` and `POST /api/system/restore {archive}` queue a `backup` or `restore` job in the
+heavy lane (task T121, FR-034); the paths are folders and files on the main PC.
 """
 
 from __future__ import annotations
@@ -15,9 +19,10 @@ import psutil
 from fastapi import APIRouter, Request
 from pydantic import BaseModel, ConfigDict
 
+from dentalsim.backup import LAST_BACKUP, LAST_RESTORE, BackupResult, RestoreResult
 from dentalsim.conventions.loader import LoadedConventions
 from dentalsim.conventions.schema import Conventions
-from dentalsim.errors import SolverNotFound
+from dentalsim.errors import Refused, SolverNotFound
 from dentalsim.persistence import Repos
 from dentalsim.version import version_info
 from dentalsim_studio.api.deps import ReposDep, data_dir_of
@@ -67,6 +72,27 @@ class SystemInfo(BaseModel):
     memory: MemoryInfo
     disk: DiskInfo
     queue: QueueSummary
+    last_backup: BackupResult | None = None
+    last_restore: RestoreResult | None = None
+
+
+class BackupBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    to: str | None = None
+    """A folder on the main PC, such as an external drive; default: the data folder's backups folder."""
+
+
+class RestoreBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    archive: str
+    """A backup archive on the main PC."""
+
+
+class JobQueued(BaseModel):
+    job_id: str
+    status: str
 
 
 class ConventionsInfo(Conventions):
@@ -132,7 +158,33 @@ def system(request: Request, repos: ReposDep) -> SystemInfo:
         memory=memory_info(),
         disk=disk_info(data_dir_of(request)),
         queue=queue_summary(repos),
+        last_backup=_stored(repos, LAST_BACKUP, BackupResult),
+        last_restore=_stored(repos, LAST_RESTORE, RestoreResult),
     )
+
+
+def _stored[T: BaseModel](repos: Repos, key: str, model: type[T]) -> T | None:
+    value = repos.settings.get(key)
+    return None if value is None else model.model_validate(value)
+
+
+@router.post("/system/backup", response_model=JobQueued, status_code=202)
+def backup(body: BackupBody, repos: ReposDep) -> JobQueued:
+    if body.to:
+        folder = Path(body.to)
+        if not folder.is_absolute() or (folder.exists() and not folder.is_dir()):
+            raise Refused(f"{body.to} is not a folder on the main PC", code="validation_failed")
+    job = queue.enqueue(repos, "backup", {"to": body.to or None})
+    return JobQueued(job_id=job.id, status=job.status)
+
+
+@router.post("/system/restore", response_model=JobQueued, status_code=202)
+def restore(body: RestoreBody, repos: ReposDep) -> JobQueued:
+    archive = Path(body.archive)
+    if not archive.is_absolute() or not archive.is_file():
+        raise Refused(f"There is no backup archive at {body.archive} on the main PC.", code="validation_failed")
+    job = queue.enqueue(repos, "restore", {"archive": str(archive)})
+    return JobQueued(job_id=job.id, status=job.status)
 
 
 @router.get("/conventions", response_model=ConventionsInfo, response_model_by_alias=True)

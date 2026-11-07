@@ -11,7 +11,10 @@ Stages, each reported to the progress callback with its share of the time:
 4. **geometry** and **mesh**: the joined model, meshed at the detail level with the patches refined.
 5. **solver input**: the unit load cases (`dentalsim.post.superpose`), each spread over its contact points' load
    patches; previews use only the active load cases.
-6. **solve** and **read**: CalculiX, then its displacements, integration-point stress and strain and reactions.
+6. **solve** and **read**: CalculiX, then its displacements, integration-point stress and strain and reactions. A
+   run given a `unit_source` (a stored run result of the same model whose load cases differ only in force or
+   direction, as a study's load-only axes make) reuses that result's unit cases instead, when its mesh is this mesh
+   node for node; otherwise it solves them itself. Superposition makes the result the same either way (research R4).
 7. **checks**: for every unit case, the force, moment, energy and residual checks (FR-023); any failure fails the
    run with that reason.
 8. **superpose**, **key numbers**, **glTF**, **store**: every load case is combined, measured and drawn, and
@@ -162,6 +165,8 @@ class PipelineResult(_Model):
     versions: Versions
     timings_s: dict[str, float]
     cached: bool = False
+    unit_source: str | None = None
+    """The stored result whose unit load cases this result reused instead of solving them (research R4)."""
 
 
 class _Reporter:
@@ -348,6 +353,32 @@ def _check_cases(
     return convergence
 
 
+UnitFields = tuple[dict[str, FloatArray], dict[str, FloatArray], dict[str, FloatArray], Convergence]
+MESH_ARRAYS = ("mesh.coordinates", "mesh.connectivity", "mesh.element_part")
+
+
+def stored_unit_cases(store: ContentStore, source: str, mesh: MeshedModel, names: Sequence[str]) -> UnitFields | None:
+    """The displacements, stresses and strains of the unit cases `names` as solved for the stored run result `source`,
+    with that solve's convergence record; None when they cannot be reused: the result is missing or not a run's, its
+    unit cases are not exactly `names` in this order, or its mesh is not this mesh node for node."""
+    if not store.is_complete(source):
+        return None
+    stored = PipelineResult.model_validate(store.get_json(source, RESULT))
+    if stored.purpose != "run":
+        return None
+    artefacts = {(f.unit_case, f.name): f.store_key for f in stored.result.fields}
+    stored_names = list(dict.fromkeys(f.unit_case for f in stored.result.fields))
+    if stored_names != list(names) or any((n, f) not in artefacts for n in names for f in ("u", "stress", "strain")):
+        return None
+    mine = (mesh.coordinates, mesh.connectivity, mesh.element_part)
+    for name, array in zip(MESH_ARRAYS, mine, strict=True):
+        if not store.exists(source, name) or not np.array_equal(store.get_array(source, name), array):
+            return None
+    fields = [{n: np.asarray(store.get_array(source, artefacts[(n, f)]), dtype=np.float64) for n in names}
+              for f in ("u", "stress", "strain")]  # fmt: skip
+    return fields[0], fields[1], fields[2], stored.convergence
+
+
 def _references(assembly: Assembly, mesh: MeshedModel) -> dict[int, Reference]:
     """Each part's strength reference: the block's library value named by the part's `strength_setting`."""
     found: dict[int, Reference] = {}
@@ -437,9 +468,13 @@ def run_pipeline(
     cases_dir: Path | None = None,
     use_cache: bool = True,
     keep_work: bool = False,
+    unit_source: str | None = None,
 ) -> PipelineResult:
     """Solve a scenario, or reuse the stored result of identical inputs. Refused (`run_refused`) for an invalid
-    scenario or physics that is not ready; PipelineFailed with a plain reason when the run fails."""
+    scenario or physics that is not ready; PipelineFailed with a plain reason when the run fails.
+
+    `unit_source` (runs only) is the store key of an earlier run of the same model whose unit cases may be reused.
+    """
     with unthrottled_thread(enabled=request.purpose == "preview"):
         report = _Reporter(progress)
         conventions = get_conventions()
@@ -486,46 +521,62 @@ def run_pipeline(
             unit_loads = [_unit_load(case, i, patches) for i, case in enumerate(unit_cases)]
             solver_input = solver_model(mesh, unit_loads, f"dentalsim {request.purpose}: {scenario.name}")
 
-            report.stage("solve", f"solving {len(unit_loads)} unit load case(s), {mesh.dof} DOF")
-            total_steps = len(unit_loads)
-
-            def on_solver(event: SolverProgress) -> None:
-                done = ((event.step or 1) - 1) / total_steps
-                report.report(
-                    "solve", STAGE_START["solve"] + done * (STAGE_START["read"] - STAGE_START["solve"]), event.stage
-                )
-
-            output = solve_model(
-                solver_input,
-                work_dir,
-                threads=threads,
-                ccx=ccx,
-                progress=on_solver,
-                cancel=cancel,
-                watchdog=watchdog,
-                unthrottled=request.purpose == "preview",
+            names = [u.name for u in unit_cases]
+            reused = (
+                stored_unit_cases(store, unit_source, mesh, names)
+                if unit_source is not None and request.purpose == "run"
+                else None
             )
+            if reused is not None:
+                assert unit_source is not None
+                report.stage("solve", f"reusing the {len(names)} unit load case(s) of result {unit_source[:12]}")
+                displacements, stresses, strains, convergence = reused
+                points = integration_points(mesh.node_ids, mesh.coordinates, mesh.element_ids, mesh.connectivity)
+                peak_memory_bytes = solver_disk_bytes = 0
+            else:
+                report.stage("solve", f"solving {len(unit_loads)} unit load case(s), {mesh.dof} DOF")
+                total_steps = len(unit_loads)
 
-            report.stage("read")
-            points = integration_points(mesh.node_ids, mesh.coordinates, mesh.element_ids, mesh.connectivity)
-            expected = (np.repeat(mesh.element_ids, 4), np.tile(np.arange(1, 5), mesh.element_ids.size))
-            for step in output.steps:
-                if not (
-                    np.array_equal(step.ip_element_ids, expected[0]) and np.array_equal(step.ip_numbers, expected[1])
-                ):
-                    raise PipelineFailed(
-                        "the solver's printed results are not one row per integration point", stage="read"
+                def on_solver(event: SolverProgress) -> None:
+                    done = ((event.step or 1) - 1) / total_steps
+                    report.report(
+                        "solve",
+                        STAGE_START["solve"] + done * (STAGE_START["read"] - STAGE_START["solve"]),
+                        event.stage,
                     )
 
-            report.stage("checks")
-            convergence = _check_cases(solver_input, output, points.volumes, unit_loads)
+                output = solve_model(
+                    solver_input,
+                    work_dir,
+                    threads=threads,
+                    ccx=ccx,
+                    progress=on_solver,
+                    cancel=cancel,
+                    watchdog=watchdog,
+                    unthrottled=request.purpose == "preview",
+                )
+
+                report.stage("read")
+                points = integration_points(mesh.node_ids, mesh.coordinates, mesh.element_ids, mesh.connectivity)
+                expected = (np.repeat(mesh.element_ids, 4), np.tile(np.arange(1, 5), mesh.element_ids.size))
+                for step in output.steps:
+                    if not (
+                        np.array_equal(step.ip_element_ids, expected[0])
+                        and np.array_equal(step.ip_numbers, expected[1])
+                    ):
+                        raise PipelineFailed(
+                            "the solver's printed results are not one row per integration point", stage="read"
+                        )
+
+                report.stage("checks")
+                convergence = _check_cases(solver_input, output, points.volumes, unit_loads)
+                renamed = {case.name: unit.name for case, unit in zip(unit_loads, unit_cases, strict=True)}
+                stresses = {renamed[s.name]: s.stress for s in output.steps}
+                strains = {renamed[s.name]: s.strain for s in output.steps}
+                displacements = {renamed[s.name]: s.displacements for s in output.steps}
+                peak_memory_bytes, solver_disk_bytes = output.run.peak_memory_bytes, output.run.disk_bytes
 
             report.stage("superpose")
-            names = [u.name for u in unit_cases]
-            renamed = {case.name: unit.name for case, unit in zip(unit_loads, unit_cases, strict=True)}
-            stresses = {renamed[s.name]: s.stress for s in output.steps}
-            strains = {renamed[s.name]: s.strain for s in output.steps}
-            displacements = {renamed[s.name]: s.displacements for s in output.steps}
             combined = [
                 (
                     c,
@@ -638,8 +689,8 @@ def run_pipeline(
                 actual=Actual(
                     dof=mesh.dof,
                     time_s=timings["total"],
-                    peak_memory_gb=output.run.peak_memory_bytes / 1e9,
-                    disk_gb=(store.size_bytes(key) + output.run.disk_bytes) / 1e9,
+                    peak_memory_gb=peak_memory_bytes / 1e9,
+                    disk_gb=(store.size_bytes(key) + solver_disk_bytes) / 1e9,
                 ),
                 mesh=MeshSummary(
                     dof=mesh.dof,
@@ -658,6 +709,7 @@ def run_pipeline(
                     dev_build=is_dev_build(),
                 ),
                 timings_s=timings,
+                unit_source=unit_source if reused is not None else None,
             )
             store.put_json(key, RESULT, outcome.model_dump(mode="json"))
             store.complete(key, meta={"purpose": request.purpose, "detail_level": level})

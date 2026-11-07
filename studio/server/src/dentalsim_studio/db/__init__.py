@@ -11,6 +11,7 @@ from functools import cached_property
 from pathlib import Path
 
 from dentalsim.persistence import PublicationRepo, Repos
+from dentalsim_studio.db import backup
 from dentalsim_studio.db.connection import Database, connect, db_path
 from dentalsim_studio.db.repos.capabilities import SqliteCapabilityRepo
 from dentalsim_studio.db.repos.events import SqliteEventRepo
@@ -19,6 +20,7 @@ from dentalsim_studio.db.repos.library import SqliteLibraryRepo
 from dentalsim_studio.db.repos.runs import SqlitePreviewRepo, SqliteRunRepo
 from dentalsim_studio.db.repos.scenarios import SqliteScenarioRepo
 from dentalsim_studio.db.repos.settings import SqliteSettingsRepo
+from dentalsim_studio.db.repos.studies import SqliteStudyRepo
 from dentalsim_studio.db.repos.verification import SqliteVerificationRepo
 
 
@@ -57,6 +59,10 @@ class SqliteRepos:
         return SqliteRunRepo(self.db)
 
     @cached_property
+    def studies(self) -> SqliteStudyRepo:
+        return SqliteStudyRepo(self.db)
+
+    @cached_property
     def previews(self) -> SqlitePreviewRepo:
         return SqlitePreviewRepo(self.db)
 
@@ -72,6 +78,12 @@ class SqliteRepos:
     def transaction(self) -> Iterator[None]:
         with self.db.transaction():
             yield
+
+    def snapshot_database(self, target: Path, *, finished_job_id: str | None = None) -> None:
+        backup.snapshot(self.db, target, finished_job_id=finished_job_id)
+
+    def restore_database(self, source: Path, *, keep_job_id: str | None = None) -> None:
+        backup.restore(self.db, source, keep_job_id=keep_job_id)
 
     def close(self) -> None:
         self.db.close()

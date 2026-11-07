@@ -17,28 +17,40 @@ import {
 } from '@mantine/core';
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useRef, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router';
+import { Link, useNavigate, useSearchParams } from 'react-router';
 
 import { apiPost, isStudioError } from '../api/client';
 import {
   createProject,
   createScenario,
+  duplicateScenario,
   keys,
   saveScenario,
   scenarioGeometryUrl,
   useBlocks,
   useProjects,
   useScenario,
+  useScenarioDiff,
   useTemplates,
   validateScenario,
 } from '../api/studio';
-import type { BlockTypeEntry, Placement, Scenario, ScenarioView, ValidityProblem, ValidityResult } from '../api/types';
+import type {
+  BlockTypeEntry,
+  Difference,
+  Placement,
+  Scenario,
+  ScenarioView,
+  ValidityProblem,
+  ValidityResult,
+} from '../api/types';
 import { addBlock, blockTree, moveBlock, removeBlock, socketsFor, updateBlock, upgradeBlocks, ZERO_PLACEMENT } from '../builder';
 import { EstimateDialog } from '../components/EstimateDialog';
 import { LoadEditor } from '../components/LoadEditor';
 import { PreviewPanel } from '../components/PreviewPanel';
 import { SettingsForm } from '../components/SettingsForm';
+import { StudyDialog } from '../components/StudyDialog';
 import { TeachingNotice } from '../components/TeachingNotice';
+import { changedBlocks, describeDifference, settingChanges } from '../organise';
 import { BuilderScene } from '../viewer/BuilderScene';
 import { loadArrows } from '../viewer/loadArrows';
 import { Scene } from '../viewer/Scene';
@@ -238,6 +250,38 @@ function Problems({ validity, misfits }: { validity: ValidityResult | null; misf
   );
 }
 
+// --- duplicate and change -------------------------------------------------------------------------------------------
+
+/** What this scenario changes from the one it was duplicated from (FR-032), refetched after every save. */
+function ChangedFromOriginal({ originalId, differences }: { originalId: string; differences: Difference[] | undefined }) {
+  const original = useScenario(originalId);
+  return (
+    <Card withBorder padding="sm">
+      <Stack gap={4}>
+        <Text size="sm" fw={600}>
+          Duplicate of{' '}
+          <Link to={`/builder?scenario=${originalId}`}>{original.data?.name ?? (original.error ? 'a deleted scenario' : '…')}</Link>
+        </Text>
+        {differences === undefined ? (
+          <Text size="xs" c="dimmed">
+            Comparing with the original…
+          </Text>
+        ) : differences.length === 0 ? (
+          <Text size="xs" c="dimmed">
+            No setting differs from the original yet.
+          </Text>
+        ) : (
+          differences.map((d) => (
+            <Text key={d.path} size="xs" c="orange.8">
+              {describeDifference(d)}
+            </Text>
+          ))
+        )}
+      </Stack>
+    </Card>
+  );
+}
+
 // --- the builder ----------------------------------------------------------------------------------------------------
 
 function SaveAsTemplate({ scenarioId, opened, onClose }: { scenarioId: string; opened: boolean; onClose: () => void }) {
@@ -280,7 +324,9 @@ function Editor({ view: loaded }: { view: ScenarioView }) {
   const [savedRevision, setSavedRevision] = useState(loaded.revision);
   const [fullRevision, setFullRevision] = useState(loaded.revision);
   const [estimateOpen, setEstimateOpen] = useState(false);
+  const [study, setStudy] = useState<{ sensitivity: string | null } | null>(null);
   const [templateOpen, setTemplateOpen] = useState(false);
+  const [duplicating, setDuplicating] = useState(false);
   const revision = useRef(loaded.revision);
   const pending = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fullCheck = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -304,6 +350,22 @@ function Editor({ view: loaded }: { view: ScenarioView }) {
     placeholderData: keepPreviousData,
   });
   const geometryUrl = scene.data ?? null;
+  const originalId = view.derived_from?.kind === 'scenario' ? view.derived_from.id : null;
+  const diff = useScenarioDiff(originalId, loaded.id, savedRevision);
+  const differences = diff.data?.differences;
+  const changed = useMemo(() => changedBlocks(differences ?? []), [differences]);
+
+  const duplicate = async () => {
+    setDuplicating(true);
+    try {
+      const created = await duplicateScenario(view.project_id, view.id);
+      void navigate(`/builder?scenario=${created.scenario.id}`);
+    } catch (e) {
+      setStatus(e instanceof Error ? `not duplicated: ${e.message}` : 'not duplicated');
+    } finally {
+      setDuplicating(false);
+    }
+  };
   const arrows = useMemo(() => loadArrows(draft.loads ?? [], view.occlusal_points), [draft.loads, view.occlusal_points]);
 
   const change = (next: Scenario) => {
@@ -348,12 +410,18 @@ function Editor({ view: loaded }: { view: ScenarioView }) {
           </Title>
           <Text size="xs" c="dimmed">
             {status}
-            {view.derived_from ? ` · from ${view.derived_from.kind} ${view.derived_from.id}` : ''}
+            {view.derived_from?.kind === 'template' ? ` · from template ${view.derived_from.id}` : ''}
           </Text>
         </Stack>
         <Group gap="xs">
+          <Button variant="default" onClick={() => void duplicate()} loading={duplicating}>
+            Duplicate and change
+          </Button>
           <Button variant="default" onClick={() => setTemplateOpen(true)}>
             Save as template
+          </Button>
+          <Button variant="default" onClick={() => setStudy({ sensitivity: null })} disabled={!validity?.ok}>
+            Study…
           </Button>
           <Button onClick={() => setEstimateOpen(true)} disabled={!validity?.ok}>
             Run in detail…
@@ -390,10 +458,21 @@ function Editor({ view: loaded }: { view: ScenarioView }) {
                   active={block.instance_id === selected}
                   onClick={() => setSelected(block.instance_id)}
                   pl={8 + depth * 14}
-                  rightSection={problemBlocks.has(block.instance_id) ? <Badge color="red" size="xs">!</Badge> : undefined}
+                  rightSection={
+                    problemBlocks.has(block.instance_id) ? (
+                      <Badge color="red" size="xs">
+                        !
+                      </Badge>
+                    ) : changed.has(block.instance_id) ? (
+                      <Badge color="orange" size="xs" variant="light">
+                        changed
+                      </Badge>
+                    ) : undefined
+                  }
                 />
               ))}
             </Card>
+            {originalId && <ChangedFromOriginal originalId={originalId} differences={differences} />}
             <AddBlock scenario={draft} types={types} onAdd={change} />
             {selectedBlock && selectedBlock.attach_to && (
               <Button
@@ -469,6 +548,8 @@ function Editor({ view: loaded }: { view: ScenarioView }) {
                     instanceId={selectedBlock.instance_id}
                     settings={selectedBlock.settings ?? {}}
                     library={view.library}
+                    changes={settingChanges(differences ?? [], selectedBlock.instance_id)}
+                    onSensitivity={validity?.ok ? (path) => setStudy({ sensitivity: path }) : undefined}
                     onChange={(id, value) =>
                       change(updateBlock(draft, selectedBlock.instance_id, (b) => ({ ...b, settings: { ...b.settings, [id]: value } })))
                     }
@@ -501,6 +582,15 @@ function Editor({ view: loaded }: { view: ScenarioView }) {
         onStarted={(runId) => void navigate(`/results?run=${runId}`)}
       />
       <SaveAsTemplate scenarioId={view.id} opened={templateOpen} onClose={() => setTemplateOpen(false)} />
+      {study && (
+        <StudyDialog
+          opened
+          onClose={() => setStudy(null)}
+          scenario={view}
+          types={types}
+          sensitivity={study.sensitivity}
+        />
+      )}
     </Stack>
   );
 }

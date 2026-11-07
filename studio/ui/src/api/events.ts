@@ -11,6 +11,8 @@ const EVENT_TYPES = {
   'job.failed': true,
   'validity.changed': true,
   'capability.changed': true,
+  'backup.finished': true,
+  'restore.finished': true,
 } satisfies Record<StudioEventType, true>;
 
 export const STUDIO_EVENT_TYPES = Object.keys(EVENT_TYPES) as StudioEventType[];
