@@ -90,7 +90,11 @@ BoolArray = NDArray[np.bool_]
 
 @dataclass(frozen=True)
 class Design:
-    """Marks a design setting. `minimum` and `maximum` apply to numbers, `min_items` and `max_items` to lists."""
+    """Marks a design setting. `minimum` and `maximum` apply to numbers, `min_items` and `max_items` to lists.
+
+    `site_width_offset_mm`: a block newly added on a jaw site starts with this setting at the site's tooth width
+    plus this offset (see `assembly.site_defaults`), not at the fixed default.
+    """
 
     group: SettingGroup
     label: str
@@ -100,6 +104,7 @@ class Design:
     min_items: int | None = None
     max_items: int | None = None
     help: str = ""
+    site_width_offset_mm: float | None = None
 
 
 @dataclass(frozen=True)
@@ -137,6 +142,8 @@ class SettingSpec:
     parameter_key: str | None = None
     above: float | None = None
     below: float | None = None
+    site_width_offset_mm: float | None = None
+    """For a design setting: a new block on a jaw site starts at the site's tooth width plus this."""
 
     def json_schema(self) -> dict[str, Any]:
         schema: dict[str, Any] = {"title": self.label, "group": self.group, "kind": self.kind}
@@ -166,6 +173,8 @@ class SettingSpec:
             schema["exclusiveMinimum"] = self.above
         if self.below is not None:
             schema["exclusiveMaximum"] = self.below
+        if self.site_width_offset_mm is not None:
+            schema["site_width_offset_mm"] = self.site_width_offset_mm
         return schema
 
 
@@ -229,6 +238,7 @@ def _spec(name: str, info: FieldInfo) -> SettingSpec:
         choices=choices,
         min_items=marker.min_items,
         max_items=marker.max_items,
+        site_width_offset_mm=marker.site_width_offset_mm,
     )
 
 

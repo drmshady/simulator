@@ -25,7 +25,8 @@ Without these, the end of the bar or its lowest line could graze a unit's surfac
 hundredths of a millimetre, which meshes into badly shaped elements. One that reaches no unit is built as a stub
 `STUB_MM` long, so the builder can show it.
 
-**Checks** `unsupported_pontic`: a connector that reaches no unit; `overlap`: two connectors joining the same two
+**Checks** `unsupported_pontic`: a connector that reaches no unit (named as an overlap when the unit beside it
+reaches up to `MAX_OVERLAP_MM` past its contact area); `overlap`: two connectors joining the same two
 contact areas; `design_limit`: a section taller than the units it joins leave room for.
 """
 
@@ -58,6 +59,9 @@ MAX_GAP_MM = 3.0
 """How far ahead of its socket a connector looks for the facing contact area."""
 MAX_OFFSET_MM = 2.0
 """How far off the socket's axis the facing contact area may lie (units of different heights, a tilted implant)."""
+MAX_OVERLAP_MM = 4.0
+"""How far a facing contact area may lie behind a connector's and still be named as an overlapping unit; units
+farther along the arch lie a whole unit width behind."""
 MIN_FACING = 0.7
 """The facing contact area's outward normal must point back along the axis by at least this cosine."""
 EMBED_MM = 0.6
@@ -172,6 +176,24 @@ class SplintingConnector(BlockType[SplintingConnectorSettings]):
                 best = (distance, joint)
         return None if best is None else best[1]
 
+    def overlapping(self, ctx: BlockContext[SplintingConnectorSettings]) -> tuple[Joint, float] | None:
+        """The facing contact area of a unit that reaches past this one (the two units overlap), and how far."""
+        if ctx.parent is None:
+            return None
+        origin, axis = np.asarray(ctx.to_frame.origin), np.asarray(ctx.to_frame.axes[2])
+        best: tuple[float, Joint] | None = None
+        for joint in ctx.environment.joints:
+            if joint.owner == ctx.parent.instance_id:
+                continue
+            offset = np.asarray(joint.position_mm) - origin
+            along = float(offset @ axis)
+            lateral = float(np.linalg.norm(offset - along * axis))
+            facing = float(np.asarray(joint.normal) @ axis)
+            fits = -MAX_OVERLAP_MM <= along < -EMBED_MM and lateral <= MAX_OFFSET_MM and facing <= -MIN_FACING
+            if fits and (best is None or -along > best[0]):
+                best = (-along, joint)
+        return None if best is None else (best[1], best[0])
+
     def _joints(self, ctx: BlockContext[SplintingConnectorSettings]) -> tuple[Joint | None, Joint | None]:
         """The joint it hangs from and the one it reaches (None when unknown)."""
         if ctx.parent is None:
@@ -206,14 +228,20 @@ class SplintingConnector(BlockType[SplintingConnectorSettings]):
         side = side_name(ctx.parent.socket.name)
         mine = next((link for link in ctx.environment.links if link.by == ctx.instance_id), None)
         if mine is None:
-            return [
-                ctx.problem(
-                    "unsupported_pontic",
-                    f"Splinting connector {ctx.instance_id!r} on the {side} side of {name} reaches no unit within "
-                    f"{MAX_GAP_MM:g} mm. Remove it, or place a unit beside it there.",
-                    ctx.to_frame.origin,
+            overlapping = self.overlapping(ctx)
+            if overlapping is not None:
+                neighbour, depth = overlapping
+                message = (
+                    f"Splinting connector {ctx.instance_id!r} on the {side} side of {name} has no gap to join: "
+                    f"{neighbour.label} reaches {depth:.1f} mm past this contact area, so the two units overlap. Make "
+                    "one of them narrower (mesiodistal width) or move it."
                 )
-            ]
+            else:
+                message = (
+                    f"Splinting connector {ctx.instance_id!r} on the {side} side of {name} reaches no unit within "
+                    f"{MAX_GAP_MM:g} mm. Remove it, or place a unit beside it there."
+                )
+            return [ctx.problem("unsupported_pontic", message, ctx.to_frame.origin)]
         room = [
             j.room_below_mm + j.room_above_mm - 2 * ROOM_MARGIN_MM for j in (unit, ctx.environment.joint(*mine.b)) if j
         ]

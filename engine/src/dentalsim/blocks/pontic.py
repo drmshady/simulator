@@ -51,7 +51,16 @@ from dentalsim.model.validity import Problem
 
 class PonticSettings(BlockSettings):
     mesiodistal_mm: Annotated[
-        float, Design("prosthesis", "Mesiodistal width", unit="mm", minimum=4.0, maximum=14.0)
+        float,
+        Design(
+            "prosthesis",
+            "Mesiodistal width",
+            unit="mm",
+            minimum=4.0,
+            maximum=14.0,
+            site_width_offset_mm=-0.4,
+            help="A new one starts 0.4 mm narrower than the mean width of its site's tooth.",
+        ),
     ] = 7.0
     buccolingual_mm: Annotated[
         float, Design("prosthesis", "Buccolingual width", unit="mm", minimum=5.0, maximum=13.0)

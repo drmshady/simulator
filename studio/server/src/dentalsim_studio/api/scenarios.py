@@ -21,6 +21,7 @@ from fastapi import APIRouter, Query, Response
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 
 from dentalsim.assembly.placement import place
+from dentalsim.assembly.site_defaults import with_site_defaults
 from dentalsim.assembly.validity import check_validity
 from dentalsim.blocks.registry import catalogue
 from dentalsim.clock import new_ulid, utc_now
@@ -348,7 +349,10 @@ def get_scenario(scenario_id: str, repos: ReposDep) -> ScenarioView:
 @router.put("/scenarios/{scenario_id}", response_model=ScenarioView)
 def save_scenario(scenario_id: str, body: SaveScenario, repos: ReposDep) -> ScenarioView:
     current = repos.scenarios.require(scenario_id)
-    scenario = checked_scenario(body.scenario, LibraryService(repos))
+    # A block added since the last save starts sized to its site (a crown's width on a premolar site, say), once
+    # its library values are filled in so it can be placed.
+    new_blocks = {b.instance_id for b in body.scenario.blocks} - {b.instance_id for b in current.scenario.blocks}
+    scenario = with_site_defaults(checked_scenario(body.scenario, LibraryService(repos)), new_blocks)
     changed = current.model_copy(
         update={
             "scenario": scenario,

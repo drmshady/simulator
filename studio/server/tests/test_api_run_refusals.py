@@ -261,3 +261,26 @@ def test_verification_cases_and_reports_can_be_read(client: TestClient, data_dir
     physics = {p["id"]: p for p in client.get("/api/physics").json()}
     assert physics["bonded_elastic"]["status"] == "ready"
     assert physics["bonded_elastic"]["report_url"] == "/api/verification/reports/R1"
+
+
+def test_a_crown_added_in_the_builder_is_sized_to_its_site(client: TestClient) -> None:
+    project = client.post("/api/projects", json={"name": "Restore"}).json()
+    body = {"project_id": project["id"], "from": {"template_id": "cantilever_bridge"}}
+    scenario = client.post("/api/scenarios", json=body).json()["scenario"]
+    definition = scenario["scenario"]
+    # Replace the premolar crown at 35 as the builder does: a new block with no settings yet.
+    definition["blocks"] = [b for b in definition["blocks"] if b["instance_id"] != "crown-2"]
+    definition["blocks"].append(
+        {
+            "instance_id": "crown-3",
+            "type_id": "crown",
+            "type_version": next(b for b in definition["blocks"] if b["type_id"] == "crown")["type_version"],
+            "attach_to": {"instance_id": "abutment-2", "attach_point": "crown_seat"},
+            "settings": {},
+        }
+    )
+    saved = client.put(f"/api/scenarios/{scenario['id']}", json={"revision": 1, "scenario": definition})
+    assert saved.status_code == 200, saved.json()
+    blocks = {b["instance_id"]: b for b in saved.json()["scenario"]["blocks"]}
+    assert blocks["crown-3"]["settings"]["mesiodistal_mm"] == {"kind": "design", "value": 6.6}  # tooth 35 less 0.4
+    assert blocks["crown-1"]["settings"]["mesiodistal_mm"]["value"] == 10.5  # a saved block keeps its width

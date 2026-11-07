@@ -912,6 +912,15 @@ reported), restore it, save, run in detail and check the results (quickstart row
   - 2026-11-06: the owner accepted the slice 1b preview times (30 s to 3 min, `docs/setup/performance.md`;
     SC-002 and FR-017 amended). Still open: approving the four templates' design defaults (T104), quickstart row
     1b in the browser, and the detailed runs.
+  - 2026-11-07, from quickstart row 1b in the browser: a crown rebuilt by hand on site 35 took the molar default
+    width and overlapped its neighbour. Now a crown or pontic new to a save starts 0.4 mm narrower than its site's
+    tooth (`assembly/site_defaults.py`). A connector between overlapping units now names the overlap, rather than
+    "reaches no unit". The builder's 3D view also draws each load case as arrows.
+  - 2026-11-07: the owner approved the four templates' design defaults and passed quickstart row 1b in the
+    browser (deleting an implant names the unsupported part; restored, saved and run at standard). The full arch
+    at `fine` (1.66 M DOF) was stopped by the memory watchdog: the DOF prediction, fitted on the single crown only,
+    gave 1.04 M; it is being refitted on all templates. Still open: a 3-implant detailed (`standard`, FR-018)
+    run within 10 h (SC-013), timed in `docs/setup/performance.md`.
 
 **Checkpoint**: every implant-supported fixed scenario in the year-one plan can be built and run.
 

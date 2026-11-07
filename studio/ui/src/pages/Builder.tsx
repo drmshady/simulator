@@ -40,6 +40,7 @@ import { PreviewPanel } from '../components/PreviewPanel';
 import { SettingsForm } from '../components/SettingsForm';
 import { TeachingNotice } from '../components/TeachingNotice';
 import { BuilderScene } from '../viewer/BuilderScene';
+import { loadArrows } from '../viewer/loadArrows';
 import { Scene } from '../viewer/Scene';
 
 const SAVE_DELAY_MS = 500;
@@ -303,6 +304,7 @@ function Editor({ view: loaded }: { view: ScenarioView }) {
     placeholderData: keepPreviousData,
   });
   const geometryUrl = scene.data ?? null;
+  const arrows = useMemo(() => loadArrows(draft.loads ?? [], view.occlusal_points), [draft.loads, view.occlusal_points]);
 
   const change = (next: Scenario) => {
     setDraft(next);
@@ -418,6 +420,7 @@ function Editor({ view: loaded }: { view: ScenarioView }) {
                   movable={Boolean(selectedBlock?.attach_to)}
                   problemBlocks={problemBlocks}
                   problems={validity?.problems ?? []}
+                  loads={arrows}
                   onSelect={setSelected}
                   onMove={(id, delta) => change(moveBlock(draft, id, delta))}
                 />
@@ -432,6 +435,15 @@ function Editor({ view: loaded }: { view: ScenarioView }) {
                   Try again
                 </Button>
               </Alert>
+            )}
+            {geometryUrl && arrows.length > 0 && (
+              <Group gap="md">
+                {[...new Map(arrows.map((a) => [a.load, a])).values()].map((a) => (
+                  <Text key={a.load} size="xs">
+                    <span style={{ color: a.colour }}>&#9660;</span> {a.label}
+                  </Text>
+                ))}
+              </Group>
             )}
             <Problems validity={validity} misfits={view.misfits} />
           </Stack>

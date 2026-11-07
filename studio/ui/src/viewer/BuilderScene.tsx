@@ -5,6 +5,7 @@ import * as THREE from 'three';
 
 import { apiGet } from '../api/client';
 import type { ConventionsInfo, ValidityProblem } from '../api/types';
+import type { LoadArrow } from './loadArrows';
 
 const CLASS_COLOURS: Record<string, string> = {
   metal: '#9aa3ad',
@@ -23,6 +24,8 @@ export interface BuilderSceneProps {
   movable: boolean;
   problemBlocks: ReadonlySet<string>;
   problems: ValidityProblem[];
+  /** The load cases' arrows, drawn with their tips on the contact points. */
+  loads?: LoadArrow[];
   onSelect: (instanceId: string) => void;
   /** Called when a drag of the selected block ends, with how far it moved (mm, frame axes). */
   onMove: (instanceId: string, delta: [number, number, number]) => void;
@@ -37,11 +40,11 @@ function useMaterialClasses() {
 }
 
 /** The builder's scene: each placed block's parts in its material class's colour, the keep-out volumes in
- * translucent red, problem locations marked, the selected block highlighted and draggable. Use it in a `Scene`
+ * translucent red, problem locations marked, the load cases as arrows, the selected block highlighted and draggable. Use it in a `Scene`
  * with `fit={false}`: the view is fitted to the parts only, since the drag gizmo carries very large invisible
  * planes that would otherwise zoom the view out until the model vanished. The fit is made once, so the view stays
  * put while the scenario is edited. */
-export function BuilderScene({ url, selected, movable, problemBlocks, problems, onSelect, onMove }: BuilderSceneProps) {
+export function BuilderScene({ url, selected, movable, problemBlocks, problems, loads = [], onSelect, onMove }: BuilderSceneProps) {
   const gltf = useGLTF(url);
   const conventions = useMaterialClasses();
   const classOf = useMemo(() => {
@@ -135,6 +138,32 @@ export function BuilderScene({ url, selected, movable, problemBlocks, problems, 
             <meshStandardMaterial color={PROBLEM_EMISSIVE} emissive={PROBLEM_EMISSIVE} emissiveIntensity={0.6} />
           </mesh>
         ))}
+      {loads.map((arrow, index) => (
+        <ForceArrow key={`${arrow.load}-${index}`} arrow={arrow} />
+      ))}
     </group>
   );
+}
+
+/** A force arrow whose tip touches the contact point, pointing along the force. */
+function ForceArrow({ arrow }: { arrow: LoadArrow }) {
+  const helper = useMemo(() => {
+    const direction = new THREE.Vector3(...arrow.direction).normalize();
+    const origin = new THREE.Vector3(...arrow.tip).addScaledVector(direction, -arrow.length);
+    const head = Math.min(1.6, arrow.length * 0.35);
+    const made = new THREE.ArrowHelper(direction, origin, arrow.length, arrow.colour, head, head * 0.55);
+    // Drawn over the parts, so an arrow is never hidden inside a crown.
+    for (const part of [made.line, made.cone]) {
+      const material = part.material as THREE.Material;
+      material.depthTest = false;
+      material.transparent = true;
+      part.renderOrder = 10;
+    }
+    made.raycast = () => undefined;
+    made.line.raycast = () => undefined;
+    made.cone.raycast = () => undefined;
+    return made;
+  }, [arrow]);
+  useEffect(() => () => helper.dispose(), [helper]);
+  return <primitive object={helper} />;
 }
