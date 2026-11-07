@@ -1,20 +1,30 @@
-// Query hooks and calls for slice 1a: catalogue, projects, scenarios, previews, estimates, runs and the queue
-// (contracts/studio-api.md). Pages use these; none of them knows a block type.
+// Query hooks and calls for slice 1a: catalogue, projects, scenarios, previews, estimates, runs and the queue, and
+// for Story 2: the literature library (contracts/studio-api.md). Pages use these; none of them knows a block type.
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { apiGet, apiPost, apiPut } from './client';
+import { apiGet, apiPost, apiPut, withQuery } from './client';
 import { useStudioEvents } from './events';
 import type {
+  ApprovalResult,
   BlockTypeEntry,
   DetailLevel,
+  EntryChanges,
   EntryDetail,
+  EntryStatus,
+  ImportedVersion,
+  ImportResult,
+  LibraryCategory,
+  LiteratureEntry,
+  LiteratureEntryVersion,
+  OwnerEntry,
   PhysicsItem,
   PreviewQueued,
   PreviewView,
   ProjectRecord,
   ProjectView,
   QueueView,
+  RejectResult,
   ResultsView,
   RunEstimate,
   RunQueued,
@@ -23,6 +33,8 @@ import type {
   ScenarioCreated,
   ScenarioView,
   SettingValue,
+  SnapshotWritten,
+  SourceCheckView,
   TemplateSummary,
   ValidityResult,
 } from './types';
@@ -39,6 +51,7 @@ export const keys = {
   results: (id: string) => ['results', id] as const,
   queue: ['queue'] as const,
   entry: (ref: string) => ['library-entry', ref] as const,
+  entries: ['library-entries'] as const,
 };
 
 export function useBlocks() {
@@ -95,6 +108,67 @@ export function useLibraryEntry(ref: string | null) {
     enabled: ref !== null,
     staleTime: 60_000,
   });
+}
+
+export interface EntryFilters {
+  status?: EntryStatus | null;
+  category?: LibraryCategory | null;
+  q?: string | null;
+}
+
+export function useLibraryEntries(filters: EntryFilters) {
+  return useQuery({
+    queryKey: [...keys.entries, filters],
+    queryFn: ({ signal }) =>
+      apiGet<LiteratureEntry[]>(
+        withQuery('/api/library/entries', { status: filters.status, category: filters.category, q: filters.q || null }),
+        { signal },
+      ),
+  });
+}
+
+/** Refetch the entry list and every entry detail after a change to the library. */
+export function useRefreshLibrary() {
+  const queryClient = useQueryClient();
+  return () => {
+    void queryClient.invalidateQueries({ queryKey: keys.entries });
+    void queryClient.invalidateQueries({ queryKey: ['library-entry'] });
+  };
+}
+
+function entryPath(entryId: string, version?: number): string {
+  const base = `/api/library/entries/${encodeURIComponent(entryId)}`;
+  return version === undefined ? base : `${base}/versions/${version}`;
+}
+
+export function addOwnerEntry(body: OwnerEntry): Promise<ImportedVersion> {
+  return apiPost<ImportedVersion>('/api/library/entries', body);
+}
+
+export function importProposals(file: File): Promise<ImportResult> {
+  const form = new FormData();
+  form.append('file', file);
+  return apiPost<ImportResult>('/api/library/import', form);
+}
+
+export function checkSources(entryId: string, version: number): Promise<SourceCheckView> {
+  return apiPost<SourceCheckView>(`${entryPath(entryId, version)}/check-sources`);
+}
+
+export function approveVersion(entryId: string, version: number): Promise<ApprovalResult> {
+  return apiPost<ApprovalResult>(`${entryPath(entryId, version)}/approve`);
+}
+
+export function rejectVersion(entryId: string, version: number, reason: string): Promise<RejectResult> {
+  return apiPost<RejectResult>(`${entryPath(entryId, version)}/reject`, { reason });
+}
+
+export function editEntry(entryId: string, changes: EntryChanges): Promise<LiteratureEntryVersion> {
+  return apiPut<LiteratureEntryVersion>(entryPath(entryId), { changes });
+}
+
+export function exportLibrary(): Promise<SnapshotWritten> {
+  return apiPost<SnapshotWritten>('/api/library/export');
 }
 
 export function createProject(name: string): Promise<ProjectRecord> {

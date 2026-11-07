@@ -14,12 +14,13 @@ import {
   Title,
 } from '@mantine/core';
 import { useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 
 import { useResults, useRun } from '../api/studio';
-import type { KeyNumber, ResultsView, RunView } from '../api/types';
+import type { KeyNumber, LibraryUse, ResultsView, RunView } from '../api/types';
 import { TeachingNotice } from '../components/TeachingNotice';
 import { paired, SCREW_NOTE } from '../display';
+import { quantity, STATUS_COLOUR } from '../library';
 import { FIELDS, formatMagnification, type FieldName } from '../viewer/colourScale';
 import { ResultView } from '../viewer/ResultView';
 
@@ -151,6 +152,49 @@ function RunRecord({ run }: { run: RunView }) {
   );
 }
 
+/** The library versions the run used (FR-016): entry, version, value and sources. The run keeps its version; a note
+ * says when a newer version has been approved since, or when the version was rejected. */
+function LibraryPanel({ uses }: { uses: LibraryUse[] }) {
+  return (
+    <Card withBorder padding="sm">
+      <Stack gap="xs">
+        <Text fw={600}>Library values used</Text>
+        {uses.map((use) => (
+          <Stack key={`${use.entry_id}-${use.version}`} gap={2}>
+            <Group gap="xs" wrap="nowrap" justify="space-between">
+              <Text size="xs">
+                <Link to={`/library?entry=${use.entry_id}`}>{use.parameter_key}</Link> v{use.version}:{' '}
+                <b>{use.values.map((v) => quantity(v, use.units)).join(', ')}</b> ({use.choice})
+              </Text>
+              {use.status && use.status !== 'approved' && (
+                <Badge size="xs" variant="light" color={STATUS_COLOUR[use.status]}>
+                  {use.status}
+                </Badge>
+              )}
+            </Group>
+            <Text size="xs" c="dimmed">
+              {use.label} · used in {use.used_in.join(', ')}
+            </Text>
+            <Text size="xs" c="dimmed">
+              Sources: {use.sources.map((s) => `${s.citation}: ${quantity(s.value, use.units)}${s.chosen ? ' (chosen)' : ''}`).join('; ')}
+            </Text>
+            {use.newer_version !== null && use.newer_version !== undefined && (
+              <Text size="xs" c="orange">
+                A newer version (v{use.newer_version}) has been approved since; this run keeps v{use.version}.
+              </Text>
+            )}
+            {use.status === 'rejected' && (
+              <Text size="xs" c="red">
+                This version was rejected after the run, so the run cannot be published until it is re-run.
+              </Text>
+            )}
+          </Stack>
+        ))}
+      </Stack>
+    </Card>
+  );
+}
+
 function ResultsBody({ run, results }: { run: RunView; results: ResultsView }) {
   const cases = results.combined_cases;
   const [loadCase, setLoadCase] = useState<string>(cases[0] ?? '');
@@ -232,6 +276,7 @@ function ResultsBody({ run, results }: { run: RunView; results: ResultsView }) {
             </Stack>
           </Card>
           <RunRecord run={run} />
+          <LibraryPanel uses={run.library} />
         </Stack>
       </Grid.Col>
     </Grid>

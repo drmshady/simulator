@@ -503,7 +503,7 @@ def test_reject_a_proposed_version(service: LibraryService, tmp_path: Path, fixe
     assert result.version.rejected_reason == "The cited study measured D2 bone."
     assert result.version.rejected_at == fixed_time.now
     assert not result.was_current
-    assert (result.run_flagging, result.note, result.flagged_runs) == ("done", None, [])
+    assert result.flagged_runs == []
     with pytest.raises(Refused):
         service.approve(entry_id, 1)
     with pytest.raises(Refused, match="only a proposed or approved version"):
@@ -535,7 +535,7 @@ def test_rejection_flags_runs_through_the_hook(repos: Repos, internet: Internet,
     entry_id = _approved_entry(service, tmp_path)
     result = service.reject(entry_id, 1, "Wrong units in the paper.")
     assert calls == [(entry_id, 1)]
-    assert (result.flagged_runs, result.run_flagging, result.note) == (["RUN1", "RUN2"], "done", None)
+    assert result.flagged_runs == ["RUN1", "RUN2"]
 
 
 def test_a_rejection_needs_a_reason(service: LibraryService, tmp_path: Path) -> None:

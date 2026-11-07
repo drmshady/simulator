@@ -161,11 +161,10 @@ def reject_command(args: argparse.Namespace, out: Output) -> None:
     lines = [f"rejected {_label(entry, result.version)}: {result.version.rejected_reason}"]
     if result.was_current:
         lines.append(f"{entry.parameter_key} has no approved version now")
-    if result.run_flagging == "not_available":
-        lines.append(f"note: {result.note}")
-    elif result.flagged_runs:
+    if result.flagged_runs:
         lines.append(f"flagged {len(result.flagged_runs)} run(s) 'uses a rejected entry':")
         lines += [f"  {run_id}" for run_id in result.flagged_runs]
+        lines.append("they cannot be published until they are re-run with approved versions")
     else:
         lines.append("no runs used this version")
     out.result(result.model_dump(mode="json"), "\n".join(lines))

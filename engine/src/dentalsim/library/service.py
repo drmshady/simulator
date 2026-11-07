@@ -18,7 +18,7 @@ from __future__ import annotations
 import math
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -57,12 +57,11 @@ from dentalsim.model.settings import CHOICE, LibraryValue
 from dentalsim.persistence import Repos
 
 SNAPSHOT_PATH = Path("content") / "library" / "snapshots" / "library-snapshot.yaml"
-RUN_FLAGGING_UNAVAILABLE = "run flagging not available yet"
 
 Checker = Callable[[Source], SourceCheck]
 RejectionHook = Callable[[str, int], list[str]]
-"""Called with (entry_id, version) when a version is rejected; flags the runs that used it and returns their ids.
-Raises NotImplementedError while there is no run repository."""
+"""Called with (entry_id, version) when a version is rejected, inside the rejection's transaction; flags the runs
+that used it and returns their ids."""
 
 CHECK_TEXT = {
     "not_checked": "has not been checked (run the source check; it needs the internet)",
@@ -104,8 +103,7 @@ class RejectResult(_Model):
     version: LiteratureEntryVersion
     was_current: bool
     flagged_runs: list[str] = []
-    run_flagging: Literal["done", "not_available"] = "done"
-    note: str | None = None
+    """The runs that used the version, now flagged `uses_rejected_entry` (FR-055)."""
 
 
 class EntryChanges(_Model):
@@ -488,11 +486,11 @@ class LibraryService:
     # Rejection (FR-055) -----------------------------------------------------------------------------------------
 
     def _flag_runs_using(self, entry_id: str, version: int) -> list[str]:
-        """The default rejection hook: flag the runs that used the version `uses_rejected_entry` (task T109)."""
-        runs = self.repos.runs  # raises NotImplementedError until the run repository exists (task T084)
-        run_ids = runs.runs_using(entry_id, version)
+        """The default rejection hook: flag every run that used the version `uses_rejected_entry` (FR-055). The
+        flag blocks publishing until the scenario is re-run with approved versions."""
+        run_ids = self.repos.runs.runs_using(entry_id, version)
         if run_ids:
-            runs.add_flag(run_ids, "uses_rejected_entry")
+            self.repos.runs.add_flag(run_ids, "uses_rejected_entry")
         return run_ids
 
     def reject(self, entry_id: str, version: int, reason: str) -> RejectResult:
@@ -517,15 +515,7 @@ class LibraryService:
             was_current = entry.current_version == version
             if was_current:
                 library.set_current_version(entry_id, None)
-            try:
-                flagged = self.on_rejected(entry_id, version)
-            except NotImplementedError:
-                return RejectResult(
-                    version=rejected,
-                    was_current=was_current,
-                    run_flagging="not_available",
-                    note=RUN_FLAGGING_UNAVAILABLE,
-                )
+            flagged = self.on_rejected(entry_id, version)
         return RejectResult(version=rejected, was_current=was_current, flagged_runs=flagged)
 
     # Editing (FR-016) -------------------------------------------------------------------------------------------

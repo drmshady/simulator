@@ -107,9 +107,30 @@ export type RunQueued = Schemas['RunQueued'];
 export type RunView = Schemas['RunView'];
 export type Run = Schemas['Run'];
 export type ResultsView = Schemas['ResultsView'];
-export type EntryDetail = Schemas['EntryDetail'];
+export type EntryDetail = Schemas['EntryView'];
 export type DetailLevel = 'preview' | 'standard' | 'fine' | 'extra_fine';
 export type SettingValue = DesignValue | LibraryValue;
+
+// Story 2 (tasks T110-T112): the literature library.
+
+export type LiteratureEntry = Schemas['LiteratureEntry'];
+export type LiteratureEntryVersion = Schemas['LiteratureEntryVersion'];
+export type LibrarySource = Schemas['Source'];
+export type SourceCheck = Schemas['SourceCheck'];
+export type VersionState = Schemas['VersionState'];
+export type EntryStatus = LiteratureEntryVersion['status'];
+export type LibraryCategory = LiteratureEntry['category'];
+export type OwnerEntry = Schemas['OwnerEntry'];
+export type ProposalEntry = Schemas['ProposalEntry'];
+export type ProposalSource = Schemas['ProposalSource'];
+export type ImportedVersion = Schemas['ImportedVersion'];
+export type ImportResult = Schemas['ImportResult'];
+export type SourceCheckView = Schemas['SourceCheckView'];
+export type ApprovalResult = Schemas['ApprovalResult'];
+export type RejectResult = Schemas['RejectResult'];
+export type EntryChanges = Schemas['EntryChanges'];
+export type SnapshotWritten = Schemas['SnapshotWritten'];
+export type LibraryUse = Schemas['LibraryUse'];
 
 /** One setting in a block's settings schema (GET /api/blocks): JSON Schema plus `group`, `kind` and units. */
 export interface SettingSchema {

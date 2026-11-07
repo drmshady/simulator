@@ -427,7 +427,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Queue View */
+        /**
+         * Queue View
+         * @description Both lanes in order, and `recent`: the latest finished jobs other than previews, newest first.
+         */
         get: operations["queue_view_api_queue_get"];
         put?: never;
         post?: never;
@@ -447,7 +450,11 @@ export interface paths {
         /** List Entries */
         get: operations["list_entries_api_library_entries_get"];
         put?: never;
-        post?: never;
+        /**
+         * Add Entry
+         * @description The owner's entry is stored as `proposed`; a parameter key that exists gets a new version.
+         */
+        post: operations["add_entry_api_library_entries_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -468,6 +475,123 @@ export interface paths {
         get: operations["get_entry_api_library_entries__entry_ref__get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/library/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Import Proposals
+         * @description A `dentalsim.library/1` file (contracts/library-entry-format.md); every entry arrives `proposed`.
+         */
+        post: operations["import_proposals_api_library_import_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/library/entries/{entry_id}/versions/{version}/check-sources": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Check Sources
+         * @description Checks each cited DOI or PMID at Crossref or NCBI and stores the result (FR-054). Needs the internet.
+         */
+        post: operations["check_sources_api_library_entries__entry_id__versions__version__check_sources_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/library/entries/{entry_id}/versions/{version}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve
+         * @description Refused (`validation_failed`, one problem per reason) unless every source is `resolved_match`.
+         */
+        post: operations["approve_api_library_entries__entry_id__versions__version__approve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/library/entries/{entry_id}/versions/{version}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reject
+         * @description Rejects a proposed or approved version and flags the runs that used it `uses_rejected_entry` (FR-055).
+         */
+        post: operations["reject_api_library_entries__entry_id__versions__version__reject_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/library/entries/{entry_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Edit
+         * @description A new proposed version from the newest one with `changes` applied (FR-016).
+         */
+        put: operations["edit_api_library_entries__entry_id__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/library/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Export */
+        post: operations["export_api_library_export_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -554,6 +678,15 @@ export interface components {
              */
             superposition: "unit_load_cases";
         };
+        /** ApprovalResult */
+        ApprovalResult: {
+            version: components["schemas"]["LiteratureEntryVersion"];
+            /**
+             * Superseded
+             * @default []
+             */
+            superseded: number[];
+        };
         /** AssetLink */
         AssetLink: {
             /** Name */
@@ -636,6 +769,11 @@ export interface components {
                 [key: string]: components["schemas"]["DesignValue"] | components["schemas"]["LibraryValue"];
             };
         };
+        /** Body_import_proposals_api_library_import_post */
+        Body_import_proposals_api_library_import_post: {
+            /** File */
+            file: string;
+        };
         /**
          * BrandComparison
          * @description Present only for a neutral comparison of commercial designs (FR-049).
@@ -659,6 +797,11 @@ export interface components {
             load_case: string;
             /** Relative Residual */
             relative_residual: number | null;
+        };
+        /** CheckedSource */
+        CheckedSource: {
+            source: components["schemas"]["Source"];
+            check: components["schemas"]["SourceCheck"];
         };
         /**
          * ChewingInstant
@@ -924,6 +1067,10 @@ export interface components {
             /** Free Gb */
             free_gb: number;
         };
+        /** EditBody */
+        EditBody: {
+            changes: components["schemas"]["EntryChanges"];
+        };
         /**
          * EnergyBalance
          * @description The work of the applied load against twice the strain energy for one unit load case (FR-023).
@@ -940,13 +1087,36 @@ export interface components {
             /** Relative Error */
             relative_error: number;
         };
-        /** EntryDetail */
-        EntryDetail: {
+        /**
+         * EntryChanges
+         * @description What an edit changes (FR-016). Fields left out keep the newest version's value; `notes: null` clears notes.
+         *
+         *     `values_by_source` replaces the whole list and may cite stored sources only; a new paper is added as an owner
+         *     entry for the same parameter key.
+         */
+        EntryChanges: {
+            /** Units */
+            units?: string | null;
+            /** Typical */
+            typical?: number | null;
+            /** Range Min */
+            range_min?: number | null;
+            /** Range Max */
+            range_max?: number | null;
+            /** Values By Source */
+            values_by_source?: components["schemas"]["ValueBySource"][] | null;
+            /** Notes */
+            notes?: string | null;
+        };
+        /** EntryView */
+        EntryView: {
             entry: components["schemas"]["LiteratureEntry"];
             /** Versions */
             versions: components["schemas"]["LiteratureEntryVersion"][];
             /** Sources */
             sources: components["schemas"]["Source"][];
+            /** States */
+            states: components["schemas"]["VersionState"][];
         };
         /**
          * ErrorBody
@@ -1078,6 +1248,48 @@ export interface components {
             /** Edges */
             edges: string[];
         };
+        /** ImportResult */
+        ImportResult: {
+            /**
+             * Origin
+             * @enum {string}
+             */
+            origin: "claude_proposal" | "owner";
+            /** Imported */
+            imported: components["schemas"]["ImportedVersion"][];
+            /**
+             * Unchanged
+             * @default []
+             */
+            unchanged: components["schemas"]["ImportedVersion"][];
+            /** Source Ids */
+            source_ids: {
+                [key: string]: string;
+            };
+            /**
+             * New Sources
+             * @default []
+             */
+            new_sources: string[];
+            /**
+             * Warnings
+             * @default []
+             */
+            warnings: string[];
+        };
+        /** ImportedVersion */
+        ImportedVersion: {
+            /** Entry Id */
+            entry_id: string;
+            /** Parameter Key */
+            parameter_key: string;
+            /** Version */
+            version: number;
+            /** New Entry */
+            new_entry: boolean;
+            /** Content Hash */
+            content_hash: string;
+        };
         /** KeyNumber */
         KeyNumber: {
             /** Id */
@@ -1161,6 +1373,34 @@ export interface components {
             quantity: string;
             /** Units */
             units: string;
+        };
+        /**
+         * LibraryUse
+         * @description One library version a run used, as the run recorded it, with what the library holds now.
+         */
+        LibraryUse: {
+            /** Entry Id */
+            entry_id: string;
+            /** Parameter Key */
+            parameter_key: string;
+            /** Label */
+            label: string;
+            /** Version */
+            version: number;
+            /** Status */
+            status: ("proposed" | "approved" | "rejected" | "superseded") | null;
+            /** Units */
+            units: string | null;
+            /** Used In */
+            used_in: string[];
+            /** Values */
+            values: number[];
+            /** Choice */
+            choice: string;
+            /** Sources */
+            sources: components["schemas"]["SourceValue"][];
+            /** Newer Version */
+            newer_version: number | null;
         };
         /**
          * LibraryValue
@@ -1445,6 +1685,15 @@ export interface components {
                 number
             ];
         };
+        /**
+         * OwnerEntry
+         * @description One paper's values typed in by the owner (FR-053). `entry.values_by_source` cites `sources` by `id`.
+         */
+        OwnerEntry: {
+            entry: components["schemas"]["ProposalEntry"];
+            /** Sources */
+            sources: components["schemas"]["ProposalSource"][];
+        };
         /** PhysicsItem */
         PhysicsItem: {
             /** Id */
@@ -1662,6 +1911,71 @@ export interface components {
              */
             scenarios: components["schemas"]["ScenarioSummary"][];
         };
+        /** ProposalEntry */
+        ProposalEntry: {
+            /** Parameter Key */
+            parameter_key: string;
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "material" | "bone" | "load" | "strength" | "frost_window";
+            /** Label */
+            label?: string | null;
+            /** Units */
+            units: string;
+            /** Typical */
+            typical: number;
+            range: components["schemas"]["ProposalRange"];
+            /** Values By Source */
+            values_by_source: components["schemas"]["ProposalValue"][];
+            /** Notes */
+            notes?: string | null;
+            /** Version */
+            version?: number | null;
+            /** Content Hash */
+            content_hash?: string | null;
+            /** Approved At */
+            approved_at?: string | null;
+        };
+        /** ProposalRange */
+        ProposalRange: {
+            /** Min */
+            min: number;
+            /** Max */
+            max: number;
+        };
+        /** ProposalSource */
+        ProposalSource: {
+            /** Id */
+            id: string;
+            /** Authors */
+            authors: string[];
+            /** Year */
+            year: number;
+            /** Title */
+            title: string;
+            /** Journal */
+            journal?: string | null;
+            /** Doi */
+            doi?: string | null;
+            /** Pmid */
+            pmid?: string | null;
+            /**
+             * Study Type
+             * @enum {string}
+             */
+            study_type: "experimental" | "clinical" | "fea" | "review" | "standard" | "textbook";
+        };
+        /** ProposalValue */
+        ProposalValue: {
+            /** Source */
+            source: string;
+            /** Value */
+            value: number;
+            /** Note */
+            note?: string | null;
+        };
         /** QueueSummary */
         QueueSummary: {
             heavy: components["schemas"]["LaneCounts"];
@@ -1687,6 +2001,22 @@ export interface components {
             value: number;
             /** Units */
             units: string;
+        };
+        /** RejectBody */
+        RejectBody: {
+            /** Reason */
+            reason: string;
+        };
+        /** RejectResult */
+        RejectResult: {
+            version: components["schemas"]["LiteratureEntryVersion"];
+            /** Was Current */
+            was_current: boolean;
+            /**
+             * Flagged Runs
+             * @default []
+             */
+            flagged_runs: string[];
         };
         /** ResultsView */
         ResultsView: {
@@ -1814,6 +2144,8 @@ export interface components {
             flags: string[];
             /** Stale Reasons */
             stale_reasons: string[];
+            /** Library */
+            library: components["schemas"]["LibraryUse"][];
         };
         /** SaveScenario */
         SaveScenario: {
@@ -1974,6 +2306,13 @@ export interface components {
              */
             expires_at: string;
         };
+        /** SnapshotWritten */
+        SnapshotWritten: {
+            /** Path */
+            path: string;
+            /** Entries */
+            entries: number;
+        };
         /** Source */
         Source: {
             /** Id */
@@ -2018,6 +2357,19 @@ export interface components {
             /** Detail */
             detail?: string | null;
         };
+        /** SourceCheckView */
+        SourceCheckView: {
+            /** Entry Id */
+            entry_id: string;
+            /** Version */
+            version: number;
+            /** Sources */
+            sources: components["schemas"]["CheckedSource"][];
+            /** Approvable */
+            approvable: boolean;
+            /** Problems */
+            problems: components["schemas"]["ErrorItem"][];
+        };
         /**
          * SourceMatch
          * @description What the resolver returned, and how it compared with the source as cited.
@@ -2035,6 +2387,17 @@ export interface components {
             resolved_year?: number | null;
             /** Resolved Title */
             resolved_title?: string | null;
+        };
+        /** SourceValue */
+        SourceValue: {
+            /** Source Id */
+            source_id: string;
+            /** Citation */
+            citation: string;
+            /** Value */
+            value: number;
+            /** Chosen */
+            chosen: boolean;
         };
         /** Statistics */
         Statistics: {
@@ -2214,6 +2577,20 @@ export interface components {
             value: number;
             /** Note */
             note?: string | null;
+        };
+        /**
+         * VersionState
+         * @description What the owner may do with one version now.
+         */
+        VersionState: {
+            /** Version */
+            version: number;
+            /** Approvable */
+            approvable: boolean;
+            /** Problems */
+            problems: components["schemas"]["ErrorItem"][];
+            /** Runs Using */
+            runs_using: number;
         };
     };
     responses: never;
@@ -3773,6 +4150,57 @@ export interface operations {
             };
         };
     };
+    add_entry_api_library_entries_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OwnerEntry"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportedVersion"];
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
     get_entry_api_library_entries__entry_ref__get: {
         parameters: {
             query?: never;
@@ -3790,7 +4218,312 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["EntryDetail"];
+                    "application/json": components["schemas"]["EntryView"];
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    import_proposals_api_library_import_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_import_proposals_api_library_import_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportResult"];
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    check_sources_api_library_entries__entry_id__versions__version__check_sources_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entry_id: string;
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SourceCheckView"];
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    approve_api_library_entries__entry_id__versions__version__approve_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entry_id: string;
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApprovalResult"];
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    reject_api_library_entries__entry_id__versions__version__reject_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entry_id: string;
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RejectBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RejectResult"];
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    edit_api_library_entries__entry_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entry_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EditBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LiteratureEntryVersion"];
+                };
+            };
+            /** @description Error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    export_api_library_export_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SnapshotWritten"];
                 };
             };
             /** @description Error */

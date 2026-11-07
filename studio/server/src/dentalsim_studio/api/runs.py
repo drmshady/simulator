@@ -38,6 +38,7 @@ from dentalsim.store.staleness import CurrentState, check_staleness
 from dentalsim.verification.report import VerificationReport
 from dentalsim.version import engine_source_hash, gmsh_version
 from dentalsim_studio.api.deps import ReposDep, data_dir_of
+from dentalsim_studio.api.library import LibraryUse, library_uses
 from dentalsim_studio.db import SqliteRepos
 from dentalsim_studio.db.repos.runs import PreviewRecord
 from dentalsim_studio.events import bus
@@ -192,6 +193,8 @@ class RunView(BaseModel):
     flags: list[str]
     """The stored flags and the out-of-date flags computed now."""
     stale_reasons: list[str]
+    library: list[LibraryUse]
+    """The library versions the run used, with their values and sources (FR-016)."""
 
 
 class ResultsView(BaseModel):
@@ -300,7 +303,9 @@ def start_run(scenario_id: str, body: LevelBody, repos: ReposDep) -> RunQueued:
 def get_run(run_id: str, repos: ReposDep) -> RunView:
     run = repos.runs.require(run_id)
     flags, reasons = staleness_of(run, repos)
-    return RunView(run=run, flags=sorted(set(run.flags) | flags), stale_reasons=reasons)
+    return RunView(
+        run=run, flags=sorted(set(run.flags) | flags), stale_reasons=reasons, library=library_uses(run, repos)
+    )
 
 
 @router.post("/runs/{run_id}/cancel", response_model=Run)

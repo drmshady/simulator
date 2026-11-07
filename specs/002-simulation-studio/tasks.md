@@ -938,7 +938,7 @@ reported), restore it, save, run in detail and check the results (quickstart row
 **Independent Test**: add one proposed entry and one owner entry. Approve one and reject the other. Only the approved
 one can be chosen, and both show their sources (quickstart row 2).
 
-- [ ] T108 [US2] Implement `studio/server/src/dentalsim_studio/api/library.py`, calling
+- [X] T108 [US2] Implement `studio/server/src/dentalsim_studio/api/library.py`, calling
   `dentalsim.library.service`, with every library route in contracts/studio-api.md:
   - list (status, category and text filters) and get (with versions and sources)
   - owner add, which creates a `proposed` entry
@@ -946,24 +946,24 @@ one can be chosen, and both show their sources (quickstart row 2).
   - check-sources, approve and reject `{reason}`
   - `PUT`, which creates a new version
   - export a snapshot
-- [ ] T109 [US2] Implement rejection flagging in `engine/src/dentalsim/library/service.py` and
+- [X] T109 [US2] Implement rejection flagging in `engine/src/dentalsim/library/service.py` and
   `studio/server/src/dentalsim_studio/db/repos/runs.py` (FR-055):
   - rejecting a used version sets `uses_rejected_entry` on every run that used it
   - superseded versions stay readable
   - `dentalsim library reject` lists the flagged runs
-- [ ] T110 [P] [US2] Implement `studio/ui/src/pages/Library.tsx`:
+- [X] T110 [P] [US2] Implement `studio/ui/src/pages/Library.tsx`:
   - a table filtered by status, category and text
   - entry detail: every version; the range, typical value and values by source; each source's check result
     (authors, year, title similarity)
   - **Check sources**, **Approve** (disabled, with the reason, until every source matches) and **Reject with
     reason** buttons
   - bulk YAML upload, and an edit dialog that creates a new version
-- [ ] T111 [P] [US2] Implement `studio/ui/src/components/AddEntryForm.tsx` (FR-053): the owner enters a paper and its
+- [X] T111 [P] [US2] Implement `studio/ui/src/components/AddEntryForm.tsx` (FR-053): the owner enters a paper and its
   values (parameter key, category, units, typical, range, values by source, and source fields with a DOI or PMID); the
   entry is saved as `proposed`
-- [ ] T112 [US2] Show the library versions used on the run record in `studio/ui/src/pages/Results.tsx` (entry, version,
+- [X] T112 [US2] Show the library versions used on the run record in `studio/ui/src/pages/Results.tsx` (entry, version,
   value, sources), with a "newer version exists" note (Acceptance 3)
-- [ ] T113 [US2] Add `studio/server/tests/test_api_library.py`, with Crossref and NCBI mocked:
+- [X] T113 [US2] Add `studio/server/tests/test_api_library.py`, with Crossref and NCBI mocked:
   - a proposed entry cannot be chosen (422)
   - approval is refused on a mismatching DOI
   - editing an approved entry creates v2, and an old run still shows v1
