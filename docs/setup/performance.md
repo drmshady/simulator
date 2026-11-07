@@ -90,3 +90,27 @@ Two meshing changes came with slice 1b, both leaving the single crown's mesh ide
    crown's cusp ridges end about 0.15 mm short of the edge of its occlusal table; in some positions along the arch
    that strip meshed into slivers (quality 0.009 against the 0.01 floor). The bridge's 32.7 s includes such
    rounds. A better crown shape (the owner's later spec on realistic crowns) would remove the strip.
+
+## Slice 1b standard runs (the owner's check, T107)
+
+Run by the owner in the studio on 7 Nov 2026 (8 solver threads, both load cases, data folder on D:). Time is the
+whole run (join, mesh, solve, results and store), from the studio's run records.
+
+| Scenario | Detail level | Estimated DOF | Actual DOF | Peak memory | Time |
+|---|---|---|---|---|---|
+| Bridge (implants), 2 implants | standard | 281,300 | 396,630 | 5.2 GB | 3 min 23 s |
+| Cantilever bridge (implants), 2 implants | standard | 286,000 | 415,779 | 5.3 GB | 4 min 17 s |
+| Full-arch fixed (implants), 4 implants | standard | 488,011 | 909,918 | 11.6 GB | 7 min 15 s |
+| Full-arch fixed, one implant (45) removed: **3 implants** | standard | 743,327 | 814,218 | 10.0 GB | **6 min 16 s** |
+| Full-arch fixed (implants), 4 implants | fine | 1,037,641 | 1,658,664 | > 27 GB | stopped after 3 min |
+
+- **SC-013 is met**: a detailed run (`standard`, provisionally detailed until the mesh check exists, FR-018) of a
+  scenario with three implants finished in 6 min 16 s, against the 10 h limit. To be confirmed again once the
+  mesh check shows which level passes.
+- **The full arch at `fine` does not fit on the main PC.** The memory watchdog stopped its solver before the PC
+  ran out of memory, and nothing was stored. The DOF prediction, fitted on the single crown alone, had
+  under-predicted multi-unit meshes by 21–46%, so the run was let through. The prediction now has a term for each
+  part's surface mesh and is refitted on all the built-in templates (`mesh/predict.py`, within −13% to +26%). The
+  3-implant run above used the refitted estimate (9% under, time within 3%). The full arch at `fine` is now
+  predicted at 1.78 M DOF and 29.7 GB, and refused before it starts. It is a case for the rented solver machine
+  (Phase 14), or for a mesh check carried over from a smaller verified model.

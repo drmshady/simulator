@@ -907,7 +907,7 @@ reported), restore it, save, run in detail and check the results (quickstart row
     component stress by region and block, so pontics, connectors and cantilevers appear unchanged. One generic
     gap was fixed in the builder: offering keyed sockets (`socketsFor`, tested in `studio/ui/tests/slice1b.test.ts`),
     plus a help line on what x means on a jaw site. Not yet seen in a browser against the running studio (T107).
-- [ ] T107 [US1] **Owner (main PC)**: work through quickstart row 1b. Then run a 3-implant scenario in detail, which
+- [X] T107 [US1] **Owner (main PC)**: work through quickstart row 1b. Then run a 3-implant scenario in detail, which
   must finish within 10 h (SC-013), and record the time in `docs/setup/performance.md`.
   - 2026-11-06: the owner accepted the slice 1b preview times (30 s to 3 min, `docs/setup/performance.md`;
     SC-002 and FR-017 amended). Still open: approving the four templates' design defaults (T104), quickstart row
@@ -919,8 +919,9 @@ reported), restore it, save, run in detail and check the results (quickstart row
   - 2026-11-07: the owner approved the four templates' design defaults and passed quickstart row 1b in the
     browser (deleting an implant names the unsupported part; restored, saved and run at standard). The full arch
     at `fine` (1.66 M DOF) was stopped by the memory watchdog: the DOF prediction, fitted on the single crown only,
-    gave 1.04 M; it is being refitted on all templates. Still open: a 3-implant detailed (`standard`, FR-018)
-    run within 10 h (SC-013), timed in `docs/setup/performance.md`.
+    gave 1.04 M; it is now refitted on all templates and refuses that run before it starts.
+  - 2026-11-07: the 3-implant run (the full arch less implant 45, `standard`, FR-018) finished in 6 min 16 s
+    (SC-013, limit 10 h), recorded in `docs/setup/performance.md`. Done.
 
 **Checkpoint**: every implant-supported fixed scenario in the year-one plan can be built and run.
 
